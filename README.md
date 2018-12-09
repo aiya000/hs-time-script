@@ -2,7 +2,7 @@
 
 `Time script` = `Vim script` + static typing
 
-(static **t**yping **e**xperience for V**im script**)
+(The static **t**yping **e**xperience for V**im script**)
 
 ## Purpose
 
