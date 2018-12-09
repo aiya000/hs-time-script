@@ -1,0 +1,15 @@
+resolver: lts-12.22
+packages:
+  - '.'
+extra-deps:
+  - git: https://github.com/tonatona-project/tonatona
+    commit: 0b6dcc9b4a816db8458b0a3b122e50b215685bb0
+    subdirs:
+      - tonaparser
+      - tonatona
+      - tonatona-logger
+      - tonatona-persistent-postgresql
+      - tonatona-persistent-sqlite
+      - tonatona-servant
+flags: {}
+extra-package-dbs: []
