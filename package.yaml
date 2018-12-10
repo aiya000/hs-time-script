@@ -59,35 +59,47 @@ default-extensions:
 
 dependencies:
   - base >= 4.7 && < 5
+  - containers
+  - data-default
+  - generic-lens
+  - here
+  - lens
+  - mtl
+  - prettyprinter
   - rio
+  - text
   - tonatona
   - tonatona-logger
 
 library:
-  source-dirs:
-    - src
+  source-dirs: src
+  build-tools:
+    - happy
 
 executables:
   tims:
-    source-dirs:
-      - app
+    source-dirs: app
     main: Main.hs
     dependencies:
       - time-script
 
 tests:
-  spec:
-    main: Spec.hs
-    source-dirs:
-      - test
+  tasty:
+    main: Tasty.hs
+    source-dirs: test
     dependencies:
-      - time-script
       - hspec
-      - QuickCheck
+      - hspec-expectations
+      - smallcheck
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - tasty-hunit
+      - tasty-smallcheck
+      - time-script
   doctest:
     main: DocTest.hs
-    source-dirs:
-      - test
+    source-dirs: test
     dependencies:
       - time-script
       - doctest
