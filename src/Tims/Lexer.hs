@@ -2,7 +2,7 @@ module Tims.Lexer (lex) where
 
 import Data.Text (Text)
 import Tims.Lexer.Types
-import Tims.Types
+import Tims.Processor (Processor)
 import qualified Prelude as Prelude
 
 -- | Tokenizes a code

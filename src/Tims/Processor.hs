@@ -1,5 +1,5 @@
 -- | Exposes contexts for both the lexer and the parser
-module Tims.Types where
+module Tims.Processor where
 
 import Control.Monad.Except (MonadError, ExceptT, runExceptT)
 import Control.Monad.State (State, runState)
