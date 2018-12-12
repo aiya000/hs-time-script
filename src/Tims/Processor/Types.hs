@@ -1,4 +1,7 @@
-module Tims.Parser.Types.Idents where
+-- | Exposes types for both the lexer and the parser
+module Tims.Processor.Types where
+
+import Data.Text (Text)
 
 data UpperChar = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
   deriving (Show, Eq)
@@ -20,3 +23,7 @@ data TypeIdent = TypeIdent UpperChar Text
 -- (e.g. foo, g:bar, v:null, v:true, @")
 data VarIdent = VarIdent LowerChar Text
    deriving (Show, Eq)
+
+-- | Non empty strings
+data Ident = Ident Char Text
+  deriving (Show, Eq)

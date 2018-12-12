@@ -1,4 +1,4 @@
--- | Exposes Time script's common types
+-- | Exposes contexts for both the lexer and the parser
 module Tims.Types where
 
 import Control.Monad.Except (MonadError, ExceptT, runExceptT)
