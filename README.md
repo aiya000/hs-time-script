@@ -11,6 +11,8 @@
 
 ## About
 
+about.tim
+
 ```vim
 " Basic types (you can see at `:help type()`)
 let x: Int = 42 " Vim script's Number
