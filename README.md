@@ -1,8 +1,6 @@
 # :diamond_shape_with_a_dot_inside: Time script :diamond_shape_with_a_dot_inside:
 
-`Time script` = `Vim script` + static typing
-
-(The static **t**yping **e**xperience for V**im script**)
+`Time script` = `Vim script` + strong static typing
 
 ## Purpose
 
