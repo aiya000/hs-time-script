@@ -78,7 +78,7 @@ let map: type(char_code) = char_code
 
 - Type inferences
 
-```
+```vim
 " type(y) is Int (Now type(y) is Any)
 let x: Int = 10
 let y = x
@@ -86,10 +86,24 @@ let y = x
 
 - Sum types
 
-```
+```vim
 type Mode = <Normal: Null, Insert: Null, Virtual: VKind>
 type VKind = <Charwise: Null, Linewise: Null, Blockwise: Null>
 
 let x: Mode = Normal v:null
 let y: Mode = Virtual (Charwise v:null)
+```
+
+- String interpolations
+
+```vim
+let n: Nat = 10
+
+" expressions to be stringified via string()
+echo "$n ${n + 1}"
+" 10 11
+
+" single quotes doesn't expand (the raw string)
+echo '$n ${n + 1}'
+" $n ${n + 1}
 ```
