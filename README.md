@@ -107,3 +107,10 @@ echo "$n ${n + 1}"
 echo '$n ${n + 1}'
 " $n ${n + 1}
 ```
+
+- Don't need unnecessary quotes in dicts
+
+```vim
+echo {foo: 10} == {'foo': 10}
+" 1
+```
