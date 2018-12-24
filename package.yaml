@@ -58,6 +58,7 @@ default-extensions:
   - ViewPatterns
 
 dependencies:
+  - array
   - base >= 4.7 && < 5
   - containers
   - data-default
@@ -67,6 +68,7 @@ dependencies:
   - mtl
   - prettyprinter
   - rio
+  - safe-exceptions
   - text
   - tonatona
   - tonatona-logger
