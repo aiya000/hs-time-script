@@ -3,7 +3,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Tims.Parser
+module Tim.Parser
   ( parse
   ) where
 
@@ -15,13 +15,13 @@ import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
-import Tims.Lexer.Types (Token, TokenPos, Failure(..))
-import Tims.Parser.Types
-import Tims.Processor (Processor, runProcessor)
-import Tims.Processor.Types (AsciiChar(..), UpperChar(..), LowerChar(..), pattern LetIdent)
+import Tim.Lexer.Types (Token, TokenPos, Failure(..))
+import Tim.Parser.Types
+import Tim.Processor (Processor, runProcessor)
+import Tim.Processor.Types (AsciiChar(..), UpperChar(..), LowerChar(..), pattern LetIdent)
 import qualified Data.Map.Strict as Map
-import qualified Tims.Lexer.Types as Token
-import qualified Tims.Processor.Types as Proc
+import qualified Tim.Lexer.Types as Token
+import qualified Tim.Processor.Types as Proc
 }
 
 %error { parseError }

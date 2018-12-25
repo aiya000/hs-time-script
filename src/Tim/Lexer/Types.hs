@@ -1,14 +1,14 @@
 {-# LANGUAGE PatternSynonyms #-}
 
-module Tims.Lexer.Types where
+module Tim.Lexer.Types where
 
 import Data.Default (Default(..))
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Numeric.Natural (Natural)
 import RIO
-import Tims.Processor.Types
-import qualified Tims.Processor.Types as Proc
+import Tim.Processor.Types
+import qualified Tim.Processor.Types as Proc
 
 data TokenPos = TokenPos
   { lineNum :: Int

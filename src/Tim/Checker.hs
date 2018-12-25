@@ -1,2 +1,2 @@
 -- | The static checker that checks syntax validities
-module Tims.Checker where
+module Tim.Checker where

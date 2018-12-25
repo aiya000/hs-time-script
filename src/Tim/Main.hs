@@ -1,5 +1,5 @@
 -- | Exposes the standard entry point
-module Tims.Main where
+module Tim.Main where
 
 import RIO
 import Tonatona (HasConfig(..), HasParser(..))

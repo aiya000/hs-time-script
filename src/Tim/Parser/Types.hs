@@ -1,10 +1,10 @@
-module Tims.Parser.Types where
+module Tim.Parser.Types where
 
 import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import qualified Tims.Processor.Types as Proc
+import qualified Tim.Processor.Types as Proc
 
 -- | The Time script's abstract syntax tree
 newtype AST = AST

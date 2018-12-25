@@ -1,7 +1,7 @@
-module Tims.Checker.Types where
+module Tim.Checker.Types where
 
 import RIO
-import Tims.Processor.Types (VarIdent)
+import Tim.Processor.Types (VarIdent)
 
 -- | g: variables
 newtype GVar = GVar

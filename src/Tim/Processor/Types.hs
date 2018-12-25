@@ -1,7 +1,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | Exposes types for both the lexer and the parser
-module Tims.Processor.Types where
+module Tim.Processor.Types where
 
 import Data.Text (Text)
 import RIO

@@ -1,12 +1,12 @@
 -- | Exposes contexts for both the lexer and the parser
-module Tims.Processor where
+module Tim.Processor where
 
 import Control.Monad.Except (MonadError, ExceptT, runExceptT)
 import Control.Monad.State (State, runState)
 import Control.Monad.State.Class (MonadState)
 import Data.Default (def)
 import RIO
-import Tims.Lexer.Types (TokenPos, Failure)
+import Tim.Lexer.Types (TokenPos, Failure)
 
 -- | A context for both the lexer and the parser
 newtype Processor a = Processor
