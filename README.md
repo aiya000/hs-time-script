@@ -31,7 +31,8 @@ endfunction
 "" Natural numbers (non negative numbers)
 let m: Nat = 10
 let n: Nat = 0
-""" compile error! (negative numbers cannot assign)
+""" compile error! (integral signs means Int literals)
+"let l: Nat = +1
 "let l: Nat = -1
 
 "" Characters
