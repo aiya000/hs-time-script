@@ -43,9 +43,9 @@ import qualified Tim.Processor.Types as Proc
 
 %token
   let       { (Token.Command LetIdent, _)          }
-  varIdent  { (Token.VarIdent $$, _)               }
+  varIdent  { (Token.Var $$, _)                    }
   ':'       { (Token.Colon, _)                     }
-  typeIdent { (Token.TypeIdent $$, _)              }
+  typeIdent { (Token.Type $$, _)                   }
   '='       { (Token.Assign, _)                    }
   nat       { (Token.Literal (Token.Nat $$), _)    }
   int       { (Token.Literal (Token.Int $$), _)    }

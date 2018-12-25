@@ -7,7 +7,6 @@ import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Numeric.Natural (Natural)
 import RIO
-import Tim.Processor.Types
 import qualified Tim.Processor.Types as Proc
 
 data TokenPos = TokenPos
@@ -42,9 +41,9 @@ data AtomicLiteral = Nat Natural
 type Identifier = Text
 
 -- | Time script's keywords, identifiers, or else
-data Token = VarIdent Proc.VarIdent
-           | TypeIdent Proc.TypeIdent
-           | Command CmdIdent
+data Token = Var Proc.VarIdent
+           | Type Proc.TypeIdent
+           | Command Proc.CmdIdent
            | Colon
            | Assign -- ^ =
            | ListBegin -- ^ [
