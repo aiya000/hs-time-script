@@ -3,6 +3,17 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+-- |
+-- Parses codes, commands, and expressions.
+--
+-- NOTICE:
+-- This only parses syntaxes, doesn't check valid syntaxes strictly.
+-- Please use Tim.Checker if you want.
+--
+-- e.g.
+-- These are parsed successfully.
+-- `let x: String = 10` (invalid assigning)
+-- `1.0` (1.0 is not a command, commands are not allowed at top level)
 module Tim.Parser
   ( parse
   ) where
@@ -31,29 +42,34 @@ import qualified Tim.Processor.Types as Proc
 %tokentype { (Token, TokenPos) }
 
 %token
-  let       { (Token.Command LetIdent, _) }
-  varIdent  { (Token.VarIdent $$, _)                         }
-  ':'       { (Token.Colon, _)                               }
-  typeIdent { (Token.TypeIdent $$, _)                        }
-  '='       { (Token.Assign, _)                              }
-  nat       { (Token.Literal (Token.Nat $$), _)              }
-  int       { (Token.Literal (Token.Int $$), _)              }
-  float     { (Token.Literal (Token.Float $$), _)            }
-  string    { (Token.Literal (Token.String $$), _)           }
-  '['       { (Token.ListBegin, _)                           }
-  ']'       { (Token.ListEnd, _)                             }
-  '{'       { (Token.DictBegin, _)                           }
-  '}'       { (Token.DictEnd, _)                             }
-  '('       { (Token.ParenBegin, _)                          }
-  ')'       { (Token.ParenEnd, _)                            }
-  ','       { (Token.Comma, _)                               }
-  lineBreak { (Token.LineBreak, _)                           }
+  let       { (Token.Command LetIdent, _)          }
+  varIdent  { (Token.VarIdent $$, _)               }
+  ':'       { (Token.Colon, _)                     }
+  typeIdent { (Token.TypeIdent $$, _)              }
+  '='       { (Token.Assign, _)                    }
+  nat       { (Token.Literal (Token.Nat $$), _)    }
+  int       { (Token.Literal (Token.Int $$), _)    }
+  float     { (Token.Literal (Token.Float $$), _)  }
+  string    { (Token.Literal (Token.String $$), _) }
+  '['       { (Token.ListBegin, _)                 }
+  ']'       { (Token.ListEnd, _)                   }
+  '{'       { (Token.DictBegin, _)                 }
+  '}'       { (Token.DictEnd, _)                   }
+  '('       { (Token.ParenBegin, _)                }
+  ')'       { (Token.ParenEnd, _)                  }
+  ','       { (Token.Comma, _)                     }
+  lineBreak { (Token.LineBreak, _)                 }
 
 %%
 
-Code :: { AST }
-  : {- empty -}           { AST []       }
-  | Syntax lineBreak Code { $1 `cons` $3 }
+AST :: { AST }
+  : Literal  { Literal $1                        }
+  | Code     { Code $1                           }
+  | varIdent { VarIdent (Proc.simpleVarIdent $1) }
+
+Code :: { Code }
+  : {- empty -}           { []      }
+  | Syntax lineBreak Code { $1 : $3 }
 
 Syntax :: { Syntax }
   : let Lhs ':' typeIdent '=' Rhs { Let $2 (Just $4) $6 }
@@ -112,9 +128,4 @@ parseError (_, _) =
     Sorry, please report an issue :(
     <- parseError at ${(__FILE__ :: String)}:L${(__LINE__ :: Int)}
   |]
-
-infixr 9 `cons`
-
-cons :: Syntax -> AST -> AST
-cons x (AST xs) = AST $ x : xs
 }

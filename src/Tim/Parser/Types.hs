@@ -6,10 +6,15 @@ import Numeric.Natural (Natural)
 import RIO
 import qualified Tim.Processor.Types as Proc
 
+type Code = [Syntax]
+
+-- NOTE: Why don't use Proc.VarIdent at VarIdent,
+--       because for usability. (this is exposed to user directly)
 -- | The Time script's abstract syntax tree
-newtype AST = AST
-  { unAST :: [Syntax]
-  } deriving (Show, Eq)
+data AST = Code Code -- ^ Whole of a code
+         | Literal Literal
+         | VarIdent Text
+  deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
 data Syntax = Let Lhs (Maybe Proc.TypeIdent) Rhs -- ^ let foo: Bar = lit
