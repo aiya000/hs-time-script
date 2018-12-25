@@ -1,10 +1,10 @@
 module Tim.Lexer (lex) where
 
 import Data.Text (Text)
+import RIO
 import Tim.Lexer.Types
-import Tim.Processor (Processor)
-import qualified Prelude as Prelude
+import qualified Prelude
 
 -- | Tokenizes a code
-lex :: Text -> Processor [(Token, TokenPos)]
+lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = Prelude.undefined
