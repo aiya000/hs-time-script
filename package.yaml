@@ -88,21 +88,20 @@ executables:
 tests:
   tasty:
     main: Tasty.hs
-    source-dirs: test
+    source-dirs:
+      - test/tasty
+      - src
     dependencies:
-      - hspec
-      - hspec-expectations
       - smallcheck
       - tasty
       - tasty-discover
-      - tasty-hspec
       - tasty-hunit
       - tasty-smallcheck
-      - time-script
   doctest:
     main: DocTest.hs
-    source-dirs: test
+    source-dirs:
+      - test/doctest
+      - src
     dependencies:
-      - time-script
-      - doctest
       - Glob
+      - doctest
