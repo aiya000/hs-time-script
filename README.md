@@ -15,12 +15,12 @@ about.tim
 " Basic types (you can see at `:help type()`)
 let x: Int = 42 " Vim script's Number
 let s: String = 'you'
-let f: Int -> String = function('string') " funcref
-let xs: List String = ['sugar', 'sweet', 'moon']
-let ys: Dict Int = {'foo': 10, 'bar': 20} " dictionary
 let y: Float = 1.0
-let b: Bool = v:true " boolean
+let b: Bool = v:true
 let z: Null = v:null
+let xs: List String = ['sugar', 'sweet', 'moon']
+let ys: Dict Int = {'foo': 10, 'bar': 20}
+let f: Int -> String = function('string')
 
 "" [A] returns a value of A
 function! F(x: Int) [String] abort
