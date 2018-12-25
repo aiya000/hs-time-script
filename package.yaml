@@ -65,9 +65,11 @@ dependencies:
   - generic-lens
   - here
   - lens
+  - megaparsec
   - mtl
   - prettyprinter
   - rio
+  - safe
   - safe-exceptions
   - text
   - tonatona
