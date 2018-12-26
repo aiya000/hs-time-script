@@ -53,12 +53,17 @@ let u: Tuple Int String Bool = [-10, 'me', v:true] " 3
 
 "" Any
 let foo: Any = 10
-""" type Any if you don't specify the type
+""" Be typed by Any if the variable type omitted
 let foo = 'string'
 
-""" Returns an Any by the foo's same reason
+""" Be typed the returned value by Any for the same reason
 function! G() abort
   return 10
+endfunction
+
+""" Be typed the argument by Any for the same reason
+function! H(x) abort
+  " x is Any
 endfunction
 
 " type synonyms
