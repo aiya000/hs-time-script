@@ -13,7 +13,6 @@ ghc-options:
   - -Wincomplete-record-updates
   - -Wincomplete-uni-patterns
   - -Wredundant-constraints
-  - -Werror
 
 default-extensions:
   - AutoDeriveTypeable
