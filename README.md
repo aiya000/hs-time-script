@@ -4,6 +4,8 @@
 
 `Time script` = `Vim script` + strong static typing
 
+- [The presentation (Japanese)](https://aiya000.github.io/Maid/about-time-script/)
+
 ## Purpose
 
 - Parsing basic (plain) Vim script with Haskell (haskell-vimlparser)
