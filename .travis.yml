@@ -1,0 +1,21 @@
+sudo: false
+language: c
+
+cache:
+  directories:
+  - $HOME/.stack
+
+addons:
+  apt:
+    packages:
+    - libgmp-dev
+    sources: hvr-ghc
+
+before_install:
+ - mkdir -p $HOME/.local/bin
+ - curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+ - stack setup
+
+script:
+  - stack test :doctest
+  - stack test :tasty
