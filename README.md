@@ -1,5 +1,7 @@
 # :diamond_shape_with_a_dot_inside: Time script :diamond_shape_with_a_dot_inside:
 
+[![Build Status](https://travis-ci.org/aiya000/hs-time-script.svg?branch=master)](https://travis-ci.org/aiya000/hs-time-script)
+
 `Time script` = `Vim script` + strong static typing
 
 ## Purpose
