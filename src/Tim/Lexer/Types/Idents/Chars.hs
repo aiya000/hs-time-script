@@ -124,17 +124,6 @@ numberChar = do
     Nothing -> fail "non numeric char"
     Just x -> pure x
 
--- | The standard symbols for Vim's registers
-data SymbolChar = SymDQuote -- ^ "
-                | SymMinus
-                | SymTimes -- ^ *
-                | SymPlus
-                | SymDot
-                | SymPercent
-                | SymSlash
-                | SymEqual
-  deriving (Show, Eq, Ord)
-
 dual :: Ord a => Map k a -> Map a k
 dual (Map.toList -> x) =
   Map.fromList $ map swap x
