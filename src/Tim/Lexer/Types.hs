@@ -7,12 +7,12 @@ import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Numeric.Natural (Natural)
 import RIO
-import qualified Tim.Processor.Types as Proc
+import qualified Tim.Lexer.Types.Idents as Ident
 
 data TokenPos = TokenPos
   { lineNum :: Int
   , colNum  :: Int
-  } deriving (Show, Eq)
+  } deriving (Show, Eq, Generic)
 
 instance Default TokenPos where
   def = TokenPos 1 1
@@ -41,9 +41,9 @@ data AtomicLiteral = Nat Natural
 type Identifier = Text
 
 -- | Time script's keywords, identifiers, or else
-data Token = Var Proc.VarIdent
-           | Type Proc.TypeIdent
-           | Command Proc.CmdIdent
+data Token = Var Ident.VarIdent
+           | Type Ident.TypeIdent
+           | Command Ident.CmdIdent
            | Colon
            | Assign -- ^ =
            | ListBegin -- ^ [

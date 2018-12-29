@@ -27,12 +27,12 @@ import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
 import Tim.Lexer.Types (Token, TokenPos, Failure(..))
+import Tim.Lexer.Types.Idents (pattern LetIdent)
 import Tim.Parser.Types
 import Tim.Processor (Processor, runProcessor)
-import Tim.Processor.Types (AsciiChar(..), UpperChar(..), LowerChar(..), pattern LetIdent)
 import qualified Data.Map.Strict as Map
 import qualified Tim.Lexer.Types as Token
-import qualified Tim.Processor.Types as Proc
+import qualified Tim.Lexer.Types.Idents as Ident
 }
 
 %error { parseError }
@@ -65,7 +65,7 @@ import qualified Tim.Processor.Types as Proc
 AST :: { AST }
   : Literal  { Literal $1                        }
   | Code     { Code $1                           }
-  | varIdent { VarIdent (Proc.simpleVarIdent $1) }
+  | varIdent { VarIdent (Ident.simpleVarIdent $1) }
 
 Code :: { Code }
   : {- empty -}           { []      }
@@ -80,7 +80,7 @@ Lhs :: { Lhs }
   | '[' DestVars ']' { LDestuct $2 }
 
 -- Destructive assignee variables
-DestVars :: { NonEmpty Proc.VarIdent }
+DestVars :: { NonEmpty Ident.VarIdent }
   : varIdent              { ($1 :| []) }
   | varIdent ',' DestVars { $1 <| $3   }
 

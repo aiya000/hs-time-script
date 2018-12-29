@@ -4,11 +4,11 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import qualified Tim.Processor.Types as Proc
+import qualified Tim.Lexer.Types.Idents as Ident
 
 type Code = [Syntax]
 
--- NOTE: Why don't use Proc.VarIdent at VarIdent,
+-- NOTE: Why don't use Ident.VarIdent at VarIdent,
 --       because for usability. (this is exposed to user directly)
 -- | The Time script's abstract syntax tree
 data AST = Code Code -- ^ Whole of a code
@@ -17,17 +17,17 @@ data AST = Code Code -- ^ Whole of a code
   deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
-data Syntax = Let Lhs (Maybe Proc.TypeIdent) Rhs -- ^ let foo: Bar = lit
+data Syntax = Let Lhs (Maybe Ident.TypeIdent) Rhs -- ^ let foo: Bar = lit
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
 -- | The left hand side
-data Lhs = LVar Proc.VarIdent
-         | LDestuct (NonEmpty Proc.VarIdent) -- ^ [x, y] of (`let [x, y] = zs`)
+data Lhs = LVar Ident.VarIdent
+         | LDestuct (NonEmpty Ident.VarIdent) -- ^ [x, y] of (`let [x, y] = zs`)
   deriving (Show, Eq)
 
 -- | The right hand side
-data Rhs = RVar Proc.VarIdent
+data Rhs = RVar Ident.VarIdent
          | RLit Literal
   deriving (Show, Eq)
 
