@@ -11,7 +11,7 @@ import Text.Megaparsec (MonadParsec)
 import qualified Data.Map.Strict as Map
 import qualified Text.Megaparsec.Char as P
 
-type CodeParsing m = MonadParsec Void String m
+type CodeParsing = MonadParsec Void String
 
 data AsciiChar = AsciiAlpha AlphaChar
                | AsciiDigit NumberChar

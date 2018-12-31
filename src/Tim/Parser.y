@@ -26,10 +26,10 @@ import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
-import Tim.Lexer.Types (Token, TokenPos, Failure(..))
+import Tim.Lexer.Types (Token)
 import Tim.Lexer.Types.Idents (pattern LetIdent)
 import Tim.Parser.Types
-import Tim.Processor (Processor, runProcessor)
+import Tim.Processor (Processor, runProcessor, TokenPos, Failure(..))
 import qualified Data.Map.Strict as Map
 import qualified Tim.Lexer.Types as Token
 import qualified Tim.Lexer.Types.Idents as Ident
@@ -63,8 +63,8 @@ import qualified Tim.Lexer.Types.Idents as Ident
 %%
 
 AST :: { AST }
-  : Literal  { Literal $1                        }
-  | Code     { Code $1                           }
+  : Literal  { Literal $1                         }
+  | Code     { Code $1                            }
   | varIdent { VarIdent (Ident.simpleVarIdent $1) }
 
 Code :: { Code }

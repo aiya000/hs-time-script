@@ -4,9 +4,9 @@ module Tim.Processor where
 import Control.Monad.Except (MonadError, ExceptT, runExceptT, throwError)
 import Control.Monad.State (State, runState)
 import Control.Monad.State.Class (MonadState, get)
-import Data.Default (def)
+import Data.Default (Default(..))
+import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO
-import Tim.Lexer.Types (TokenPos, Failure(..))
 
 -- | A context for both the lexer and the parser
 newtype Processor a = Processor
@@ -19,9 +19,33 @@ newtype Processor a = Processor
 -- | Extracts the lexed/parsed result
 runProcessor :: Processor a -> Either Failure a
 runProcessor = unProcessor
-                 >>> (runExceptT :: ExceptT Failure (State TokenPos) a -> State TokenPos (Either Failure a))
-                 >>> (flip runState def :: State TokenPos (Either Failure a) -> (Either Failure a, TokenPos))
+                 >>> runExceptT'
+                 >>> runState'
                  >>> fst
+  where
+    runExceptT' :: ExceptT Failure (State TokenPos) a -> State TokenPos (Either Failure a)
+    runExceptT' = runExceptT
+
+    runState' :: State TokenPos (Either Failure a) -> (Either Failure a, TokenPos)
+    runState' = flip runState def
+
+data TokenPos = TokenPos
+  { lineNum :: Int
+  , colNum  :: Int
+  } deriving (Show, Eq, Generic)
+
+instance Default TokenPos where
+  def = TokenPos 1 1
+
+instance Pretty TokenPos where
+  pretty (TokenPos l c) = "(" <> pretty l <> "," <> pretty c <> ")"
+
+-- | For error messages
+data Failure = Failure
+  { what_  :: String   -- ^ What is wrong / Why it is failed
+  , where_ :: TokenPos -- ^ Where it is failed
+  } deriving (Show, Eq)
+
 
 -- | Makes the context into a failure with the lexer's current position
 throwAtLexer :: String -> Processor a

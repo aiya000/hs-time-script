@@ -13,7 +13,7 @@ import Numeric.Natural (Natural)
 import RIO
 import Safe (readMay, headMay, tailMay)
 import Tim.Lexer.Types
-import Tim.Processor (Processor, runProcessor, failIfNothing)
+import Tim.Processor (Processor, runProcessor, failIfNothing, Failure, TokenPos)
 import qualified Data.Text as Text
 import qualified Prelude
 import qualified Text.Megaparsec as P

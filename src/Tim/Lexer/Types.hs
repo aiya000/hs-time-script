@@ -1,30 +1,62 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Tim.Lexer.Types where
 
-import Data.Default (Default(..))
+import Control.Monad.Except (MonadError)
+import Control.Monad.State.Class (MonadState)
+import Data.Bifunctor (first)
+import Data.List.NonEmpty (NonEmpty(..))
+import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
+import Data.Void (Void)
 import Numeric.Natural (Natural)
-import RIO
+import RIO hiding (first)
+import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError)
+import Text.Megaparsec.Pos (SourcePos(..))
+import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..))
+import qualified Text.Megaparsec as P
 import qualified Tim.Lexer.Types.Idents as Ident
 
-data TokenPos = TokenPos
-  { lineNum :: Int
-  , colNum  :: Int
-  } deriving (Show, Eq, Generic)
+-- | Before 'runNaked'
+type Naked = ParsecT Void String Processor
 
-instance Default TokenPos where
-  def = TokenPos 1 1
+-- | After 'runNaked'
+type Lexed = Either (ParseError (P.Token String) Void)
 
-instance Pretty TokenPos where
-  pretty (TokenPos l c) = "(" <> pretty l <> "," <> pretty c <> ")"
+runNaked :: String -> Naked a -> Processor (Lexed a)
+runNaked code naked = runParserT naked "lexer" code
 
--- | For error messages
-data Failure = Failure
-  { what_  :: String   -- ^ What is wrong / Why it is failed
-  , where_ :: TokenPos -- ^ Where it is failed
-  } deriving (Show, Eq)
+-- | The compatibility between megaparsec's error and tim's error
+compatible :: ParseError (P.Token String) Void -> Failure
+compatible e =
+  let (SourcePos _ (P.unPos -> line) (P.unPos -> col) :| _) = P.errorPos e
+      pos = TokenPos line col
+  in Failure (show e) pos
+
+
+-- | A context for the lexer
+newtype Lexer a = Lexer
+  { unLexer :: Naked a
+  } deriving ( Functor, Applicative, Monad
+             , Alternative, MonadPlus
+             , MonadState TokenPos
+             , MonadError Failure
+             , MonadParsec Void String
+             )
+
+-- | Do tokenize
+runLexer :: Lexer a -> String -> Either Failure a
+runLexer lexer code = unLexer lexer
+                      & runNaked code
+                      & runProcessor
+                      & include
+  where
+    include :: Either Failure (Lexed a) -> Either Failure a
+    include (Left e) = Left e
+    include (Right x) = join . Right $ first compatible x
+
 
 -- |
 -- Atomic literals
@@ -58,4 +90,4 @@ data Token = Var Ident.VarIdent
   deriving (Show, Eq)
 
 instance Pretty Token where
-  pretty _ = undefined
+  pretty _ = [i|TODO (pretty @Token|]
