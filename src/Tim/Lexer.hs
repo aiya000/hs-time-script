@@ -9,8 +9,9 @@ import Data.Generics.Product (field)
 import Data.Monoid (First(..))
 import Data.String.Here (i)
 import Data.Text (Text)
+import Numeric.Natural (Natural)
 import RIO
-import Safe (readMay)
+import Safe (readMay, headMay, tailMay)
 import Tim.Lexer.Types
 import Tim.Processor (Processor, runProcessor, failIfNothing)
 import qualified Data.Text as Text
@@ -37,14 +38,23 @@ rex (']' : xs) = forward ListEnd 1 xs
 rex ('{' : xs) = forward DictBegin 1 xs
 rex ('}' : xs) = forward DictEnd 1 xs
 
+-- Int literals
+rex ('+' : xs) = rexInt IntPlus xs
+rex ('-' : xs) = rexInt IntMinus xs
+
+-- single quoted strings
+rex ('\'' : xs) = do
+  let (content, rest) = span (/= '\'') xs
+  let str = Literal . String $ Text.pack content
+  -- Remove the end of '
+  rest' <- tailMay rest `failIfNothing` [i|never finite a single quoted string (${content})|]
+  forward str (length content) rest'
+
 rex xs = do
-  let (got, rest) = unsafeHead $ Prelude.lex xs
+  (got, rest) <- headMay (Prelude.lex xs) `failIfNothing` [i|token not found in ${xs}|]
   term <- readTerm got `failIfNothing` [i|an unknown lexer ${got}|]
   forward term (length got) rest
   where
-    -- because Prelude.lex constantly returuns a singleton list
-    unsafeHead = Prelude.head
-
     -- Reads a literal or an identifier
     readTerm :: String -> Maybe Token
     readTerm x = getFirst $
@@ -77,3 +87,17 @@ down rest = do
   field @"colNum" .= 1
   field @"lineNum" += 1
   (token' :) <$> rex rest
+
+data IntSign = IntPlus | IntMinus
+  deriving (Show, Eq)
+
+doSign :: IntSign -> Natural -> Int
+doSign IntPlus nat = fromIntegral nat
+doSign IntMinus nat = negate $ fromIntegral nat
+
+rexInt :: IntSign -> String -> Processor [(Token, TokenPos)]
+rexInt sign xs = do
+  (got, rest) <- headMay (Prelude.lex xs) `failIfNothing` [i|token not found in ${xs}|]
+  nat <- readMay @Natural got `failIfNothing` [i|expected a number, but got a non number (${got})|]
+  let intLit = Literal . Int $ doSign sign nat
+  forward intLit (length got) rest
