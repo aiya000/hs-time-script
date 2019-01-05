@@ -5,9 +5,9 @@ import RIO
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, (@?=), Assertion)
 import Tim.Lexer (lex)
-import Tim.Lexer.Types (Failure)
 import Tim.Parser (parse)
 import Tim.Parser.Types
+import Tim.Processor (Failure)
 import qualified Data.Map.Strict as Map
 
 nat :: Natural -> AST
@@ -28,7 +28,7 @@ list = Literal . List
 dict :: Map Text Literal -> AST
 dict = Literal . Dict
 
-process :: Text -> Either Tim.Lexer.Types.Failure AST
+process :: Text -> Either Failure AST
 process = lex >=> parse
 
 (@?>) :: Either Failure AST -> AST -> Assertion
