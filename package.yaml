@@ -101,7 +101,7 @@ tests:
       - tasty-hunit
       - tasty-smallcheck
   doctest:
-    main: DocTest.hs
+    main: Main.hs
     source-dirs:
       - test/doctest
       - src
