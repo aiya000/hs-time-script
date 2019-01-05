@@ -90,7 +90,7 @@ executables:
 
 tests:
   tasty:
-    main: Tasty.hs
+    main: Main.hs
     source-dirs:
       - test/tasty
       - src
