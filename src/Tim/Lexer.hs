@@ -1,103 +1,144 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Tim.Lexer (lex) where
+module Tim.Lexer  where
 
 import Control.Lens ((+=), (.=))
 import Control.Monad.State.Class (get)
 import Data.Generics.Product (field)
-import Data.Monoid (First(..))
-import Data.String.Here (i)
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import Safe (readMay, headMay, tailMay)
+import Text.Megaparsec (MonadParsec)
 import Tim.Lexer.Types
-import Tim.Processor (Processor, runProcessor, failIfNothing, Failure, TokenPos)
+import Tim.Lexer.Types.Idents
+import Tim.Processor (Failure, TokenPos)
 import qualified Data.Text as Text
-import qualified Prelude
 import qualified Text.Megaparsec as P
-import qualified Tim.Lexer.Types.Idents as Ident
+import qualified Text.Megaparsec.Char as P
+import qualified Text.Megaparsec.Char.Lexer as P hiding (space)
 
 -- | Tokenizes a code
 lex :: Text -> Either Failure [(Token, TokenPos)]
-lex = runProcessor . rex . Text.unpack
+lex = runLexer rex . Text.unpack
 
-rex :: String -> Processor [(Token, TokenPos)]
-rex "" = pure []
-rex ('\r' : '\n' : xs) = down xs
-rex ('\n' : xs) = down xs
-rex ('\r' : xs) = down xs
-rex ('=' : xs) = forward Assign 1 xs
-rex (':' : xs) = forward Colon 1 xs
-rex (',' : xs) = forward Comma 1 xs
-rex ('(' : xs) = forward ParenBegin 1 xs
-rex (')' : xs) = forward ParenEnd 1 xs
-rex ('[' : xs) = forward ListBegin 1 xs
-rex (']' : xs) = forward ListEnd 1 xs
-rex ('{' : xs) = forward DictBegin 1 xs
-rex ('}' : xs) = forward DictEnd 1 xs
+rex :: Lexer [(Token, TokenPos)]
+rex = P.many $
+  symbol <|>
+  first Literal <$> literal <|>
+  first Var <$> varIdent <|>
+  first Type <$> typeIdent <|>
+  first Command <$> cmdIdent
 
--- Int literals
-rex ('+' : xs) = rexInt IntPlus xs
-rex ('-' : xs) = rexInt IntMinus xs
+-- | Skips spaces of head and tail
+token :: MonadParsec e String m => m a -> m a
+token tokenParser = do
+  _ <- P.space
+  result <- tokenParser
+  _ <- P.space
+  pure result
 
--- single quoted strings
-rex ('\'' : xs) = do
-  let (content, rest) = span (/= '\'') xs
-  let str = Literal . String $ Text.pack content
-  -- Remove the end of '
-  rest' <- tailMay rest `failIfNothing` [i|never finite a single quoted string (${content})|]
-  forward str (length content) rest'
-
-rex xs = do
-  (got, rest) <- headMay (Prelude.lex xs) `failIfNothing` [i|token not found in ${xs}|]
-  term <- readTerm got `failIfNothing` [i|an unknown lexer ${got}|]
-  forward term (length got) rest
+symbol :: Lexer (Token, TokenPos)
+symbol =
+  forward '=' Assign <|>
+  forward ':' Colon <|>
+  forward ',' Comma <|>
+  forward '(' ParenBegin <|>
+  forward ')' ParenEnd <|>
+  forward '[' ListBegin <|>
+  forward ']' ListEnd <|>
+  forward '{' DictBegin <|>
+  forward '}' DictEnd <|>
+  down
   where
-    -- Reads a literal or an identifier
-    readTerm :: String -> Maybe Token
-    readTerm x = getFirst $
-      First (readLit x) <> First (readIdent x)
+    charToken :: Char -> Lexer Char
+    charToken = token . P.char
 
-    readLit :: String -> Maybe Token
-    readLit x = fmap Literal . getFirst . mconcat $
-      map First [ Nat <$> readMay x
-                , Int <$> readMay x
-                , Float <$> readMay x
-                , String <$> readMay x
-                ]
+    -- Takes expected chars, and its correspound token
+    forward :: Char -> Token -> Lexer (Token, TokenPos)
+    forward expected itsToken = do
+      result <- (itsToken,) <$> get
+      _ <- charToken expected
+      field @"colNum" += 1
+      pure result
 
-    readIdent :: String -> Maybe Token
-    readIdent x = getFirst . mconcat $
-      map First [ Type <$> P.parseMaybe Ident.parseTypeIdent x
-                , Command <$> P.parseMaybe Ident.parseCmdIdent x
-                , Var <$> P.parseMaybe Ident.parseVarIdent x
-                ]
+    down :: Lexer (Token, TokenPos)
+    down = do
+      current <- (LineBreak,) <$> get
+      _ <- P.newline
+      field @"colNum" .= 1
+      field @"lineNum" += 1
+      pure current
 
-forward :: Token -> Int -> String -> Processor [(Token, TokenPos)]
-forward token tokenLen rest = do
-  token' <- (token,) <$> get
-  field @"colNum" += tokenLen
-  (token' :) <$> rex rest
+-- | Int literals
+literal :: Lexer (AtomicLiteral, TokenPos)
+literal =
+  natLiteral <|>
+  intLiteral <|>
+  floatLiteral <|>
+  stringLiteral
+  where
+    natLiteral = do
+      pos <- get
+      nat <-P.decimal
+      field @"colNum" += length (show nat)
+      pure (Nat nat, pos)
 
-down :: String -> Processor [(Token, TokenPos)]
-down rest = do
-  token' <- (LineBreak,) <$> get
-  field @"colNum" .= 1
-  field @"lineNum" += 1
-  (token' :) <$> rex rest
+    intLiteral = do
+      pos <- get
+      int <- sign <$> intSign <*> P.decimal
+      field @"colNum" += length (show int)
+      pure (Int int, pos)
+
+    floatLiteral = do
+      pos <- get
+      float <- P.float
+      field @"colNum" += length (show float)
+      pure (Float float, pos)
+
+    stringLiteral = doubleQuoted <|> singleQuoted
+
+    doubleQuoted = do
+      pos <- get
+      _ <- P.char '"'
+      str <- P.manyTill P.charLiteral $ P.char '"'
+      pure (String' str, pos)
+
+    singleQuoted = do
+      pos <- get
+      _ <- P.char '\''
+      str <- P.manyTill P.charLiteral $ P.char '\''
+      pure (String' str, pos)
 
 data IntSign = IntPlus | IntMinus
   deriving (Show, Eq)
 
-doSign :: IntSign -> Natural -> Int
-doSign IntPlus nat = fromIntegral nat
-doSign IntMinus nat = negate $ fromIntegral nat
+intSign :: Lexer IntSign
+intSign = plus <|> minus
+  where
+    plus = P.char '+' $> IntPlus
+    minus = P.char '-' $> IntMinus
 
-rexInt :: IntSign -> String -> Processor [(Token, TokenPos)]
-rexInt sign xs = do
-  (got, rest) <- headMay (Prelude.lex xs) `failIfNothing` [i|token not found in ${xs}|]
-  nat <- readMay @Natural got `failIfNothing` [i|expected a number, but got a non number (${got})|]
-  let intLit = Literal . Int $ doSign sign nat
-  forward intLit (length got) rest
+sign :: IntSign -> Natural -> Int
+sign IntPlus nat = fromIntegral nat
+sign IntMinus nat = negate $ fromIntegral nat
+
+varIdent :: Lexer (VarIdent, TokenPos)
+varIdent = do
+  pos <- get
+  x <- parseVarIdent
+  field @"colNum" += Text.length (simpleVarIdent x)
+  pure (x, pos)
+
+typeIdent :: Lexer (TypeIdent, TokenPos)
+typeIdent = do
+  pos <- get
+  x <- parseTypeIdent
+  field @"colNum" += Text.length (simpleTypeIdent x)
+  pure (x, pos)
+
+cmdIdent :: Lexer (CmdIdent, TokenPos)
+cmdIdent = do
+  pos <- get
+  x <- parseCmdIdent
+  field @"colNum" += Text.length (simpleCmdIdent x)
+  pure (x, pos)

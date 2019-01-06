@@ -16,6 +16,7 @@ import RIO hiding (first)
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError)
 import Text.Megaparsec.Pos (SourcePos(..))
 import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..))
+import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
 import qualified Tim.Lexer.Types.Idents as Ident
 
@@ -68,6 +69,12 @@ data AtomicLiteral = Nat Natural
                    | Float Double
                    | String Text
   deriving (Show, Eq)
+
+-- | Simular to AtomicLiteral's 'String', but from `String`
+pattern String' :: String -> AtomicLiteral
+pattern String' s <- String (Text.unpack -> s)
+  where
+    String' s = String (Text.pack s)
 
 -- | "Int", "List", "x"
 type Identifier = Text
