@@ -1,15 +1,15 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Tim.Lexer  where
+module Tim.Lexer (lex) where
 
-import Control.Lens ((+=), (.=))
+import Control.Lens ((+=))
 import Control.Monad.State.Class (get)
 import Data.Generics.Product (field)
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import Text.Megaparsec (MonadParsec)
 import Tim.Lexer.Types
+import Tim.Lexer.Types.Combinators
 import Tim.Lexer.Types.Idents
 import Tim.Processor (Failure, TokenPos)
 import qualified Data.Text as Text
@@ -29,45 +29,29 @@ rex = P.many $
   first Type <$> typeIdent <|>
   first Command <$> cmdIdent
 
--- | Skips spaces of head and tail
-token :: MonadParsec e String m => m a -> m a
-token tokenParser = do
-  _ <- P.space
-  result <- tokenParser
-  _ <- P.space
-  pure result
-
 symbol :: Lexer (Token, TokenPos)
 symbol =
-  forward '=' Assign <|>
-  forward ':' Colon <|>
-  forward ',' Comma <|>
-  forward '(' ParenBegin <|>
-  forward ')' ParenEnd <|>
-  forward '[' ListBegin <|>
-  forward ']' ListEnd <|>
-  forward '{' DictBegin <|>
-  forward '}' DictEnd <|>
-  down
+  aSymbol '=' Assign <|>
+  aSymbol ':' Colon <|>
+  aSymbol ',' Comma <|>
+  aSymbol '(' ParenBegin <|>
+  aSymbol ')' ParenEnd <|>
+  aSymbol '[' ListBegin <|>
+  aSymbol ']' ListEnd <|>
+  aSymbol '{' DictBegin <|>
+  aSymbol '}' DictEnd <|>
+  lineBreak
   where
-    charToken :: Char -> Lexer Char
-    charToken = token . P.char
-
     -- Takes expected chars, and its correspound token
-    forward :: Char -> Token -> Lexer (Token, TokenPos)
-    forward expected itsToken = do
-      result <- (itsToken,) <$> get
-      _ <- charToken expected
-      field @"colNum" += 1
-      pure result
+    aSymbol :: Char -> Token -> Lexer (Token, TokenPos)
+    aSymbol expected itsToken =
+      first (const itsToken) <$>
+        token (P.char expected) `forward` 1
 
-    down :: Lexer (Token, TokenPos)
-    down = do
-      current <- (LineBreak,) <$> get
-      _ <- P.newline
-      field @"colNum" .= 1
-      field @"lineNum" += 1
-      pure current
+    lineBreak :: Lexer (Token, TokenPos)
+    lineBreak =
+      first (const LineBreak) <$>
+        down P.newline
 
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
@@ -76,38 +60,41 @@ literal =
   intLiteral <|>
   floatLiteral <|>
   stringLiteral
+
+natLiteral :: Lexer (AtomicLiteral, TokenPos)
+natLiteral =
+  first Nat <$> P.decimal `forwardVia` length . show
+
+intLiteral :: Lexer (AtomicLiteral, TokenPos)
+intLiteral = restoreOnFail $
+  first Int <$> int
   where
-    natLiteral = do
+    int :: Lexer (Int, TokenPos)
+    int = do
       pos <- get
-      nat <-P.decimal
-      field @"colNum" += length (show nat)
-      pure (Nat nat, pos)
+      s <- intSign
+      nat <- P.decimal
+      let signLen = 1
+      let natLen = length $ show nat
+      field @"colNum" += signLen + natLen
+      pure (sign s nat, pos)
 
-    intLiteral = do
-      pos <- get
-      int <- sign <$> intSign <*> P.decimal
-      field @"colNum" += length (show int)
-      pure (Int int, pos)
+floatLiteral :: Lexer (AtomicLiteral, TokenPos)
+floatLiteral =
+  first Float <$> P.float `forwardVia` length . show
 
-    floatLiteral = do
-      pos <- get
-      float <- P.float
-      field @"colNum" += length (show float)
-      pure (Float float, pos)
-
-    stringLiteral = doubleQuoted <|> singleQuoted
-
-    doubleQuoted = do
-      pos <- get
+stringLiteral :: Lexer (AtomicLiteral, TokenPos)
+stringLiteral = doubleQuoted <|> singleQuoted
+  where
+    doubleQuoted = flip forwardVia (length . show) $ do
       _ <- P.char '"'
       str <- P.manyTill P.charLiteral $ P.char '"'
-      pure (String' str, pos)
+      pure $ String' str
 
-    singleQuoted = do
-      pos <- get
+    singleQuoted = flip forwardVia (length . show) $ do
       _ <- P.char '\''
       str <- P.manyTill P.charLiteral $ P.char '\''
-      pure (String' str, pos)
+      pure $ String' str
 
 data IntSign = IntPlus | IntMinus
   deriving (Show, Eq)
@@ -118,27 +105,19 @@ intSign = plus <|> minus
     plus = P.char '+' $> IntPlus
     minus = P.char '-' $> IntMinus
 
+-- | Does sign
 sign :: IntSign -> Natural -> Int
 sign IntPlus nat = fromIntegral nat
 sign IntMinus nat = negate $ fromIntegral nat
 
 varIdent :: Lexer (VarIdent, TokenPos)
-varIdent = do
-  pos <- get
-  x <- parseVarIdent
-  field @"colNum" += Text.length (simpleVarIdent x)
-  pure (x, pos)
+varIdent =
+  parseVarIdent `forwardVia` Text.length . simpleVarIdent
 
 typeIdent :: Lexer (TypeIdent, TokenPos)
-typeIdent = do
-  pos <- get
-  x <- parseTypeIdent
-  field @"colNum" += Text.length (simpleTypeIdent x)
-  pure (x, pos)
+typeIdent =
+  parseTypeIdent `forwardVia` Text.length . simpleTypeIdent
 
 cmdIdent :: Lexer (CmdIdent, TokenPos)
-cmdIdent = do
-  pos <- get
-  x <- parseCmdIdent
-  field @"colNum" += Text.length (simpleCmdIdent x)
-  pure (x, pos)
+cmdIdent =
+  parseCmdIdent `forwardVia` Text.length . simpleCmdIdent
