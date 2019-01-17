@@ -1,5 +1,4 @@
 {-# LANGUAGE PatternSynonyms #-}
-{-# LANGUAGE QuasiQuotes #-}
 
 module Tim.Lexer.Types where
 
@@ -7,7 +6,6 @@ import Control.Monad.Except (MonadError)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
 import Data.List.NonEmpty (NonEmpty(..))
-import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Data.Void (Void)
@@ -16,6 +14,7 @@ import RIO hiding (first)
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError)
 import Text.Megaparsec.Pos (SourcePos(..))
 import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..))
+import qualified Data.String as String
 import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
 import qualified Tim.Lexer.Types.Idents as Ident
@@ -70,6 +69,13 @@ data AtomicLiteral = Nat Natural
                    | String Text
   deriving (Show, Eq)
 
+instance Pretty AtomicLiteral where
+  pretty (Nat x)    = String.fromString $ show x
+  pretty (Float x)  = String.fromString $ show x
+  pretty (String x) = String.fromString $ show x
+  pretty (Int x) | x < 0 = String.fromString $ show x
+                 | otherwise = String.fromString $ '+' : show x
+
 -- | Simular to AtomicLiteral's 'String', but from `String`
 pattern String' :: String -> AtomicLiteral
 pattern String' s <- String (Text.unpack -> s)
@@ -97,4 +103,17 @@ data Token = Var Ident.VarIdent
   deriving (Show, Eq)
 
 instance Pretty Token where
-  pretty _ = [i|TODO (pretty @Token|]
+  pretty Colon       = String.fromString ":"
+  pretty Assign      = String.fromString "="
+  pretty ListBegin   = String.fromString "["
+  pretty ListEnd     = String.fromString "]"
+  pretty DictBegin   = String.fromString "{"
+  pretty DictEnd     = String.fromString "}"
+  pretty ParenBegin  = String.fromString "("
+  pretty ParenEnd    = String.fromString ")"
+  pretty Comma       = String.fromString ","
+  pretty LineBreak   = String.fromString "\n"
+  pretty (Var x)     = pretty x
+  pretty (Type x)    = pretty x
+  pretty (Command x) = pretty x
+  pretty (Literal x) = pretty x

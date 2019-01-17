@@ -25,9 +25,11 @@ module Tim.Lexer.Types.Idents
   ) where
 
 import Data.Text (Text)
+import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO
 import Tim.Lexer.Types.Idents.Chars
 import qualified Control.Applicative as P
+import qualified Data.String as String
 import qualified Data.Text as Text
 import qualified Text.Megaparsec.Char as P
 
@@ -36,6 +38,9 @@ import qualified Text.Megaparsec.Char as P
 -- (`I "nt"`, `S "tring"`, ...)
 data TypeIdent = TypeIdent UpperChar [AsciiChar]
   deriving (Show, Eq)
+
+instance Pretty TypeIdent where
+  pretty x = String.fromString . Text.unpack $ simpleTypeIdent x
 
 simpleTypeIdent :: TypeIdent -> Text
 simpleTypeIdent (TypeIdent x xs) =
@@ -54,6 +59,9 @@ parseTypeIdent =
 data VarIdent = VarIdent Char String
   deriving (Show, Eq)
 
+instance Pretty VarIdent where
+  pretty x = String.fromString . Text.unpack $ simpleVarIdent x
+
 simpleVarIdent :: VarIdent -> Text
 simpleVarIdent (VarIdent x xs) = Text.pack $ x : xs
 
@@ -65,6 +73,9 @@ parseVarIdent =
 -- | Vim defined or user defined commands
 data CmdIdent = CmdIdent AlphaChar [AsciiChar]
   deriving (Show, Eq)
+
+instance Pretty CmdIdent where
+  pretty x = String.fromString . Text.unpack $ simpleCmdIdent x
 
 simpleCmdIdent :: CmdIdent -> Text
 simpleCmdIdent (CmdIdent x xs) =
