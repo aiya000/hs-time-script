@@ -114,6 +114,7 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
   where
     replace [] = []
     replace ('\n' : xs) = ' ' : replace xs
+    replace (x : xs) = x : replace xs
 
 parseError :: ([(Token, TokenPos)], [String]) -> Processor a
 parseError (((got, pos):_), expected) =
