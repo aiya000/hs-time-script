@@ -56,9 +56,9 @@ symbol =
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
 literal =
+  floatLiteral <|>
   natLiteral <|>
   intLiteral <|>
-  floatLiteral <|>
   stringLiteral
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
