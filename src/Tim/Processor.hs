@@ -29,7 +29,6 @@ runProcessor = unProcessor
     runState' :: State TokenPos (Either Failure a) -> (Either Failure a, TokenPos)
     runState' = flip runState def
 
--- TODO: Extend colNum to range (Int to Int)
 data TokenPos = TokenPos
   { lineNum :: Int
   , colNum  :: Int
