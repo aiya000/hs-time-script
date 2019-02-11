@@ -1,4 +1,5 @@
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Tim.Lexer.Types where
 
@@ -6,35 +7,74 @@ import Control.Monad.Except (MonadError)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
 import Data.List.NonEmpty (NonEmpty(..))
+import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Data.Void (Void)
 import Numeric.Natural (Natural)
 import RIO hiding (first)
-import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError)
+import RIO.List (foldl)
+import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
+import Text.Megaparsec.Error (ErrorItem(..), ErrorFancy(..), errorPos)
 import Text.Megaparsec.Pos (SourcePos(..))
 import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..))
+import qualified Data.Set as Set
 import qualified Data.String as String
 import qualified Data.Text as Text
+import qualified Prelude as Unsafe
 import qualified Text.Megaparsec as P
 import qualified Tim.Lexer.Types.Idents as Ident
+
+type LexError = ParseError (P.Token String) Void
+type LexErrorItem = ErrorItem (P.Token String)
+type LexErrorFancy = ErrorFancy Void
+
+takeReasons :: LexError -> Either (Set LexErrorItem) (Set LexErrorFancy)
+takeReasons (TrivialError _ _ reasons) = Left reasons
+takeReasons (FancyError _ reasons) = Right reasons
+
+takeProblem :: LexError -> Maybe LexErrorItem
+takeProblem (TrivialError _ maybeProblem _) = maybeProblem
+takeProblem (FancyError _ _) = Nothing
 
 -- | Before 'runNaked'
 type Naked = ParsecT Void String Processor
 
 -- | After 'runNaked'
-type Lexed = Either (ParseError (P.Token String) Void)
+type Lexed = Either LexError
 
 runNaked :: String -> Naked a -> Processor (Lexed a)
 runNaked code naked = runParserT naked "lexer" code
 
--- | The compatibility between megaparsec's error and tim's error
-compatible :: ParseError (P.Token String) Void -> Failure
-compatible e =
-  let (SourcePos _ (P.unPos -> line) (P.unPos -> col) :| _) = P.errorPos e
-      pos = TokenPos line col
-  in Failure (show e) pos
+-- | Takes the last of a taken error
+compatible :: LexError -> Failure
+compatible lexError =
+  let (SourcePos fileName (P.unPos -> line) (P.unPos -> col) :| _) = errorPos lexError
+      problem = fromMaybe (Unsafe.error "{has been to unknown conditinon!}") $ takeProblem lexError
+      message = [i|Got ${gotten problem}, but expected ${simplizeAll $ takeReasons lexError}|] :: String
+  in flip Failure (TokenPos line col) [i|${fileName}: ${message}|]
+  where
+    simplizeAll :: Either (Set LexErrorItem) (Set LexErrorFancy) -> String
+    simplizeAll =
+      unsentences . Set.toList .
+        either (Set.map simplizeItem) (Set.map simplizeFancy)
 
+    gotten :: LexErrorItem -> String
+    gotten (Tokens (x :| xs)) = [i|`${show . pretty $ x : xs}`|]
+    gotten (Label (x :| xs)) = [i|a ${x : xs}|]
+    gotten EndOfInput = "EOF"
+
+    simplizeItem :: LexErrorItem -> String
+    simplizeItem (Tokens (x :| xs)) = [i|the one character of [${x : xs}]|]
+    simplizeItem (Label (x :| xs)) = [i|a ${x : xs}|]
+    simplizeItem EndOfInput = "EOF"
+
+    simplizeFancy :: LexErrorFancy -> String
+    simplizeFancy = show -- TODO
+
+    unsentences :: [String] -> String
+    unsentences [] = ""
+    unsentences (x : xs) = foldl (\result y -> result <> ", " <> y) x xs
 
 -- | A context for the lexer
 newtype Lexer a = Lexer

@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Exposes contexts for both the lexer and the parser
 module Tim.Processor where
 
@@ -5,8 +7,10 @@ import Control.Monad.Except (MonadError, ExceptT, runExceptT, throwError)
 import Control.Monad.State (State, runState)
 import Control.Monad.State.Class (MonadState, get)
 import Data.Default (Default(..))
+import Data.String.Here (i)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO
+import qualified Data.String as IsString
 
 -- | A context for both the lexer and the parser
 newtype Processor a = Processor
@@ -46,6 +50,8 @@ data Failure = Failure
   , where_ :: TokenPos -- ^ Where it is failed
   } deriving (Show, Eq)
 
+instance Pretty Failure where
+  pretty Failure{..} = IsString.fromString [i|failure! ${show $ pretty where_}: ${what_}|]
 
 -- | Makes the context into a failure with the lexer's current position
 throwAtLexer :: String -> Processor a
