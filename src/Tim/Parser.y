@@ -99,6 +99,7 @@ Literal :: { Literal }
 
 ListInner :: { [Literal] }
   : {- empty -}           { []      }
+  | Literal               { [$1]    }
   | Literal ',' ListInner { $1 : $3 }
 
 DictInner :: { Map Text Literal }
