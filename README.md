@@ -4,12 +4,12 @@
 
 `Time script` = `Vim script` + strong static typing
 
-- [The presentation (Japanese)](https://aiya000.github.io/Maid/about-time-script/)
+- [The introduction (Japanese)](https://aiya000.github.io/Maid/about-time-script/)
 
 ## Purpose
 
-- Parsing basic (plain) Vim script with Haskell (haskell-vimlparser)
-- Writing Vim script codes with strong static types
+- Introduce advanced experience to Vim script (e.g. string interpolations)
+- Introduce strong static types to Vim script (Please see below 'About' section :sunglasses:)
 
 ## About
 
@@ -119,6 +119,7 @@ let y: Mode = Virtual (Charwise v:null)
 - Structural subtypings
 
 ```vim
+TODO
 ```
 
 - Type inferences
@@ -135,7 +136,7 @@ let y = x
 let map: type(char_code) = char_code
 ```
 
-### Extending Vim script
+### Advanced
 
 - String interpolations
 
