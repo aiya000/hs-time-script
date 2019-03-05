@@ -63,7 +63,7 @@ literal =
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
 natLiteral =
-  first Nat <$> P.decimal `forwardVia` length . show
+  first Nat <$> P.try P.decimal `forwardVia` length . show
 
 intLiteral :: Lexer (AtomicLiteral, TokenPos)
 intLiteral = restoreOnFail $
@@ -81,10 +81,10 @@ intLiteral = restoreOnFail $
 
 floatLiteral :: Lexer (AtomicLiteral, TokenPos)
 floatLiteral =
-  first Float <$> P.float `forwardVia` length . show
+  first Float <$> P.try P.float `forwardVia` length . show
 
 stringLiteral :: Lexer (AtomicLiteral, TokenPos)
-stringLiteral = doubleQuoted <|> singleQuoted
+stringLiteral = P.try $ doubleQuoted <|> singleQuoted
   where
     doubleQuoted = flip forwardVia (length . show) $ do
       _ <- P.char '"'
