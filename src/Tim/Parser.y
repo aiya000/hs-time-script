@@ -64,9 +64,8 @@ import qualified Tim.Lexer.Types.Idents as Ident
 %%
 
 AST :: { AST }
-  : Literal  { Literal $1                         }
-  | Code     { Code $1                            }
-  | varIdent { VarIdent (Ident.simpleVarIdent $1) }
+  : Code { Code $1 }
+  | Rhs  { Rhs $1  }
 
 Code :: { Code }
   : {- empty -}           { []      }
@@ -86,15 +85,15 @@ DestVars :: { NonEmpty Ident.VarIdent }
   | varIdent ',' DestVars { $1 <| $3   }
 
 Rhs :: { Rhs }
-  : varIdent { RVar $1 }
-  | Literal  { RLit $1 }
+  : varIdent    { RVar $1    }
+  | Literal     { RLit $1    }
+  | '(' Rhs ')' { RParens $2 }
 
 Literal :: { Literal }
   : nat               { Nat $1    }
   | int               { Int $1    }
   | float             { Float $1  }
   | StringLit         { String $1 }
-  | '(' Literal ')'   { Parens $2 }
   | '[' ListInner ']' { List $2   }
   | '{' DictInner '}' { Dict $2   }
 

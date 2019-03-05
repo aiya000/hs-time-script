@@ -22,12 +22,12 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer rex . Text.unpack
 
 rex :: Lexer [(Token, TokenPos)]
-rex = P.many $
-  symbol <|>
-  first Literal <$> literal <|>
-  first Var <$> varIdent <|>
-  first Type <$> typeIdent <|>
-  first Command <$> cmdIdent
+rex = P.many $ do
+  _ <- P.many P.spaceChar `forwardVia` length
+  symbol <|> first Literal <$> literal <|>
+             first Var <$> varIdent <|>
+             first Type <$> typeIdent <|>
+             first Command <$> cmdIdent
 
 symbol :: Lexer (Token, TokenPos)
 symbol =

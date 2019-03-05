@@ -6,31 +6,29 @@ import Data.List.NonEmpty (NonEmpty)
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import qualified Tim.Lexer.Types.Idents as Ident
+import Tim.Lexer.Types.Idents (VarIdent, TypeIdent)
 
 type Code = [Syntax]
 
--- NOTE: Why don't use Ident.VarIdent at VarIdent,
---       because for usability. (this is exposed to user directly)
--- | The Time script's abstract syntax tree
+-- | The final result of the parser
 data AST = Code Code -- ^ Whole of a code
-         | Literal Literal
-         | VarIdent Text
+         | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
-data Syntax = Let Lhs (Maybe Ident.TypeIdent) Rhs -- ^ let foo: Bar = lit
+data Syntax = Let Lhs (Maybe TypeIdent) Rhs -- ^ let foo: Bar = lit
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
 -- | The left hand side
-data Lhs = LVar Ident.VarIdent
-         | LDestuct (NonEmpty Ident.VarIdent) -- ^ [x, y] of (`let [x, y] = zs`)
+data Lhs = LVar VarIdent
+         | LDestuct (NonEmpty VarIdent) -- ^ [x, y] of (`let [x, y] = zs`)
   deriving (Show, Eq)
 
 -- | The right hand side
-data Rhs = RVar Ident.VarIdent
+data Rhs = RVar VarIdent
          | RLit Literal
+         | RParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
   deriving (Show, Eq)
 
 data Literal = Nat Natural
@@ -39,7 +37,6 @@ data Literal = Nat Natural
              | String StringLit
              | List [Literal]
              | Dict (Map StringLit Literal) -- ^ {'foo': 10}
-             | Parens Literal -- ^ enclosed literals => `(10)`, `('str')`
   deriving (Show, Eq)
 
 -- | The string literal, like `'foo'` `"bar"`.
