@@ -84,17 +84,17 @@ floatLiteral =
   first Float <$> P.try P.float `forwardVia` length . show
 
 stringLiteral :: Lexer (AtomicLiteral, TokenPos)
-stringLiteral = P.try $ doubleQuoted <|> singleQuoted
-  where
-    doubleQuoted = flip forwardVia (length . show) $ do
-      _ <- P.char '"'
-      str <- P.manyTill P.charLiteral $ P.char '"'
-      pure $ String' str
+stringLiteral = P.try $ do
+    (q, pos) <- quote `forward` 1
+    -- +1 is a length of `q`
+    (str, _) <- flip forwardVia ((+1) . length) $ P.manyTill P.charLiteral $ P.char (toChar q)
+    pure (String' q str, pos)
 
-    singleQuoted = flip forwardVia (length . show) $ do
-      _ <- P.char '\''
-      str <- P.manyTill P.charLiteral $ P.char '\''
-      pure $ String' str
+-- | Parses a string that surrounded by `'` or `"`
+quote :: Lexer Quote
+quote =
+  P.char '\'' $> SingleQ <|>
+  P.char '"' $> DoubleQ
 
 data IntSign = IntPlus | IntMinus
   deriving (Show, Eq)

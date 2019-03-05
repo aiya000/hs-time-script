@@ -13,7 +13,7 @@ import Tim.Processor (TokenPos)
 import qualified Text.Megaparsec.Char as P
 
 -- |
--- Executes taken lexer and increments 'colNum' by taken `Int`,
+-- Executes the taken lexer and increments 'colNum' by the taken `Int`,
 -- and returns the lexer result with the token position.
 forward :: Lexer a -> Int -> Lexer (a, TokenPos)
 forward lexer len =

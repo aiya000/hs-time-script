@@ -1,3 +1,5 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 module Tim.Parser.Types where
 
 import Data.List.NonEmpty (NonEmpty)
@@ -34,8 +36,13 @@ data Rhs = RVar Ident.VarIdent
 data Literal = Nat Natural
              | Int Int
              | Float Double
-             | String Text
+             | String StringLit
              | List [Literal]
-             | Dict (Map Text Literal) -- ^ {'foo': 10}
+             | Dict (Map StringLit Literal) -- ^ {'foo': 10}
              | Parens Literal -- ^ enclosed literals => `(10)`, `('str')`
   deriving (Show, Eq)
+
+-- | The string literal, like `'foo'` `"bar"`.
+data StringLit = SingleQuoted Text
+               | DoubleQuoted Text
+  deriving (Show, Eq, Ord)

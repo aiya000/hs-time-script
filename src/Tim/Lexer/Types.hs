@@ -106,21 +106,36 @@ runLexer lexer code = unLexer lexer
 data AtomicLiteral = Nat Natural
                    | Int Int
                    | Float Double
-                   | String Text
+                   | String Quote Text
   deriving (Show, Eq)
 
 instance Pretty AtomicLiteral where
   pretty (Nat x)    = String.fromString $ show x
   pretty (Float x)  = String.fromString $ show x
-  pretty (String x) = String.fromString $ show x
+  pretty (String' q x) = String.fromString $ surround q x
   pretty (Int x) | x < 0 = String.fromString $ show x
                  | otherwise = String.fromString $ '+' : show x
 
+-- | A surround of strings `'` `"`
+data Quote = SingleQ | DoubleQ
+  deriving (Show, Eq)
+
+toChar :: Quote -> Char
+toChar SingleQ = '\''
+toChar DoubleQ = '"'
+
+-- | Surrounds the string by a quote character
+surround :: Quote -> String -> String
+surround SingleQ x = [i|'${x}'|]
+surround DoubleQ x = [i|"${x}"|]
+
 -- | Simular to AtomicLiteral's 'String', but from `String`
-pattern String' :: String -> AtomicLiteral
-pattern String' s <- String (Text.unpack -> s)
+pattern String' :: Quote -> String -> AtomicLiteral
+pattern String' q s <- String q (Text.unpack -> s)
   where
-    String' s = String (Text.pack s)
+    String' q s = String q (Text.pack s)
+
+{-# COMPLETE Nat, Float, String', Int #-}
 
 -- | "Int", "List", "x"
 type Identifier = Text

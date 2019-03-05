@@ -42,23 +42,24 @@ import qualified Tim.Lexer.Types.Idents as Ident
 %tokentype { (Token, TokenPos) }
 
 %token
-  let       { (Token.Command LetIdent, _)          }
-  varIdent  { (Token.Var $$, _)                    }
-  ':'       { (Token.Colon, _)                     }
-  typeIdent { (Token.Type $$, _)                   }
-  '='       { (Token.Assign, _)                    }
-  nat       { (Token.Literal (Token.Nat $$), _)    }
-  int       { (Token.Literal (Token.Int $$), _)    }
-  float     { (Token.Literal (Token.Float $$), _)  }
-  string    { (Token.Literal (Token.String $$), _) }
-  '['       { (Token.ListBegin, _)                 }
-  ']'       { (Token.ListEnd, _)                   }
-  '{'       { (Token.DictBegin, _)                 }
-  '}'       { (Token.DictEnd, _)                   }
-  '('       { (Token.ParenBegin, _)                }
-  ')'       { (Token.ParenEnd, _)                  }
-  ','       { (Token.Comma, _)                     }
-  lineBreak { (Token.LineBreak, _)                 }
+  let           { (Token.Command LetIdent, _)                        }
+  varIdent      { (Token.Var $$, _)                                  }
+  ':'           { (Token.Colon, _)                                   }
+  typeIdent     { (Token.Type $$, _)                                 }
+  '='           { (Token.Assign, _)                                  }
+  nat           { (Token.Literal (Token.Nat $$), _)                  }
+  int           { (Token.Literal (Token.Int $$), _)                  }
+  float         { (Token.Literal (Token.Float $$), _)                }
+  singleQString { (Token.Literal (Token.String Token.SingleQ $$), _) }
+  doubleQString { (Token.Literal (Token.String Token.DoubleQ $$), _) }
+  '['           { (Token.ListBegin, _)                               }
+  ']'           { (Token.ListEnd, _)                                 }
+  '{'           { (Token.DictBegin, _)                               }
+  '}'           { (Token.DictEnd, _)                                 }
+  '('           { (Token.ParenBegin, _)                              }
+  ')'           { (Token.ParenEnd, _)                                }
+  ','           { (Token.Comma, _)                                   }
+  lineBreak     { (Token.LineBreak, _)                               }
 
 %%
 
@@ -92,19 +93,23 @@ Literal :: { Literal }
   : nat               { Nat $1    }
   | int               { Int $1    }
   | float             { Float $1  }
-  | string            { String $1 }
+  | StringLit         { String $1 }
   | '(' Literal ')'   { Parens $2 }
   | '[' ListInner ']' { List $2   }
   | '{' DictInner '}' { Dict $2   }
+
+StringLit :: { StringLit }
+  : singleQString { SingleQuoted $1 }
+  | doubleQString { DoubleQuoted $1 }
 
 ListInner :: { [Literal] }
   : {- empty -}           { []      }
   | Literal               { [$1]    }
   | Literal ',' ListInner { $1 : $3 }
 
-DictInner :: { Map Text Literal }
-  : {- empty -}                      { Map.empty           }
-  | string ':' Literal ',' DictInner { Map.insert $1 $3 $5 }
+DictInner :: { Map StringLit Literal }
+  : {- empty -}                         { Map.empty           }
+  | StringLit ':' Literal ',' DictInner { Map.insert $1 $3 $5 }
 
 {
 parse :: [(Token, TokenPos)] -> Either Failure AST
