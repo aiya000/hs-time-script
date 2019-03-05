@@ -1,17 +1,14 @@
-{-# LANGUAGE RankNTypes #-}
-
--- | Very strictly character types
-module Tim.Lexer.Types.Idents.Chars where
+-- | Kinds of characters
+module Tim.Char where
 
 import Data.Map.Strict (Map)
 import Data.Maybe (fromJust)
 import Data.Tuple (swap)
 import RIO
-import Text.Megaparsec (MonadParsec)
+import Tim.Megaparsec
 import qualified Data.Map.Strict as Map
+import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
-
-type CodeParsing = MonadParsec Void String
 
 data AsciiChar = AsciiAlpha AlphaChar
                | AsciiDigit NumberChar
@@ -33,6 +30,9 @@ data AlphaChar = AlphaLower LowerChar
 alphaToChar :: AlphaChar -> Char
 alphaToChar (AlphaLower x) = lowerToChar x
 alphaToChar (AlphaUpper x) = upperToChar x
+
+charToAlpha :: Char -> Maybe AlphaChar
+charToAlpha x = P.parseMaybe alphaChar [x]
 
 alphaChar :: CodeParsing m => m AlphaChar
 alphaChar =

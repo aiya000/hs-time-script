@@ -51,17 +51,33 @@ data Failure = Failure
   } deriving (Show, Eq)
 
 instance Pretty Failure where
-  pretty Failure{..} = IsString.fromString [i|failure! ${show $ pretty where_}: ${what_}|]
+  pretty Failure{..} =
+    IsString.fromString [i|failure! ${show $ pretty where_}: ${what_}|]
 
 -- | Makes the context into a failure with the lexer's current position
-throwAtLexer :: String -> Processor a
-throwAtLexer msg = do
+throwIntoLexer :: String -> Processor a
+throwIntoLexer msg = do
   pos <- get
   throwError $ Failure msg pos
 
 -- |
--- Simular to 'throwAtLexer',
+-- Simular to 'throwIntoLexer',
 -- but throws only for `Nothing`.
-failIfNothing :: Maybe a -> String -> Processor a
-failIfNothing Nothing msg = throwAtLexer msg
-failIfNothing (Just x) _ = pure x
+includeIntoLexer :: Maybe a -> String -> Processor a
+includeIntoLexer Nothing msg = throwIntoLexer msg
+includeIntoLexer (Just x) _ = pure x
+
+-- | Makes the context into a failure with a reason by a token.
+throwTokenError :: TokenPos -> String -> Processor a
+throwTokenError pos msg = throwError $ Failure msg pos
+
+-- |
+-- Includes `Maybe a` to the context of 'Processor'.
+--
+-- Makes the negative context with 'TokenPos' if `Nothing` specified.
+-- `
+-- some foo & includeTokenStuff pos "message"
+-- `
+includeTokenStuff :: TokenPos -> String -> Maybe a -> Processor a
+includeTokenStuff pos msg Nothing = throwTokenError pos msg
+includeTokenStuff _ _ (Just x) = pure x

@@ -12,6 +12,7 @@ import Tim.Lexer.Types
 import Tim.Lexer.Types.Combinators
 import Tim.Lexer.Types.Idents
 import Tim.Processor (Failure, TokenPos)
+import Tim.String
 import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
@@ -112,12 +113,12 @@ sign IntMinus nat = negate $ fromIntegral nat
 
 varIdent :: Lexer (VarIdent, TokenPos)
 varIdent =
-  parseVarIdent `forwardVia` Text.length . simpleVarIdent
+  parseNonEmpty `forwardVia` length . unNonEmpty
 
 typeIdent :: Lexer (TypeIdent, TokenPos)
 typeIdent =
-  parseTypeIdent `forwardVia` Text.length . simpleTypeIdent
+  parsePascal `forwardVia` length . unPascal
 
 cmdIdent :: Lexer (CmdIdent, TokenPos)
 cmdIdent =
-  parseCmdIdent `forwardVia` Text.length . simpleCmdIdent
+  parseCamel `forwardVia` length . unCamel

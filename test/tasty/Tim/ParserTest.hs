@@ -2,30 +2,32 @@
 
 module Tim.ParserTest where
 
+import qualified Tim.Lexer.Types.Idents as Ident
 import Data.Bifunctor (first)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, (@?=), Assertion)
+import Tim.Char (LowerChar (..), AlphaChar (..))
 import Tim.Lexer (lex)
 import Tim.Parser (parse)
 import Tim.Parser.Types
 
 nat :: Natural -> AST
-nat = Literal . Nat
+nat = Rhs . RLit . Nat
 
 int :: Int -> AST
-int = Literal . Int
+int = Rhs . RLit . Int
 
 float :: Double -> AST
-float = Literal . Float
+float = Rhs . RLit . Float
 
 stringS :: Text -> AST
-stringS = Literal . singleQuoted
+stringS = Rhs . RLit . singleQuoted
 
 stringD :: Text -> AST
-stringD = Literal . doubleQuoted
+stringD = Rhs . RLit . doubleQuoted
 
 singleQuoted :: Text -> Literal
 singleQuoted = String . SingleQuoted
@@ -34,10 +36,15 @@ doubleQuoted :: Text -> Literal
 doubleQuoted = String . DoubleQuoted
 
 list :: [Literal] -> AST
-list = Literal . List
+list = Rhs . RLit . List
 
 dict :: Map StringLit Literal -> AST
-dict = Literal . Dict
+dict = Rhs . RLit . Dict
+
+<<<<<<< HEAD
+=======
+
+>>>>>>> 3a49b81... WIP :+1: Parse variable names strictly
 
 type PrettyFailure = String
 
@@ -49,6 +56,7 @@ process code =
 toBe :: Either PrettyFailure AST -> AST -> Assertion
 actual `toBe` expected = actual @?= Right expected
 
+
 test_literals :: [TestTree]
 test_literals =
   [ testCase "42" testNats
@@ -58,8 +66,10 @@ test_literals =
   , testCase "v:true, v:false, v:null" testLiteralLikeVimVars
   , testCase "['sugar', 'sweet', 'moon']" testLists
   , testCase "{'foo': 10, 'bar': 20}" testDicts
+  , testCase "ident" testIdents
   -- TODO
-  --, testCase "function('string')"
+  -- , testCase "(foo)" testParens
+  -- , testCase "function('string')"
   ]
   where
     testNats =
@@ -77,9 +87,9 @@ test_literals =
       process "1.0" `toBe` float 1.0
 
     testLiteralLikeVimVars = do
-      process "v:true" `toBe` VarIdent "v:true"
-      process "v:false" `toBe` VarIdent "v:false"
-      process "v:null" `toBe` VarIdent "v:null"
+      process "v:true"  `toBe` Rhs (RVar $ Scoped V "true")
+      process "v:false" `toBe` Rhs (RVar $ Scoped V "false")
+      process "v:null"  `toBe` Rhs (RVar $ Scoped V "null")
 
     testLists = do
       let expected = list [ singleQuoted "sugar"
@@ -101,3 +111,14 @@ test_literals =
         dict [ (DoubleQuoted "foo", Nat 10)
              , (DoubleQuoted "bar", Nat 20)
              ]
+
+    testIdents = do
+      process "simple" `toBe` Rhs (RVar $ SimpleLocal "simple")
+      process "g:scoped" `toBe` Rhs (RVar $ Scoped G "scoped")
+      process "@a" `toBe` Rhs (RVar . Register . Alphabetic $ AlphaLower A_)
+      process "@+" `toBe` Rhs (RVar $ Register ClipboardPlus)
+
+    -- testParens = do
+    --   process "(10)" `toBe` parens ()
+    --   process "(ident)" `toBe` Parens (VarIdent
+    --   process "((nested))" `toBe` Parens (VarIdent
