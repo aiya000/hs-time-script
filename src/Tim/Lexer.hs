@@ -113,7 +113,7 @@ sign IntMinus nat = negate $ fromIntegral nat
 
 varIdent :: Lexer (VarIdent, TokenPos)
 varIdent =
-  parseNonEmpty `forwardVia` length . unNonEmpty
+  parseSneakCase `forwardVia` length . unSneakCase
 
 typeIdent :: Lexer (TypeIdent, TokenPos)
 typeIdent =

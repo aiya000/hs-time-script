@@ -19,7 +19,7 @@ data Pascal = Pascal UpperChar [AsciiChar]
   deriving (Show, Eq)
 
 instance Pretty Pascal where
-  pretty x = String.fromString $ unPascal x
+  pretty = String.fromString . unPascal
 
 unPascal :: Pascal -> String
 unPascal (Pascal x xs) =
@@ -35,7 +35,7 @@ data NonEmpty = NonEmpty Char String
   deriving (Show, Eq)
 
 instance Pretty NonEmpty where
-  pretty x = String.fromString $ unNonEmpty x
+  pretty = String.fromString . unNonEmpty
 
 unNonEmpty :: NonEmpty -> String
 unNonEmpty (NonEmpty x xs) = x : xs
@@ -54,7 +54,7 @@ data Camel = Camel AlphaChar [AsciiChar]
   deriving (Show, Eq)
 
 instance Pretty Camel where
-  pretty x = String.fromString $ unCamel x
+  pretty = String.fromString . unCamel
 
 unCamel :: Camel -> String
 unCamel (Camel x xs) = alphaToChar x : map asciiToChar xs
@@ -68,9 +68,31 @@ parseCamel =
 data SneakCase = SneakCase SneakCaseChar [SneakCaseChar]
   deriving (Show, Eq)
 
+instance Pretty SneakCase where
+  pretty = String.fromString . unSneakCase
+
+unSneakCase :: SneakCase -> String
+unSneakCase (SneakCase x xs) =
+  unSneakCaseChar x : map unSneakCaseChar xs
+
+parseSneakCase :: CodeParsing m => m SneakCase
+parseSneakCase = do
+  x <- parseSneakCaseChar
+  xs <- P.many parseSneakCaseChar
+  pure $ SneakCase x xs
+
 data SneakCaseChar = UnderScore -- ^ _
                    | Ascii AsciiChar -- ^ [A-Za-z]
   deriving (Show, Eq)
+
+unSneakCaseChar :: SneakCaseChar -> Char
+unSneakCaseChar UnderScore = '_'
+unSneakCaseChar (Ascii x) = asciiToChar x
+
+parseSneakCaseChar :: CodeParsing m => m SneakCaseChar
+parseSneakCaseChar =
+  UnderScore <$ P.char '_' <|>
+  Ascii <$> asciiChar
 
 
 -- | Non empty "veryflatten" names
