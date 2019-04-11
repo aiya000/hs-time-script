@@ -207,11 +207,11 @@ parseError (((got, pos):_), expected) =
     at ${show $ pretty pos},
     but ${expected} are expected at here.
   |]
-parseError (_, _) =
+parseError whole@(_, _) =
   error $ flattenMargins [i|
     fatal error!
-    Sorry, please report an issue :(
-    <- parseError at ${(__FILE__ :: String)}:L${(__LINE__ :: Int)}
+    Sorry, please report this issue. ->
+    parseError at ${(__FILE__ :: String)}:L${(__LINE__ :: Int)}: ${show whole}
   |]
 
 readRegAlpha :: String -> TokenPos -> Processor Register
