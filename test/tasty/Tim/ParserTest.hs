@@ -13,34 +13,6 @@ import Tim.Lexer (lex)
 import Tim.Parser (parse)
 import Tim.Parser.Types
 
-nat :: Natural -> AST
-nat = Rhs . RLit . Nat
-
-int :: Int -> AST
-int = Rhs . RLit . Int
-
-float :: Double -> AST
-float = Rhs . RLit . Float
-
-stringS :: Text -> AST
-stringS = Rhs . RLit . singleQuoted
-
-stringD :: Text -> AST
-stringD = Rhs . RLit . doubleQuoted
-
-singleQuoted :: Text -> Literal
-singleQuoted = String . SingleQuoted
-
-doubleQuoted :: Text -> Literal
-doubleQuoted = String . DoubleQuoted
-
-list :: [Literal] -> AST
-list = Rhs . RLit . List
-
-dict :: Map StringLit Literal -> AST
-dict = Rhs . RLit . Dict
-
-
 type PrettyFailure = String
 
 process :: Text -> Either PrettyFailure AST
@@ -68,18 +40,18 @@ test_literals =
   ]
   where
     testNats =
-      process "42" `toBe` nat 42
+      process "42" `toBe` Rhs (RLit $ Nat 42)
 
     testInts = do
-      process "+42" `toBe` int 42
-      process "-42" `toBe` int (-42)
-
-    testStrings = do
-      process "'you'" `toBe` stringS "you"
-      process "\"you\"" `toBe` stringD "you"
+      process "+42" `toBe` Rhs (RLit $ Int 42)
+      process "-42" `toBe` Rhs (RLit $ Int (-42))
 
     testFloats =
-      process "1.0" `toBe` float 1.0
+      process "1.0" `toBe` Rhs (RLit $ Float 1.0)
+
+    testStrings = do
+      process "'you'" `toBe` Rhs (RLit . String $ SingleQuoted "you")
+      process "\"you\"" `toBe` Rhs (RLit . String $ DoubleQuoted "you")
 
     testLiteralLikeVimVars = do
       process "v:true"  `toBe` Rhs (RVar $ Scoped V "true")
@@ -87,11 +59,15 @@ test_literals =
       process "v:null"  `toBe` Rhs (RVar $ Scoped V "null")
 
     testLists = do
-      let expected = list [ singleQuoted "sugar"
-                          , singleQuoted "sweet"
-                          , singleQuoted "moon"
-                          ]
+      let expected = Rhs . RLit $
+            List [ String $ SingleQuoted "sugar"
+                 , String $ SingleQuoted "sweet"
+                 , String $ SingleQuoted "moon"
+                 ]
       process "['sugar', 'sweet', 'moon']" `toBe` expected
+
+    dict :: Map StringLit Literal -> AST
+    dict = Rhs . RLit . Dict
 
     testDicts = do
       process "{'foo': 10, 'bar': 20}" `toBe`
