@@ -62,8 +62,8 @@ test_literals =
   , testCase "['sugar', 'sweet', 'moon']" testLists
   , testCase "{'foo': 10, 'bar': 20}" testDicts
   , testCase "ident" testIdents
+  , testCase "(foo)" testParens
   -- TODO
-  -- , testCase "(foo)" testParens
   -- , testCase "function('string')"
   ]
   where
@@ -113,7 +113,7 @@ test_literals =
       process "@a" `toBe` Rhs (RVar . Register . Alphabetic $ AlphaLower A_)
       process "@+" `toBe` Rhs (RVar $ Register ClipboardPlus)
 
-    -- testParens = do
-    --   process "(10)" `toBe` Rhs (RParens ())
-    --   process "(ident)" `toBe` Rhs (RParens)
-    --   process "((nested))" `toBe` Rhs (RParens)
+    testParens = do
+      process "(10)" `toBe` Rhs (RParens . RLit $ Nat 10)
+      process "(ident)" `toBe` Rhs (RParens . RVar $ SimpleLocal "ident")
+      process "((nested))" `toBe` Rhs (RParens . RParens . RVar $ SimpleLocal "nested")
