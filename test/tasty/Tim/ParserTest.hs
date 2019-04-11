@@ -2,7 +2,6 @@
 
 module Tim.ParserTest where
 
-import qualified Tim.Lexer.Types.Idents as Ident
 import Data.Bifunctor (first)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
@@ -41,10 +40,6 @@ list = Rhs . RLit . List
 dict :: Map StringLit Literal -> AST
 dict = Rhs . RLit . Dict
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 3a49b81... WIP :+1: Parse variable names strictly
 
 type PrettyFailure = String
 
@@ -119,6 +114,6 @@ test_literals =
       process "@+" `toBe` Rhs (RVar $ Register ClipboardPlus)
 
     -- testParens = do
-    --   process "(10)" `toBe` parens ()
-    --   process "(ident)" `toBe` Parens (VarIdent
-    --   process "((nested))" `toBe` Parens (VarIdent
+    --   process "(10)" `toBe` Rhs (RParens ())
+    --   process "(ident)" `toBe` Rhs (RParens)
+    --   process "((nested))" `toBe` Rhs (RParens)
