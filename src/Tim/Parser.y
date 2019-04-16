@@ -202,17 +202,13 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
 
 parseError :: ([(Token, TokenPos)], [String]) -> Processor a
 parseError (((got, pos):_), expected) =
-  throwError . flip Failure pos $ flattenMargins [i|
+  throwError . flip Failure (OnAToken pos) $ flattenMargins [i|
     got a token `${show $ pretty got}`
     at ${show $ pretty pos},
     but ${expected} are expected at here.
   |]
-parseError whole@(_, _) =
-  error $ flattenMargins [i|
-    fatal error!
-    Sorry, please report this issue. ->
-    parseError at ${(__FILE__ :: String)}:L${(__LINE__ :: Int)}: ${show whole}
-  |]
+parseError ([], expected) =
+  throwError $ Failure [i|got EOF, but ${expected} are expected at here.|] EOF
 
 readRegAlpha :: String -> TokenPos -> Processor Register
 readRegAlpha "" pos = throwTokenError pos "expected a register name, but no register name specified."

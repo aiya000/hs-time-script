@@ -16,8 +16,7 @@ import RIO hiding (first)
 import RIO.List (foldl)
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec.Error (ErrorItem(..), ErrorFancy(..), errorPos)
-import Text.Megaparsec.Pos (SourcePos(..))
-import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..))
+import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..), SourcePos(..))
 import qualified Data.Set as Set
 import qualified Data.String as String
 import qualified Data.Text as Text
@@ -49,10 +48,10 @@ runNaked code naked = runParserT naked "lexer" code
 -- | Takes the last of a taken error
 compatible :: LexError -> Failure
 compatible lexError =
-  let (SourcePos fileName (P.unPos -> line) (P.unPos -> col) :| _) = errorPos lexError
+  let (P.SourcePos fileName (P.unPos -> line) (P.unPos -> col) :| _) = errorPos lexError
       problem = fromMaybe (Unsafe.error "{has been to unknown conditinon!}") $ takeProblem lexError
       message = [i|Got ${gotten problem}, but expected ${simplizeAll $ takeReasons lexError}|] :: String
-  in flip Failure (TokenPos line col) [i|${fileName}: ${message}|]
+  in Failure [i|${fileName}: ${message}|] . OnAToken $ TokenPos line col
   where
     simplizeAll :: Either (Set LexErrorItem) (Set LexErrorFancy) -> String
     simplizeAll =

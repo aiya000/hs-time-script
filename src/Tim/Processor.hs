@@ -33,6 +33,7 @@ runProcessor = unProcessor
     runState' :: State TokenPos (Either Failure a) -> (Either Failure a, TokenPos)
     runState' = flip runState def
 
+
 data TokenPos = TokenPos
   { lineNum :: Int
   , colNum  :: Int
@@ -44,32 +45,45 @@ instance Default TokenPos where
 instance Pretty TokenPos where
   pretty (TokenPos l c) = "(" <> pretty l <> "," <> pretty c <> ")"
 
+
+data SourcePos = OnAToken TokenPos
+               | EOF -- ^ The end of input
+  deriving (Show, Eq)
+
+instance Pretty SourcePos where
+  pretty (OnAToken x) = pretty x
+  pretty EOF = IsString.fromString "EOF"
+
+
 -- | For error messages
 data Failure = Failure
-  { what_  :: String   -- ^ What is wrong / Why it is failed
-  , where_ :: TokenPos -- ^ Where it is failed
+  { what_  :: String  -- ^ What is wrong / Why it is failed
+  , where_ :: SourcePos  -- ^ Where it is failed
   } deriving (Show, Eq)
 
 instance Pretty Failure where
-  pretty Failure{..} =
-    IsString.fromString [i|failure! ${show $ pretty where_}: ${what_}|]
+  pretty (Failure message EOF) =
+    IsString.fromString [i|Failure! At the EOF: ${message}|]
+  pretty (Failure message (OnAToken pos)) =
+    IsString.fromString [i|Failure! ${show $ pretty pos}: ${message}|]
+
 
 -- | Makes the context into a failure with the lexer's current position
-throwIntoLexer :: String -> Processor a
-throwIntoLexer msg = do
+throwTokenErrorNow :: String -> Processor a
+throwTokenErrorNow msg = do
   pos <- get
-  throwError $ Failure msg pos
+  throwError $ Failure msg (OnAToken pos)
 
 -- |
--- Simular to 'throwIntoLexer',
+-- Simular to 'throwTokenErrorNow',
 -- but throws only for `Nothing`.
 includeIntoLexer :: Maybe a -> String -> Processor a
-includeIntoLexer Nothing msg = throwIntoLexer msg
+includeIntoLexer Nothing msg = throwTokenErrorNow msg
 includeIntoLexer (Just x) _ = pure x
 
 -- | Makes the context into a failure with a reason by a token.
 throwTokenError :: TokenPos -> String -> Processor a
-throwTokenError pos msg = throwError $ Failure msg pos
+throwTokenError pos msg = throwError $ Failure msg (OnAToken pos)
 
 -- |
 -- Includes `Maybe a` to the context of 'Processor'.
