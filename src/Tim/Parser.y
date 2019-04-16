@@ -66,43 +66,43 @@ import qualified Tim.String as String
   ','            { whole@(Token.Comma, _)                                   }
   lineBreak      { whole@(Token.LineBreak, _)                               }
 
-  varScopedG { whole@(Token.Var (String.unSneakCase -> 'g' : ':' : $$), _) }
-  varScopedS { whole@(Token.Var (String.unSneakCase -> 's' : ':' : $$), _) }
-  varScopedL { whole@(Token.Var (String.unSneakCase -> 'l' : ':' : $$), _) }
-  varScopedA { whole@(Token.Var (String.unSneakCase -> 'a' : ':' : $$), _) }
-  varScopedV { whole@(Token.Var (String.unSneakCase -> 'v' : ':' : $$), _) }
-  varScopedB { whole@(Token.Var (String.unSneakCase -> 'b' : ':' : $$), _) }
-  varScopedW { whole@(Token.Var (String.unSneakCase -> 'w' : ':' : $$), _) }
-  varScopedT { whole@(Token.Var (String.unSneakCase -> 't' : ':' : $$), _) }
+  varScopedG { whole@(Token.Var (String.unNonEmpty -> 'g' : ':' : $$), _) }
+  varScopedS { whole@(Token.Var (String.unNonEmpty -> 's' : ':' : $$), _) }
+  varScopedL { whole@(Token.Var (String.unNonEmpty -> 'l' : ':' : $$), _) }
+  varScopedA { whole@(Token.Var (String.unNonEmpty -> 'a' : ':' : $$), _) }
+  varScopedV { whole@(Token.Var (String.unNonEmpty -> 'v' : ':' : $$), _) }
+  varScopedB { whole@(Token.Var (String.unNonEmpty -> 'b' : ':' : $$), _) }
+  varScopedW { whole@(Token.Var (String.unNonEmpty -> 'w' : ':' : $$), _) }
+  varScopedT { whole@(Token.Var (String.unNonEmpty -> 't' : ':' : $$), _) }
 
-  varRegUnnamed   { whole@(Token.Var (String.unSneakCase -> '@' : '"' : $$), _) }
-  varRegSmallDel  { whole@(Token.Var (String.unSneakCase -> '@' : '-' : $$), _) }
-  varRegReadOnlyC { whole@(Token.Var (String.unSneakCase -> '@' : ':' : $$), _) }
-  varRegReadonlyD { whole@(Token.Var (String.unSneakCase -> '@' : '.' : $$), _) }
-  varRegReadOnlyP { whole@(Token.Var (String.unSneakCase -> '@' : '%' : $$), _) }
-  varRegBuffer    { whole@(Token.Var (String.unSneakCase -> '@' : '#' : $$), _) }
-  varRegExpr      { whole@(Token.Var (String.unSneakCase -> '@' : '=' : $$), _) }
-  varRegClipS     { whole@(Token.Var (String.unSneakCase -> '@' : '*' : $$), _) }
-  varRegClipP     { whole@(Token.Var (String.unSneakCase -> '@' : '+' : $$), _) }
-  varRegBlackHole { whole@(Token.Var (String.unSneakCase -> '@' : '_' : $$), _) }
-  varRegSeached   { whole@(Token.Var (String.unSneakCase -> '@' : '/' : $$), _) }
-  varReg0         { whole@(Token.Var (String.unSneakCase -> '@' : '0' : $$), _) }
-  varReg1         { whole@(Token.Var (String.unSneakCase -> '@' : '1' : $$), _) }
-  varReg2         { whole@(Token.Var (String.unSneakCase -> '@' : '2' : $$), _) }
-  varReg3         { whole@(Token.Var (String.unSneakCase -> '@' : '3' : $$), _) }
-  varReg4         { whole@(Token.Var (String.unSneakCase -> '@' : '4' : $$), _) }
-  varReg5         { whole@(Token.Var (String.unSneakCase -> '@' : '5' : $$), _) }
-  varReg6         { whole@(Token.Var (String.unSneakCase -> '@' : '6' : $$), _) }
-  varReg7         { whole@(Token.Var (String.unSneakCase -> '@' : '7' : $$), _) }
-  varReg8         { whole@(Token.Var (String.unSneakCase -> '@' : '8' : $$), _) }
-  varReg9         { whole@(Token.Var (String.unSneakCase -> '@' : '9' : $$), _) }
-  varRegAlpha     { whole@(Token.Var (String.unSneakCase -> '@' : $$), _)       } -- a-zA-Z
+  varRegUnnamed   { whole@(Token.Var (String.unNonEmpty -> '@' : '"' : $$), _) }
+  varRegSmallDel  { whole@(Token.Var (String.unNonEmpty -> '@' : '-' : $$), _) }
+  varRegReadOnlyC { whole@(Token.Var (String.unNonEmpty -> '@' : ':' : $$), _) }
+  varRegReadonlyD { whole@(Token.Var (String.unNonEmpty -> '@' : '.' : $$), _) }
+  varRegReadOnlyP { whole@(Token.Var (String.unNonEmpty -> '@' : '%' : $$), _) }
+  varRegBuffer    { whole@(Token.Var (String.unNonEmpty -> '@' : '#' : $$), _) }
+  varRegExpr      { whole@(Token.Var (String.unNonEmpty -> '@' : '=' : $$), _) }
+  varRegClipS     { whole@(Token.Var (String.unNonEmpty -> '@' : '*' : $$), _) }
+  varRegClipP     { whole@(Token.Var (String.unNonEmpty -> '@' : '+' : $$), _) }
+  varRegBlackHole { whole@(Token.Var (String.unNonEmpty -> '@' : '_' : $$), _) }
+  varRegSeached   { whole@(Token.Var (String.unNonEmpty -> '@' : '/' : $$), _) }
+  varReg0         { whole@(Token.Var (String.unNonEmpty -> '@' : '0' : $$), _) }
+  varReg1         { whole@(Token.Var (String.unNonEmpty -> '@' : '1' : $$), _) }
+  varReg2         { whole@(Token.Var (String.unNonEmpty -> '@' : '2' : $$), _) }
+  varReg3         { whole@(Token.Var (String.unNonEmpty -> '@' : '3' : $$), _) }
+  varReg4         { whole@(Token.Var (String.unNonEmpty -> '@' : '4' : $$), _) }
+  varReg5         { whole@(Token.Var (String.unNonEmpty -> '@' : '5' : $$), _) }
+  varReg6         { whole@(Token.Var (String.unNonEmpty -> '@' : '6' : $$), _) }
+  varReg7         { whole@(Token.Var (String.unNonEmpty -> '@' : '7' : $$), _) }
+  varReg8         { whole@(Token.Var (String.unNonEmpty -> '@' : '8' : $$), _) }
+  varReg9         { whole@(Token.Var (String.unNonEmpty -> '@' : '9' : $$), _) }
+  varRegAlpha     { whole@(Token.Var (String.unNonEmpty -> '@' : $$), _)       } -- a-zA-Z
 
-  varOptionScopedL  { whole@(Token.Var (String.unSneakCase -> '&' : 'l' : ':' : $$), _) }
-  varOptionScopedG  { whole@(Token.Var (String.unSneakCase -> '&' : 'g' : ':' : $$), _) }
-  varOptionUnscoped { whole@(Token.Var (String.unSneakCase -> '&' : $$), _)             }
+  varOptionScopedL  { whole@(Token.Var (String.unNonEmpty -> '&' : 'l' : ':' : $$), _) }
+  varOptionScopedG  { whole@(Token.Var (String.unNonEmpty -> '&' : 'g' : ':' : $$), _) }
+  varOptionUnscoped { whole@(Token.Var (String.unNonEmpty -> '&' : $$), _)             }
 
-  varSimpleLocal { whole@(Token.Var (String.unSneakCase -> $$), _) }
+  varSimpleLocal { whole@(Token.Var (String.unNonEmpty -> $$), _) }
 
 %%
 

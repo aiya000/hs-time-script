@@ -4,11 +4,9 @@ module Tim.Lexer.Types.Idents where
 
 import Tim.Char
 import Tim.String
+import qualified Tim.String as String
 
 type TypeIdent = Pascal
-
--- | foo, g:bar, v:null, v:true, g:, @", &option, &l:option
-type VarIdent = SneakCase
 
 -- | Vim defined or user defined commands
 type CmdIdent = Camel
@@ -19,3 +17,6 @@ pattern LetIdent =
   Camel (AlphaLower L_) [ AsciiAlpha (AlphaLower E_)
                         , AsciiAlpha (AlphaLower T_)
                         ]
+
+-- | foo, g:bar, v:null, v:true, g:, @", &option, &l:option
+type VarIdent = String.NonEmpty
