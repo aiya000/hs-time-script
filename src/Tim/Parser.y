@@ -200,6 +200,7 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
     replace ('\n' : xs) = ' ' : replace xs
     replace (x : xs) = x : replace xs
 
+-- TODO: Show all [(Token, TokenPos)] if --verbose specified on cli.
 parseError :: ([(Token, TokenPos)], [String]) -> Processor a
 parseError (((got, pos):_), expected) =
   throwError . flip Failure (OnAToken pos) $ flattenMargins [i|
