@@ -5,6 +5,7 @@ module Tim.ParserTest where
 import Data.Bifunctor (first)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
+import GHC.Stack (HasCallStack)
 import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase, (@?=), Assertion)
@@ -20,7 +21,7 @@ process code =
   let x = parse =<< lex code
   in first (show . pretty) x
 
-toBe :: Either PrettyFailure AST -> AST -> Assertion
+toBe :: HasCallStack => Either PrettyFailure AST -> AST -> Assertion
 actual `toBe` expected = actual @?= Right expected
 
 
