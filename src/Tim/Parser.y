@@ -187,6 +187,7 @@ ListInner :: { [Literal] }
 
 DictInner :: { Map StringLit Literal }
   : {- empty -}                         { Map.empty           }
+  | StringLit ':' Literal               { Map.singleton $1 $3 }
   | StringLit ':' Literal ',' DictInner { Map.insert $1 $3 $5 }
 
 {
