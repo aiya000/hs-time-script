@@ -1,29 +1,13 @@
 {-# LANGUAGE OverloadedLists #-}
 
-module Tim.ParserTest where
+module Tim.ParserTest.Rhs where
 
-import Data.Bifunctor (first)
-import Data.Text (Text)
-import Data.Text.Prettyprint.Doc (pretty)
-import GHC.Stack (HasCallStack)
 import RIO hiding (first)
 import Test.Tasty (TestTree)
-import Test.Tasty.HUnit (testCase, (@?=), Assertion)
+import Test.Tasty.HUnit (testCase)
 import Tim.Char (LowerChar (..), AlphaChar (..))
-import Tim.Lexer (lex)
-import Tim.Parser (parse)
 import Tim.Parser.Types
-
-type PrettyFailure = String
-
-process :: Text -> Either PrettyFailure AST
-process code =
-  let x = parse =<< lex code
-  in first (show . pretty) x
-
-toBe :: HasCallStack => Either PrettyFailure AST -> AST -> Assertion
-actual `toBe` expected = actual @?= Right expected
-
+import Tim.Test
 
 test_literals :: [TestTree]
 test_literals =
@@ -34,8 +18,6 @@ test_literals =
   , testCase "v:true, v:false, v:null" testLiteralLikeVimVars
   , testCase "['sugar', 'sweet', 'moon']" testLists
   , testCase "{'foo': 10, 'bar': 20}" testDicts
-  , testCase "ident" testIdents
-  , testCase "(foo)" testParens
   -- TODO
   -- , testCase "function('string')"
   ]
@@ -67,9 +49,6 @@ test_literals =
                  ]
       process "['sugar', 'sweet', 'moon']" `toBe` expected
 
-    dict :: Map StringLit Literal -> AST
-    dict = Rhs . RLit . Dict
-
     testDicts = do
       process "{'foo': 10, 'bar': 20}" `toBe`
         dict [ (SingleQuoted "foo", Nat 10)
@@ -83,7 +62,18 @@ test_literals =
         dict [ (DoubleQuoted "foo", Nat 10)
              , (DoubleQuoted "bar", Nat 20)
              ]
+       where
+        dict :: Map StringLit Literal -> AST
+        dict = Rhs . RLit . Dict
 
+
+-- | Non atomically expressions
+test_expressions :: [TestTree]
+test_expressions =
+  [ testCase "ident" testIdents
+  , testCase "(foo)" testParens
+  ]
+  where
     testIdents = do
       process "simple" `toBe` Rhs (RVar $ SimpleLocal "simple")
       process "g:scoped" `toBe` Rhs (RVar $ Scoped G "scoped")
