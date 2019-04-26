@@ -44,7 +44,7 @@ import qualified Tim.String as String
 %error { parseError }
 %errorhandlertype explist
 %monad { Processor }
-%name parseCode
+%name parseAST
 %tokentype { (Token, TokenPos) }
 
 %token
@@ -191,7 +191,7 @@ DictInner :: { Map StringLit Literal }
 
 {
 parse :: [(Token, TokenPos)] -> Either Failure AST
-parse = runProcessor . parseCode
+parse = runProcessor . parseAST
 
 flattenMargins :: String -> String
 flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) . lines
