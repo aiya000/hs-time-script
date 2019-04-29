@@ -16,13 +16,15 @@ import RIO hiding (first)
 import RIO.List (foldl)
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec.Error (ErrorItem(..), ErrorFancy(..), errorPos)
+import Tim.Megaparsec
 import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..), SourcePos(..))
 import qualified Data.Set as Set
 import qualified Data.String as String
 import qualified Data.Text as Text
 import qualified Prelude as Unsafe
 import qualified Text.Megaparsec as P
-import qualified Tim.Lexer.Types.Idents as Ident
+import qualified Text.Megaparsec.Char as P
+import qualified Tim.String as Name
 
 type LexError = ParseError (P.Token String) Void
 type LexErrorItem = ErrorItem (P.Token String)
@@ -140,9 +142,7 @@ pattern String' q s <- String q (Text.unpack -> s)
 type Identifier = Text
 
 -- | Time script's keywords, identifiers, or else
-data Token = Var Ident.VarIdent
-           | Type Ident.TypeIdent
-           | Command Ident.CmdIdent
+data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type.
            | Colon
            | Assign -- ^ =
            | ListBegin -- ^ [
@@ -167,7 +167,27 @@ instance Pretty Token where
   pretty ParenEnd    = String.fromString ")"
   pretty Comma       = String.fromString ","
   pretty LineBreak   = String.fromString "\n"
-  pretty (Var x)     = pretty x
-  pretty (Type x)    = pretty x
-  pretty (Command x) = pretty x
+  pretty (Ident x)   = pretty x
   pretty (Literal x) = pretty x
+
+
+-- |
+-- Any identifiers.
+-- (command, variable, or type identifier.)
+type Ident = Name.NonEmpty
+
+parseIdent :: CodeParsing m => m Ident
+parseIdent =
+  Name.NonEmpty
+    <$> P.noneOf enclosers
+    <*> P.many (P.noneOf delimiters)
+  where
+    delimiters =
+      ':' :
+      ' ' : enclosers
+
+    enclosers =
+      [ '(', ')'
+      , '{', '}'
+      , '[', ']'
+      ]

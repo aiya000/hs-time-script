@@ -10,7 +10,6 @@ import Numeric.Natural (Natural)
 import RIO
 import Tim.Lexer.Types
 import Tim.Lexer.Types.Combinators
-import Tim.Lexer.Types.Idents
 import Tim.Processor (Failure, TokenPos)
 import Tim.String
 import qualified Data.Text as Text
@@ -20,15 +19,13 @@ import qualified Text.Megaparsec.Char.Lexer as P hiding (space)
 
 -- | Tokenizes a code
 lex :: Text -> Either Failure [(Token, TokenPos)]
-lex = runLexer rex . Text.unpack
+lex = runLexer lexer . Text.unpack
 
-rex :: Lexer [(Token, TokenPos)]
-rex = P.many $ do
+lexer :: Lexer [(Token, TokenPos)]
+lexer = P.many $ do
   _ <- P.many P.spaceChar `forwardVia` length
   symbol <|> first Literal <$> literal <|>
-             first Var <$> varIdent <|>
-             first Type <$> typeIdent <|>
-             first Command <$> cmdIdent
+             first Ident <$> ident
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
@@ -111,14 +108,6 @@ sign :: IntSign -> Natural -> Int
 sign IntPlus nat = fromIntegral nat
 sign IntMinus nat = negate $ fromIntegral nat
 
-varIdent :: Lexer (VarIdent, TokenPos)
-varIdent =
-  parseVarIdent `forwardVia` length . unNonEmpty
-
-typeIdent :: Lexer (TypeIdent, TokenPos)
-typeIdent =
-  parsePascal `forwardVia` length . unPascal
-
-cmdIdent :: Lexer (CmdIdent, TokenPos)
-cmdIdent =
-  parseCamel `forwardVia` length . unCamel
+ident :: Lexer (Ident, TokenPos)
+ident =
+  parseIdent `forwardVia` length . unNonEmpty
