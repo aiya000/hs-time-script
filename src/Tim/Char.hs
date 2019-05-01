@@ -10,18 +10,18 @@ import qualified Data.Map.Strict as Map
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 
-data AsciiChar = AsciiAlpha AlphaChar
-               | AsciiDigit NumberChar
+data AlphaNumChar = AlphaNumAlpha AlphaChar
+                  | AlphaNumDigit DigitChar
   deriving (Show, Eq, Ord)
 
-asciiToChar :: AsciiChar -> Char
-asciiToChar (AsciiAlpha x) = alphaToChar x
-asciiToChar (AsciiDigit x) = numberToChar x
+alphaNumToChar :: AlphaNumChar -> Char
+alphaNumToChar (AlphaNumAlpha x) = alphaToChar x
+alphaNumToChar (AlphaNumDigit x) = digitToChar x
 
-asciiChar :: CodeParsing m => m AsciiChar
-asciiChar =
-  AsciiAlpha <$> alphaChar <|>
-  AsciiDigit <$> numberChar
+alphaNumChar :: CodeParsing m => m AlphaNumChar
+alphaNumChar =
+  AlphaNumAlpha <$> alphaChar <|>
+  AlphaNumDigit <$> digitChar
 
 data AlphaChar = AlphaLower LowerChar
                | AlphaUpper UpperChar
@@ -93,33 +93,33 @@ lowerChar = do
     Nothing -> fail "non lower char"
     Just x -> pure x
 
-data NumberChar = N0
-                | N1
-                | N2
-                | N3
-                | N4
-                | N5
-                | N6
-                | N7
-                | N8
-                | N9
+data DigitChar = D0
+               | D1
+               | D2
+               | D3
+               | D4
+               | D5
+               | D6
+               | D7
+               | D8
+               | D9
   deriving (Show, Eq, Ord)
 
-numberToChar :: NumberChar -> Char
-numberToChar = fromJust . flip Map.lookup numbers
+digitToChar :: DigitChar -> Char
+digitToChar = fromJust . flip Map.lookup digits
 
-numbers :: Map NumberChar Char
-numbers = Map.fromList
-  [ (N0, '0')
-  , (N1, '1'), (N2, '2'), (N3, '3')
-  , (N4, '4'), (N5, '5'), (N6, '6')
-  , (N4, '7'), (N8, '8'), (N9, '9')
+digits :: Map DigitChar Char
+digits = Map.fromList
+  [ (D0, '0')
+  , (D1, '1'), (D2, '2'), (D3, '3')
+  , (D4, '4'), (D5, '5'), (D6, '6')
+  , (D4, '7'), (D8, '8'), (D9, '9')
   ]
 
-numberChar :: CodeParsing m => m NumberChar
-numberChar = do
-  char <- P.numberChar
-  let maybeNum = Map.lookup char $ dual numbers
+digitChar :: CodeParsing m => m DigitChar
+digitChar = do
+  char <- P.digitChar
+  let maybeNum = Map.lookup char $ dual digits
   case maybeNum of
     Nothing -> fail "non numeric char"
     Just x -> pure x

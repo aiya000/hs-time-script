@@ -17,17 +17,17 @@ data AST = Code Code -- ^ Whole of a code
   deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
-data Syntax = Let Lhs (Maybe TypeIdent) Rhs -- ^ let foo: Bar = lit
+data Syntax = Let Lhs (Maybe Type) Rhs -- ^ let foo: Bar = lit
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
 -- | The left hand side
-data Lhs = LVar VarIdent
-         | LDestuct (List.NonEmpty VarIdent) -- ^ [x, y] of (`let [x, y] = zs`)
+data Lhs = LVar Variable
+         | LDestuct (List.NonEmpty Variable) -- ^ [x, y] of (`let [x, y] = zs`)
   deriving (Show, Eq)
 
 -- | The right hand side
-data Rhs = RVar VarIdent
+data Rhs = RVar Variable
          | RLit Literal
          | RParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
   deriving (Show, Eq)
@@ -47,11 +47,20 @@ data StringLit = SingleQuoted Text
   deriving (Show, Eq, Ord)
 
 
--- | The parser's type identifiers
-type TypeIdent = Pascal
+-- | Time script's types
+data Type = Name Camel -- ^ A Name of a higher kind or lower kind type (e.g. `Int`, `List`)
+          | App Type [Type] -- ^ An application of a higher kind type and the argument types (e.g. `List Int`, `Dict Bool`)
+          | Parens Type -- ^ `(Type)`, `(List X)`, `(List) X`
+          | Arrow Type Type -- ^ `X -> Y`
+          | Union Type Type -- ^ `X | Y`
+  deriving (Show, Eq)
+
+infixr 3 `Arrow`
+infixr 4 `Union`
+infixl 5 `App`
 
 -- | The parser's variable identifiers
-data VarIdent = SimpleLocal String -- ^ simple_idents
+data Variable = SimpleLocal String -- ^ simple_idents
               | Scoped Scope String -- ^ g:, l:foo
               | Register Register -- ^ @+, @u
               | Option Option -- ^ &nu, &number
@@ -74,7 +83,7 @@ data Register = Unnamed -- ^ ""
               | ClipboardPlus -- ^ "+
               | BlackHole -- ^ "_
               | Searched -- ^ "/
-              | Numeric NumberChar -- ^ "0 ~ "9
+              | Numeric DigitChar -- ^ "0 ~ "9
               | Alphabetic AlphaChar -- ^ "a ~ "z and "A ~ "Z
   deriving (Show, Eq)
 

@@ -15,7 +15,7 @@ import qualified Text.Megaparsec.Char as P
 -- |
 -- Non empty "PascalCase" names
 -- (`I "nt"`, `S "tring"`, ...)
-data Pascal = Pascal UpperChar [AsciiChar]
+data Pascal = Pascal UpperChar [AlphaNumChar]
   deriving (Show, Eq)
 
 instance Pretty Pascal where
@@ -23,11 +23,11 @@ instance Pretty Pascal where
 
 unPascal :: Pascal -> String
 unPascal (Pascal x xs) =
-  upperToChar x : map asciiToChar xs
+  upperToChar x : map alphaNumToChar xs
 
 parsePascal :: CodeParsing m => m Pascal
 parsePascal =
-  Pascal <$> upperChar <*> P.many asciiChar
+  Pascal <$> upperChar <*> P.many alphaNumChar
 
 
 -- | Non empty names
@@ -50,18 +50,18 @@ fromString (x : xs) = Just $ NonEmpty x xs
 
 
 -- | Non empty "camelCase" names
-data Camel = Camel AlphaChar [AsciiChar]
+data Camel = Camel AlphaChar [AlphaNumChar]
   deriving (Show, Eq)
 
 instance Pretty Camel where
   pretty = String.fromString . unCamel
 
 unCamel :: Camel -> String
-unCamel (Camel x xs) = alphaToChar x : map asciiToChar xs
+unCamel (Camel x xs) = alphaToChar x : map alphaNumToChar xs
 
 parseCamel :: CodeParsing m => m Camel
 parseCamel =
-  Camel <$> alphaChar <*> P.many asciiChar
+  Camel <$> alphaChar <*> P.many alphaNumChar
 
 
 -- | Non empty "sneak_case" names
@@ -82,17 +82,17 @@ parseSneakCase = do
   pure $ SneakCase x xs
 
 data SneakCaseChar = UnderScore -- ^ _
-                   | Ascii AsciiChar -- ^ [A-Za-z]
+                   | AlphaNumChar AlphaNumChar -- ^ [A-Za-z]
   deriving (Show, Eq)
 
 unSneakCaseChar :: SneakCaseChar -> Char
 unSneakCaseChar UnderScore = '_'
-unSneakCaseChar (Ascii x) = asciiToChar x
+unSneakCaseChar (AlphaNumChar x) = alphaNumToChar x
 
 parseSneakCaseChar :: CodeParsing m => m SneakCaseChar
 parseSneakCaseChar =
   UnderScore <$ P.char '_' <|>
-  Ascii <$> asciiChar
+  AlphaNumChar <$> alphaNumChar
 
 
 -- | Non empty "veryflatten" names
