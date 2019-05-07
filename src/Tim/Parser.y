@@ -26,6 +26,7 @@ import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
+import RIO.List
 import Text.Megaparsec (parseMaybe)
 import Tim.Char (DigitChar(..))
 import Tim.Lexer.Types (Token)
@@ -217,12 +218,23 @@ parse = runProcessor . parseAST
 parseError :: ([(Token, TokenPos)], [String]) -> Processor a
 parseError ((got, pos) : _, expected) =
   throwError . flip Failure (OnAToken pos) $ flattenMargins [i|
-    got a token `${show $ pretty got}`
-    at ${show $ pretty pos},
+    got a token `${show $ pretty got}`,
     but ${expected} are expected at here.
   |]
 parseError ([], expected) =
-  throwError $ Failure [i|got EOF, but ${expected} are expected at here.|] EOF
+  throwError $ Failure [i|got EOF, but ${makePluralForm expected} are expected at here.|] EOF
+  where
+    -- ["a", "b"]      -> "a or b"
+    -- ["a", "b", "c"] -> "a, b, or c"
+    makePluralForm [] = []
+    makePluralForm [x] = x
+    makePluralForm (x : y : words) =
+      case uncons $ reverse words of
+        Nothing ->  [i|${x} or ${y}|]
+        Just (tail, reverse -> body) -> [i|${foldl comma "" body}, or ${tail}|]
+
+    comma :: String -> String -> String
+    comma x y = [i|${x}, ${y}|]
 
 flattenMargins :: String -> String
 flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) . lines
@@ -234,12 +246,12 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
 readRegAlpha :: String -> TokenPos -> Processor Register
 readRegAlpha "" pos = throwTokenError pos "expected a register name, but no register name specified."
 readRegAlpha (x : _) pos = do
-  alpha <- Char.charToAlpha x & includeTokenStuff pos [i|invalid register name @${x}|]
+  alpha <- Char.charToAlpha x & includeTokenStuff pos [i|invalid register name "@${x}"|]
   pure $ Alphabetic alpha
 
 readLowerString :: String -> TokenPos -> Processor LowerString
 readLowerString x pos = parseMaybe String.parseLowerString x
-  & includeTokenStuff pos [i|expected a lower string (e.g. number, relativenumber), but a not lower string is gotten.|]
+  & includeTokenStuff pos [i|expected a lower string "[a-z]+", but a not lower string is gotten.|]
 
 resolveParsingCamel :: TokenPos -> Either String Camel -> Processor Camel
 resolveParsingCamel _ (Right x) = pure x

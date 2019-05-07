@@ -170,7 +170,7 @@ instance Pretty Token where
   pretty Arrow       = String.fromString "->"
   pretty Bar         = String.fromString "|"
   pretty Comma       = String.fromString ","
-  pretty LineBreak   = String.fromString "\n"
+  pretty LineBreak   = String.fromString "{a line break}"
   pretty (Ident x)   = pretty x
   pretty (Literal x) = pretty x
 
