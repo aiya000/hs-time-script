@@ -8,8 +8,8 @@ import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO
 import Tim.Char
 import Tim.Megaparsec
-import qualified Control.Applicative as P
 import qualified Data.String as String
+import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 
 -- |
@@ -42,7 +42,7 @@ unNonEmpty (NonEmpty x xs) = x : xs
 
 parseNonEmpty :: CodeParsing m => m NonEmpty
 parseNonEmpty =
-  NonEmpty <$> P.anyChar <*> P.many P.anyChar
+  NonEmpty <$> P.anySingle <*> P.many P.anySingle
 
 fromString :: String -> Maybe NonEmpty
 fromString "" = Nothing

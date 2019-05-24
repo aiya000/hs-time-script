@@ -13,69 +13,74 @@ import Data.Text.Prettyprint.Doc (Pretty(..))
 import Data.Void (Void)
 import Numeric.Natural (Natural)
 import RIO hiding (first)
-import RIO.List (foldl)
-import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
-import Text.Megaparsec.Error (ErrorItem(..), ErrorFancy(..), errorPos)
+import RIO.List
+import Text.Megaparsec hiding (Token, SourcePos)
 import Tim.Megaparsec
-import Tim.Processor (Processor, runProcessor, Failure(..), TokenPos(..), SourcePos(..))
-import qualified Data.Set as Set
+import Tim.Processor
+import Tim.Util.String
 import qualified Data.String as String
 import qualified Data.Text as Text
-import qualified Prelude as Unsafe
 import qualified Text.Megaparsec as P
-import qualified Text.Megaparsec.Char as P
 import qualified Tim.String as Name
 
-type LexError = ParseError (P.Token String) Void
+type LexError = ParseError String Void
+type LexErrorBundle = ParseErrorBundle String Void
 type LexErrorItem = ErrorItem (P.Token String)
 type LexErrorFancy = ErrorFancy Void
 
-takeReasons :: LexError -> Either (Set LexErrorItem) (Set LexErrorFancy)
+takeReasons :: ParseError String Void -> Either (Set LexErrorItem) (Set LexErrorFancy)
 takeReasons (TrivialError _ _ reasons) = Left reasons
 takeReasons (FancyError _ reasons) = Right reasons
-
-takeProblem :: LexError -> Maybe LexErrorItem
-takeProblem (TrivialError _ maybeProblem _) = maybeProblem
-takeProblem (FancyError _ _) = Nothing
 
 -- | Before 'runNaked'
 type Naked = ParsecT Void String Processor
 
 -- | After 'runNaked'
-type Lexed = Either LexError
+type Lexed = Either LexErrorBundle
 
 runNaked :: String -> Naked a -> Processor (Lexed a)
 runNaked code naked = runParserT naked "lexer" code
 
 -- | Takes the last of a taken error
-compatible :: LexError -> Failure
-compatible lexError =
-  let (P.SourcePos fileName (P.unPos -> line) (P.unPos -> col) :| _) = errorPos lexError
-      problem = fromMaybe (Unsafe.error "{has been to unknown conditinon!}") $ takeProblem lexError
-      message = [i|Got ${gotten problem}, but expected ${simplizeAll $ takeReasons lexError}|] :: String
-  in Failure [i|${fileName}: ${message}|] . OnAToken $ TokenPos line col
+compatible :: LexErrorBundle -> Failure
+compatible ParseErrorBundle{..} =
+    Failure (argue bundleErrors) (onlyPos bundlePosState)
   where
-    simplizeAll :: Either (Set LexErrorItem) (Set LexErrorFancy) -> String
-    simplizeAll =
-      unsentences . Set.toList .
-        either (Set.map simplizeItem) (Set.map simplizeFancy)
+    onlyPos :: PosState String -> SourcePos
+    onlyPos PosState{..} =
+      OnAToken $ TokenPos
+        (unPos $ sourceLine pstateSourcePos)
+        (unPos $ sourceColumn pstateSourcePos)
 
-    gotten :: LexErrorItem -> String
-    gotten (Tokens (x :| xs)) = [i|`${show . pretty $ x : xs}`|]
-    gotten (Label (x :| xs)) = [i|a ${x : xs}|]
-    gotten EndOfInput = "EOF"
+-- |
+-- When the lexer is failure,
+-- shows an error message for user.
+argue :: NonEmpty LexError -> String
+argue = intercalate "\n" . toList . fmap (("- " <>) . errorDetail)
+  where
+    errorDetail :: LexError -> String
+    errorDetail (TrivialError offSet maybeActual expected) = contrast offSet maybeActual expected
+    errorDetail (FancyError offSet errors) = something offSet errors
 
-    simplizeItem :: LexErrorItem -> String
-    simplizeItem (Tokens (x :| xs)) = [i|the one character of [${x : xs}]|]
-    simplizeItem (Label (x :| xs)) = [i|a ${x : xs}|]
-    simplizeItem EndOfInput = "EOF"
+    contrast :: Int -> Maybe LexErrorItem -> Set LexErrorItem -> String
+    contrast offSet Nothing expected =
+        [i|L${offSet}: Expected ${commaSeparated expected}|]
+    contrast offSet (Just actual) expected =
+      [i|L${offSet}: Got ${visible actual}, but expected ${commaSeparated expected}.|]
 
-    simplizeFancy :: LexErrorFancy -> String
-    simplizeFancy = show -- TODO
+    commaSeparated :: Set LexErrorItem -> String
+    commaSeparated (toList -> items) =
+      enumerateByComma $ map visible items
 
-    unsentences :: [String] -> String
-    unsentences [] = ""
-    unsentences (x : xs) = foldl (\result y -> result <> ", " <> y) x xs
+    visible :: LexErrorItem -> String
+    visible (Tokens (x :| xs)) = enumerateByComma . map (: []) $ x : xs
+    visible (Label (l :| abel)) = l : abel
+    visible EndOfInput = "EOF"
+
+    -- TODO: What is 'FancyError'?
+    something :: Int -> Set LexErrorFancy -> String
+    something offSet errors = [i|This message is TODO. What is this? offSet=${show offSet}, errors=${show errors}|]
+
 
 -- | A context for the lexer
 newtype Lexer a = Lexer
