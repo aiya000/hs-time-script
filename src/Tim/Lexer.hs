@@ -11,7 +11,6 @@ import RIO
 import Tim.Lexer.Types
 import Tim.Lexer.Types.Combinators
 import Tim.Processor (Failure, TokenPos)
-import Tim.String
 import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
@@ -24,8 +23,9 @@ lex = runLexer lexer . Text.unpack
 lexer :: Lexer [(Token, TokenPos)]
 lexer = P.many $ do
   _ <- P.many P.spaceChar `forwardVia` length
-  symbol <|> first Literal <$> literal <|>
-             first Ident <$> ident
+  symbol <|>
+    first Literal <$> literal <|>
+    first Ident <$> ident
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
@@ -85,7 +85,7 @@ stringLiteral :: Lexer (AtomicLiteral, TokenPos)
 stringLiteral = P.try $ do
     (q, pos) <- quote `forward` 1
     -- +1 is a length of `q`
-    (str, _) <- flip forwardVia ((+1) . length) $ P.manyTill P.charLiteral $ P.char (toChar q)
+    (str, _) <- flip forwardVia ((+1) . length) $ P.manyTill P.charLiteral $ P.char (quoteToChar q)
     pure (String' q str, pos)
 
 -- | Parses a string that surrounded by `'` or `"`
@@ -110,4 +110,4 @@ sign IntMinus nat = negate $ fromIntegral nat
 
 ident :: Lexer (Ident, TokenPos)
 ident =
-  parseIdent `forwardVia` length . unNonEmpty
+  parseIdent `forwardVia` length . unIdent

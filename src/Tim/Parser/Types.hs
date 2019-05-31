@@ -5,9 +5,9 @@ module Tim.Parser.Types where
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import Tim.Char
 import Tim.String
 import qualified Data.List.NonEmpty as List
+import qualified Tim.Lexer.Types as Lexers
 
 type Code = [Syntax]
 
@@ -61,34 +61,7 @@ infixl 5 `App`
 
 -- | The parser's variable identifiers
 data Variable = SimpleLocal String -- ^ simple_idents
-              | Scoped Scope String -- ^ g:, l:foo
-              | Register Register -- ^ @+, @u
-              | Option Option -- ^ &nu, &number
-  deriving (Show, Eq)
-
-
--- | x:
-data Scope = G | S | L | A | V | B | W | T
-  deriving (Show, Eq)
-
--- | Please see `:help registers` on Vim
-data Register = Unnamed -- ^ ""
-              | SmallDelete -- ^ "-
-              | ReadOnlyColon -- ^ ":
-              | ReadOnlyDot -- ^ ".
-              | ReadOnlyPercent -- ^ "%
-              | Buffer -- ^ "#
-              | Expression -- ^ "=
-              | ClipboardStar -- ^ "*
-              | ClipboardPlus -- ^ "+
-              | BlackHole -- ^ "_
-              | Searched -- ^ "/
-              | Numeric DigitChar -- ^ "0 ~ "9
-              | Alphabetic AlphaChar -- ^ "a ~ "z and "A ~ "Z
-  deriving (Show, Eq)
-
--- | &foo &l:bar &g:baz
-data Option = UnscopedOption LowerString
-            | LocalScopedOption LowerString
-            | GlobalScopedOption LowerString
+              | Scoped Lexers.Scope String -- ^ g:, l:foo
+              | Register Lexers.Register -- ^ @+, @u
+              | Option Lexers.Option -- ^ &nu, &number
   deriving (Show, Eq)

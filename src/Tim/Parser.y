@@ -1,5 +1,6 @@
 {
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
 -- |
@@ -29,10 +30,11 @@ import Prelude
 import RIO.List
 import Text.Megaparsec (parseMaybe)
 import Tim.Char (DigitChar(..))
-import Tim.Lexer.Types (Token)
+import Tim.Lexer.Types (Token, Register(..), Option(..), Scope(..))
 import Tim.Parser.Types
 import Tim.Processor
-import Tim.String (LowerString, Camel (..))
+import Tim.String
+import qualified Data.List.NonEmpty as List
 import qualified Data.Map.Strict as Map
 import qualified Tim.Char as Char
 import qualified Tim.Lexer.Types as Token
@@ -66,49 +68,49 @@ import qualified Tim.String.Parser as P
   lineBreak     { (Token.LineBreak, _)                               }
 
   -- Important command identifiers
-  let { (Token.Ident (String.NonEmpty 'l' "et"), _) }
+  let { (Token.Ident Token.Let, _) }
 
   -- variable identifiers
-  varScopedG { (Token.Ident (String.unNonEmpty -> 'g' : ':' : $$), _) }
-  varScopedS { (Token.Ident (String.unNonEmpty -> 's' : ':' : $$), _) }
-  varScopedL { (Token.Ident (String.unNonEmpty -> 'l' : ':' : $$), _) }
-  varScopedA { (Token.Ident (String.unNonEmpty -> 'a' : ':' : $$), _) }
-  varScopedV { (Token.Ident (String.unNonEmpty -> 'v' : ':' : $$), _) }
-  varScopedB { (Token.Ident (String.unNonEmpty -> 'b' : ':' : $$), _) }
-  varScopedW { (Token.Ident (String.unNonEmpty -> 'w' : ':' : $$), _) }
-  varScopedT { (Token.Ident (String.unNonEmpty -> 't' : ':' : $$), _) }
+  varScopedG { (Token.Ident (Token.unIdent -> 'g' : ':' : $$), _) }
+  varScopedS { (Token.Ident (Token.unIdent -> 's' : ':' : $$), _) }
+  varScopedL { (Token.Ident (Token.unIdent -> 'l' : ':' : $$), _) }
+  varScopedA { (Token.Ident (Token.unIdent -> 'a' : ':' : $$), _) }
+  varScopedV { (Token.Ident (Token.unIdent -> 'v' : ':' : $$), _) }
+  varScopedB { (Token.Ident (Token.unIdent -> 'b' : ':' : $$), _) }
+  varScopedW { (Token.Ident (Token.unIdent -> 'w' : ':' : $$), _) }
+  varScopedT { (Token.Ident (Token.unIdent -> 't' : ':' : $$), _) }
 
-  varRegUnnamed   { (Token.Ident (String.unNonEmpty -> '@' : '"' : $$), _) }
-  varRegSmallDel  { (Token.Ident (String.unNonEmpty -> '@' : '-' : $$), _) }
-  varRegReadOnlyC { (Token.Ident (String.unNonEmpty -> '@' : ':' : $$), _) }
-  varRegReadonlyD { (Token.Ident (String.unNonEmpty -> '@' : '.' : $$), _) }
-  varRegReadOnlyP { (Token.Ident (String.unNonEmpty -> '@' : '%' : $$), _) }
-  varRegBuffer    { (Token.Ident (String.unNonEmpty -> '@' : '#' : $$), _) }
-  varRegExpr      { (Token.Ident (String.unNonEmpty -> '@' : '=' : $$), _) }
-  varRegClipS     { (Token.Ident (String.unNonEmpty -> '@' : '*' : $$), _) }
-  varRegClipP     { (Token.Ident (String.unNonEmpty -> '@' : '+' : $$), _) }
-  varRegBlackHole { (Token.Ident (String.unNonEmpty -> '@' : '_' : $$), _) }
-  varRegSeached   { (Token.Ident (String.unNonEmpty -> '@' : '/' : $$), _) }
-  varReg0         { (Token.Ident (String.unNonEmpty -> '@' : '0' : $$), _) }
-  varReg1         { (Token.Ident (String.unNonEmpty -> '@' : '1' : $$), _) }
-  varReg2         { (Token.Ident (String.unNonEmpty -> '@' : '2' : $$), _) }
-  varReg3         { (Token.Ident (String.unNonEmpty -> '@' : '3' : $$), _) }
-  varReg4         { (Token.Ident (String.unNonEmpty -> '@' : '4' : $$), _) }
-  varReg5         { (Token.Ident (String.unNonEmpty -> '@' : '5' : $$), _) }
-  varReg6         { (Token.Ident (String.unNonEmpty -> '@' : '6' : $$), _) }
-  varReg7         { (Token.Ident (String.unNonEmpty -> '@' : '7' : $$), _) }
-  varReg8         { (Token.Ident (String.unNonEmpty -> '@' : '8' : $$), _) }
-  varReg9         { (Token.Ident (String.unNonEmpty -> '@' : '9' : $$), _) }
-  varRegAlpha     { (Token.Ident (String.unNonEmpty -> '@' : $$), pos)     } -- a-zA-Z
+  varRegUnnamed   { (Token.Ident (Token.unIdent -> '@' : '"' : $$), _) }
+  varRegSmallDel  { (Token.Ident (Token.unIdent -> '@' : '-' : $$), _) }
+  varRegReadOnlyC { (Token.Ident (Token.unIdent -> '@' : ':' : $$), _) }
+  varRegReadonlyD { (Token.Ident (Token.unIdent -> '@' : '.' : $$), _) }
+  varRegReadOnlyP { (Token.Ident (Token.unIdent -> '@' : '%' : $$), _) }
+  varRegBuffer    { (Token.Ident (Token.unIdent -> '@' : '#' : $$), _) }
+  varRegExpr      { (Token.Ident (Token.unIdent -> '@' : '=' : $$), _) }
+  varRegClipS     { (Token.Ident (Token.unIdent -> '@' : '*' : $$), _) }
+  varRegClipP     { (Token.Ident (Token.unIdent -> '@' : '+' : $$), _) }
+  varRegBlackHole { (Token.Ident (Token.unIdent -> '@' : '_' : $$), _) }
+  varRegSeached   { (Token.Ident (Token.unIdent -> '@' : '/' : $$), _) }
+  varReg0         { (Token.Ident (Token.unIdent -> '@' : '0' : $$), _) }
+  varReg1         { (Token.Ident (Token.unIdent -> '@' : '1' : $$), _) }
+  varReg2         { (Token.Ident (Token.unIdent -> '@' : '2' : $$), _) }
+  varReg3         { (Token.Ident (Token.unIdent -> '@' : '3' : $$), _) }
+  varReg4         { (Token.Ident (Token.unIdent -> '@' : '4' : $$), _) }
+  varReg5         { (Token.Ident (Token.unIdent -> '@' : '5' : $$), _) }
+  varReg6         { (Token.Ident (Token.unIdent -> '@' : '6' : $$), _) }
+  varReg7         { (Token.Ident (Token.unIdent -> '@' : '7' : $$), _) }
+  varReg8         { (Token.Ident (Token.unIdent -> '@' : '8' : $$), _) }
+  varReg9         { (Token.Ident (Token.unIdent -> '@' : '9' : $$), _) }
+  varRegAlpha     { (Token.Ident (Token.unIdent -> '@' : $$), pos)     } -- a-zA-Z
 
-  varOptionScopedL  { (Token.Ident (String.unNonEmpty -> '&' : 'l' : ':' : $$), pos) }
-  varOptionScopedG  { (Token.Ident (String.unNonEmpty -> '&' : 'g' : ':' : $$), pos) }
-  varOptionUnscoped { (Token.Ident (String.unNonEmpty -> '&' : $$), pos)             }
+  varOptionScopedL  { (Token.Ident (Token.unIdent -> '&' : 'l' : ':' : $$), pos) }
+  varOptionScopedG  { (Token.Ident (Token.unIdent -> '&' : 'g' : ':' : $$), pos) }
+  varOptionUnscoped { (Token.Ident (Token.unIdent -> '&' : $$), pos)             }
 
-  varSimpleLocal { (Token.Ident (String.unNonEmpty -> $$), pos) }
+  varSimpleLocal { (Token.Ident (Token.unIdent -> $$), pos) }
 
   -- An another identifier
-  ident { (Token.Ident (String.unNonEmpty -> $$), pos) }
+  ident { (Token.Ident (Token.unIdent -> $$), pos) }
 
 %%
 
@@ -118,6 +120,7 @@ AST :: { AST }
 
 Code :: { Code }
   : {- empty -}           { []      }
+  | Syntax                { [$1]    }
   | Syntax lineBreak Code { $1 : $3 }
 
 Syntax :: { Syntax }
@@ -179,7 +182,7 @@ Variable :: { Variable }
   | varSimpleLocal { SimpleLocal $1 }
 
 -- Destructive assignee variables
-DestVars :: { NonEmpty Variable }
+DestVars :: { List.NonEmpty Variable }
   : Variable              { ($1 :| []) }
   | Variable ',' DestVars { $1 <| $3   }
 

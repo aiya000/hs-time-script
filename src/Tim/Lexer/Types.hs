@@ -1,12 +1,42 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
-module Tim.Lexer.Types where
+module Tim.Lexer.Types
+  ( LexError
+  , LexErrorItem
+  , LexErrorFancy
+  , Naked
+  , Lexed
+  , Lexer (..)
+  , runLexer
+  , AtomicLiteral (..)
+  , Quote (..)
+  , quoteToChar
+  , surround
+  , pattern String'
+  , Token (..)
+  , Ident (..)
+  , pattern Let
+  , unIdent
+  , parseIdent
+  , QualifiedVar (..)
+  , unQualifiedVar
+  , parseQualifiedVar
+  , Scope (..)
+  , scopeToChar
+  , parseScope
+  , Register (..)
+  , registerToChar
+  , parseRegister
+  , Option (..)
+  , unOption
+  , parseOption
+  ) where
 
 import Control.Monad.Except (MonadError)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
-import Data.List.NonEmpty (NonEmpty(..))
+import Data.List.NonEmpty hiding (toList, map)
 import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (Pretty(..))
@@ -14,10 +44,14 @@ import Data.Void (Void)
 import Numeric.Natural (Natural)
 import RIO hiding (first)
 import RIO.List
+import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec hiding (Token, SourcePos)
+import Tim.Char hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Tim.Megaparsec
 import Tim.Processor
+import Tim.String
 import Tim.Util.String
+import qualified Data.List.NonEmpty as List
 import qualified Data.String as String
 import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
@@ -27,10 +61,6 @@ type LexError = ParseError String Void
 type LexErrorBundle = ParseErrorBundle String Void
 type LexErrorItem = ErrorItem (P.Token String)
 type LexErrorFancy = ErrorFancy Void
-
-takeReasons :: ParseError String Void -> Either (Set LexErrorItem) (Set LexErrorFancy)
-takeReasons (TrivialError _ _ reasons) = Left reasons
-takeReasons (FancyError _ reasons) = Right reasons
 
 -- | Before 'runNaked'
 type Naked = ParsecT Void String Processor
@@ -55,7 +85,7 @@ compatible ParseErrorBundle{..} =
 -- |
 -- When the lexer is failure,
 -- shows an error message for user.
-argue :: NonEmpty LexError -> String
+argue :: List.NonEmpty LexError -> String
 argue = intercalate "\n" . toList . fmap (("- " <>) . errorDetail)
   where
     errorDetail :: LexError -> String
@@ -80,6 +110,7 @@ argue = intercalate "\n" . toList . fmap (("- " <>) . errorDetail)
     -- TODO: What is 'FancyError'?
     something :: Int -> Set LexErrorFancy -> String
     something offSet errors = [i|This message is TODO. What is this? offSet=${show offSet}, errors=${show errors}|]
+
 
 
 -- | A context for the lexer
@@ -126,9 +157,9 @@ instance Pretty AtomicLiteral where
 data Quote = SingleQ | DoubleQ
   deriving (Show, Eq)
 
-toChar :: Quote -> Char
-toChar SingleQ = '\''
-toChar DoubleQ = '"'
+quoteToChar :: Quote -> Char
+quoteToChar SingleQ = '\''
+quoteToChar DoubleQ = '"'
 
 -- | Surrounds the string by a quote character
 surround :: Quote -> String -> String
@@ -142,9 +173,6 @@ pattern String' q s <- String q (Text.unpack -> s)
     String' q s = String q (Text.pack s)
 
 {-# COMPLETE Nat, Float, String', Int #-}
-
--- | "Int", "List", "x"
-type Identifier = Text
 
 -- | Time script's keywords, identifiers, or else
 data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type.
@@ -180,23 +208,188 @@ instance Pretty Token where
   pretty (Literal x) = pretty x
 
 
+-- | Delimitters to split an rhs or lhs identifier and an another token.
+identDelimiters :: [Char]
+identDelimiters = [ ' '
+                  , '='
+                  , '('
+                  ]
+
+
 -- |
 -- Any identifiers.
--- (command, variable, or type identifier.)
-type Ident = Name.NonEmpty
+--
+-- NOTE:
+-- Why identifiers of unqualified variable, types, and commands cannot be determined by the lexer?
+-- because these has same representation.
+-- unqualified variables and (Vim buildtin) commands has "[a-z][a-zA-Z0-9]*".
+-- types and (user defined) comands has "[A-Z][a-zA-Z0-9]*".
+data Ident = PartVarIdent QualifiedVar -- ^ identifiers that can be resolved by the lexer.
+           | GeneralIdent Name.NonEmpty -- ^ identifiers that cannot be resolved by the lexer (unqualified variables, types, and commands).
+  deriving (Show, Eq)
+
+instance Pretty Ident where
+  pretty (PartVarIdent x) = pretty x
+  pretty (GeneralIdent x) = pretty x
+
+-- | The identifier of "let"
+pattern Let :: Ident
+pattern Let = GeneralIdent (Name.NonEmpty 'l' "et")
+
+unIdent :: Ident -> String
+unIdent (PartVarIdent x) = unQualifiedVar x
+unIdent (GeneralIdent x) = Name.unNonEmpty x
 
 parseIdent :: CodeParsing m => m Ident
 parseIdent =
-  Name.NonEmpty
-    <$> P.noneOf enclosers
-    <*> P.many (P.noneOf delimiters)
-  where
-    delimiters =
-      ':' :
-      ' ' : enclosers
+  PartVarIdent <$> parseQualifiedVar <|>
+  GeneralIdent <$> parseGeneralIdent
 
-    enclosers =
-      [ '(', ')'
-      , '{', '}'
-      , '[', ']'
-      ]
+parseGeneralIdent :: CodeParsing m => m Name.NonEmpty
+parseGeneralIdent =
+  Name.NonEmpty
+    <$> P.noneOf identDelimiters
+    <*> P.many (P.noneOf identDelimiters)
+
+
+-- | (At here, non scoped variable "[a-zA-Z][a-zA-Z0-9]*" is resolved as `General x :: Ident`.)
+data QualifiedVar = Scoped Scope String -- ^ g:, l:foo
+                  | Register Register -- ^ @+, @u
+                  | Option Option -- ^ &nu, &number
+  deriving (Show, Eq)
+
+instance Pretty QualifiedVar where
+  pretty (Scoped x name) = String.fromString [i|${scopeToChar x}:${name}|]
+  pretty (Register x) = pretty x
+  pretty (Option x) = pretty x
+
+unQualifiedVar :: QualifiedVar -> String
+unQualifiedVar (Scoped x name) = scopeToChar x : name
+unQualifiedVar (Register x)    = ['@', registerToChar x]
+unQualifiedVar (Option x)      = unOption x
+
+parseQualifiedVar :: CodeParsing m => m QualifiedVar
+parseQualifiedVar =
+  uncurry Scoped <$> parseScoped <|>
+  Register <$> parseRegister <|>
+  Option <$> parseOption
+
+parseScoped :: CodeParsing m => m (Scope, String)
+parseScoped = (,)
+    <$> parseScope
+    <*> P.many (P.noneOf identDelimiters)
+
+
+-- | x:
+data Scope = G | S | L | A | V | B | W | T
+  deriving (Show, Eq)
+
+scopeToChar :: Scope -> Char
+scopeToChar G = 'g'
+scopeToChar S = 's'
+scopeToChar L = 'l'
+scopeToChar A = 'a'
+scopeToChar V = 'v'
+scopeToChar B = 'b'
+scopeToChar W = 'w'
+scopeToChar T = 't'
+
+parseScope :: CodeParsing m => m Scope
+parseScope =
+  P.single 'g' $> G <|>
+  P.single 's' $> S <|>
+  P.single 'l' $> L <|>
+  P.single 'a' $> A <|>
+  P.single 'v' $> V <|>
+  P.single 'b' $> B <|>
+  P.single 'w' $> W <|>
+  P.single 't' $> T
+
+
+-- | Please see `:help registers` on Vim
+data Register = Unnamed -- ^ ""
+              | SmallDelete -- ^ "-
+              | ReadOnlyColon -- ^ ":
+              | ReadOnlyDot -- ^ ".
+              | ReadOnlyPercent -- ^ "%
+              | Buffer -- ^ "#
+              | Expression -- ^ "=
+              | ClipboardStar -- ^ "*
+              | ClipboardPlus -- ^ "+
+              | BlackHole -- ^ "_
+              | Searched -- ^ "/
+              | Numeric DigitChar -- ^ "0 ~ "9
+              | Alphabetic AlphaChar -- ^ "a ~ "z and "A ~ "Z
+  deriving (Show, Eq)
+
+instance Pretty Register where
+  pretty x = String.fromString $ '@' : [registerToChar x]
+
+registerToChar :: Register -> Char
+registerToChar Unnamed         = '"'
+registerToChar SmallDelete     = '-'
+registerToChar ReadOnlyColon   = ':'
+registerToChar ReadOnlyDot     = '.'
+registerToChar ReadOnlyPercent = '%'
+registerToChar Buffer          = '#'
+registerToChar Expression      = '='
+registerToChar ClipboardStar   = '*'
+registerToChar ClipboardPlus   = '+'
+registerToChar BlackHole       = '_'
+registerToChar Searched        = '/'
+registerToChar (Numeric x)     = digitToChar x
+registerToChar (Alphabetic x)  = alphaToChar x
+
+parseRegister :: CodeParsing m => m Register
+parseRegister =
+  P.single '"' $> Unnamed <|>
+  P.single '-' $> SmallDelete <|>
+  P.single ':' $> ReadOnlyColon <|>
+  P.single '.' $> ReadOnlyDot <|>
+  P.single '%' $> ReadOnlyPercent <|>
+  P.single '#' $> Buffer <|>
+  P.single '=' $> Expression <|>
+  P.single '*' $> ClipboardStar <|>
+  P.single '+' $> ClipboardPlus <|>
+  P.single '_' $> BlackHole <|>
+  P.single '/' $> Searched <|>
+  Numeric    <$> digitChar <|>
+  Alphabetic <$> alphaChar
+
+
+-- | &foo &l:bar &g:baz
+data Option = UnscopedOption LowerString
+            | LocalScopedOption LowerString
+            | GlobalScopedOption LowerString
+  deriving (Show, Eq)
+
+instance Pretty Option where
+  pretty (UnscopedOption x)     = pretty x
+  pretty (LocalScopedOption x)  = pretty x
+  pretty (GlobalScopedOption x) = pretty x
+
+unOption :: Option -> String
+unOption (UnscopedOption x)     = unLowerString x
+unOption (LocalScopedOption x)  = unLowerString x
+unOption (GlobalScopedOption x) = unLowerString x
+
+parseOption :: CodeParsing m => m Option
+parseOption =
+  parseLocalScopedOption <|>
+  parseGlobalScopedOption <|>
+  parseUnscopedOption
+
+parseLocalScopedOption :: CodeParsing m => m Option
+parseLocalScopedOption = do
+  _ <- P.chunk "&l:"
+  LocalScopedOption <$> parseLowerString
+
+parseGlobalScopedOption :: CodeParsing m => m Option
+parseGlobalScopedOption = do
+  _ <- P.chunk "&g:"
+  GlobalScopedOption <$> parseLowerString
+
+parseUnscopedOption :: CodeParsing m => m Option
+parseUnscopedOption = do
+  _ <- P.chunk "&"
+  UnscopedOption <$> parseLowerString
