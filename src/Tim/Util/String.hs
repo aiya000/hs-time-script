@@ -4,7 +4,7 @@ module Tim.Util.String where
 import Data.String.Here
 import RIO
 import RIO.List
-import Tim.Util.List
+import Tim.Util.List hiding (last)
 
 -- |
 -- Makes a comma separated message.
@@ -27,7 +27,7 @@ enumerateByComma [x] = x
 enumerateByComma [x, y] = [i|${x} or ${y}|]
 enumerateByComma (x : y : z : rest) =
   case snocun rest of
-    Just (last, body) -> [i|${x}, ${y}, ${comma body}, or ${last}|]
+    Just (last, body) -> [i|${x}, ${y}, ${comma $ z : body}, or ${last}|]
     Nothing -> [i|${x}, ${y}, or ${z}|]
 
 -- |

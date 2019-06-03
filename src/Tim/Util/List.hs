@@ -12,10 +12,16 @@ import Safe
 -- Nothing
 --
 -- >>> snocun [10]
--- Just (10, [])
+-- Just (10,[])
 --
 -- >>> snocun [1..9]
--- Just (9, [1, 2, 3, 4, 5, 6, 7, 8])
+-- Just (9,[1,2,3,4,5,6,7,8])
 snocun :: [a] -> Maybe (a, [a])
 snocun [] = Nothing
-snocun (x : xs) = (, init $ x :| xs) <$> lastMay xs
+snocun (x : xs) = Just (last $ x :| xs, init $ x :| xs)
+
+last :: NonEmpty a -> a
+last (x :| xs) =
+  case lastMay xs of
+    Nothing -> x
+    Just x' -> x'
