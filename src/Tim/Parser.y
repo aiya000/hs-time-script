@@ -71,7 +71,7 @@ import qualified Tim.String.Parser as P
   let { (Token.Ident Token.Let, _) }
 
   -- variable identifiers
-  varScopedG { (Token.Ident (Token.unIdent -> 'g' : ':' : $$), _) }
+  varScopedG { (Token.Ident (SpecialIdent (Scoped G $$)), _) }
   varScopedS { (Token.Ident (Token.unIdent -> 's' : ':' : $$), _) }
   varScopedL { (Token.Ident (Token.unIdent -> 'l' : ':' : $$), _) }
   varScopedA { (Token.Ident (Token.unIdent -> 'a' : ':' : $$), _) }
