@@ -1,6 +1,10 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+-- |
+-- NOTE:
+-- a parser `parseFoo` means a parsing with `try`.
+-- a parser `foo` means a parsing without `try`.
 module Tim.Lexer.Types
   ( LexError
   , LexErrorItem
@@ -37,8 +41,11 @@ import Control.Monad.Except (MonadError)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
 import Data.List.NonEmpty hiding (toList, map)
+import qualified Data.List.NonEmpty as List
+import qualified Data.String as String
 import Data.String.Here (i)
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import Data.Void (Void)
 import Numeric.Natural (Natural)
@@ -46,16 +53,13 @@ import RIO hiding (first)
 import RIO.List
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec hiding (Token, SourcePos)
+import qualified Text.Megaparsec as P
 import Tim.Char hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Tim.Megaparsec
 import Tim.Processor
 import Tim.String
-import Tim.Util.String
-import qualified Data.List.NonEmpty as List
-import qualified Data.String as String
-import qualified Data.Text as Text
-import qualified Text.Megaparsec as P
 import qualified Tim.String as Name
+import Tim.Util.String
 
 type LexError = ParseError String Void
 type LexErrorBundle = ParseErrorBundle String Void
@@ -213,6 +217,11 @@ identDelimiters :: [Char]
 identDelimiters = [ ' '
                   , '='
                   , '('
+                  , ')'
+                  , '{'
+                  , '}'
+                  , '['
+                  , ']'
                   ]
 
 
@@ -224,12 +233,12 @@ identDelimiters = [ ' '
 -- because these has same representation.
 -- unqualified variables and (Vim buildtin) commands has "[a-z][a-zA-Z0-9]*".
 -- types and (user defined) comands has "[A-Z][a-zA-Z0-9]*".
-data Ident = PartVarIdent QualifiedVar -- ^ identifiers that can be resolved by the lexer.
+data Ident = SpecialIdent QualifiedVar -- ^ identifiers that can be resolved by the lexer.
            | GeneralIdent Name.NonEmpty -- ^ identifiers that cannot be resolved by the lexer (unqualified variables, types, and commands).
   deriving (Show, Eq)
 
 instance Pretty Ident where
-  pretty (PartVarIdent x) = pretty x
+  pretty (SpecialIdent x) = pretty x
   pretty (GeneralIdent x) = pretty x
 
 -- | The identifier of "let"
@@ -237,12 +246,12 @@ pattern Let :: Ident
 pattern Let = GeneralIdent (Name.NonEmpty 'l' "et")
 
 unIdent :: Ident -> String
-unIdent (PartVarIdent x) = unQualifiedVar x
+unIdent (SpecialIdent x) = unQualifiedVar x
 unIdent (GeneralIdent x) = Name.unNonEmpty x
 
 parseIdent :: CodeParsing m => m Ident
 parseIdent =
-  PartVarIdent <$> parseQualifiedVar <|>
+  SpecialIdent <$> parseQualifiedVar <|>
   GeneralIdent <$> parseGeneralIdent
 
 parseGeneralIdent :: CodeParsing m => m Name.NonEmpty
@@ -264,7 +273,7 @@ instance Pretty QualifiedVar where
   pretty (Option x) = pretty x
 
 unQualifiedVar :: QualifiedVar -> String
-unQualifiedVar (Scoped x name) = scopeToChar x : name
+unQualifiedVar (Scoped x name) = scopeToChar x : ':' : name
 unQualifiedVar (Register x)    = ['@', registerToChar x]
 unQualifiedVar (Option x)      = unOption x
 
@@ -275,9 +284,11 @@ parseQualifiedVar =
   Option <$> parseOption
 
 parseScoped :: CodeParsing m => m (Scope, String)
-parseScoped = (,)
-    <$> parseScope
-    <*> P.many (P.noneOf identDelimiters)
+parseScoped = P.try $ do
+  s <- parseScope
+  _ <- P.single ':'
+  ident <- P.many (P.noneOf identDelimiters)
+  pure (s, ident)
 
 
 -- | x:
@@ -341,20 +352,21 @@ registerToChar (Numeric x)     = digitToChar x
 registerToChar (Alphabetic x)  = alphaToChar x
 
 parseRegister :: CodeParsing m => m Register
-parseRegister =
+parseRegister = P.try $ do
+  _ <- P.single '@'
   P.single '"' $> Unnamed <|>
-  P.single '-' $> SmallDelete <|>
-  P.single ':' $> ReadOnlyColon <|>
-  P.single '.' $> ReadOnlyDot <|>
-  P.single '%' $> ReadOnlyPercent <|>
-  P.single '#' $> Buffer <|>
-  P.single '=' $> Expression <|>
-  P.single '*' $> ClipboardStar <|>
-  P.single '+' $> ClipboardPlus <|>
-  P.single '_' $> BlackHole <|>
-  P.single '/' $> Searched <|>
-  Numeric    <$> digitChar <|>
-  Alphabetic <$> alphaChar
+    P.single '-' $> SmallDelete <|>
+    P.single ':' $> ReadOnlyColon <|>
+    P.single '.' $> ReadOnlyDot <|>
+    P.single '%' $> ReadOnlyPercent <|>
+    P.single '#' $> Buffer <|>
+    P.single '=' $> Expression <|>
+    P.single '*' $> ClipboardStar <|>
+    P.single '+' $> ClipboardPlus <|>
+    P.single '_' $> BlackHole <|>
+    P.single '/' $> Searched <|>
+    Numeric    <$> digitChar <|>
+    Alphabetic <$> alphaChar
 
 
 -- | &foo &l:bar &g:baz
@@ -380,16 +392,16 @@ parseOption =
   parseUnscopedOption
 
 parseLocalScopedOption :: CodeParsing m => m Option
-parseLocalScopedOption = do
+parseLocalScopedOption = P.try $ do
   _ <- P.chunk "&l:"
   LocalScopedOption <$> parseLowerString
 
 parseGlobalScopedOption :: CodeParsing m => m Option
-parseGlobalScopedOption = do
+parseGlobalScopedOption = P.try $ do
   _ <- P.chunk "&g:"
   GlobalScopedOption <$> parseLowerString
 
 parseUnscopedOption :: CodeParsing m => m Option
-parseUnscopedOption = do
+parseUnscopedOption = P.try $ do
   _ <- P.chunk "&"
   UnscopedOption <$> parseLowerString
