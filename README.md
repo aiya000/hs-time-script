@@ -10,6 +10,8 @@
 
 - Introduce advanced experience to Vim script (e.g. string interpolations)
 - Introduce strong static types to Vim script (Please see below 'About' section :sunglasses:)
+- The innovative, the consistency, and the easy to writeing is emphasizer than the backword compatibility
+    - Because Vim (script) definiately saves the backword compatibility
 
 ## About
 
@@ -138,27 +140,41 @@ let map: type(char_code) = char_code
 
 ### Advanced
 
+- Multi-line comments
+
+```vim
+"*
+ This
+ is
+ a
+ comment
+ *"
+```
+
+- Allow comments on all tails of lines
+
+```vim
+command! -bar ContLine  " This is a command
+    \ call gift#for#you()
+```
+
 - String interpolations
 
 ```vim
 let n: Nat = 10
 
 " expressions to be stringified via string()
-echo "$n ${n + 1}"
+echo $'$n ${n + 1}'
 " 10 11
-
-" single quotes doesn't expand (the raw string)
-echo '$n ${n + 1}'
-" $n ${n + 1}
 ```
 
-- Allow to name non upper camel for functions
+- Allow to names of non upper cases `[a-z_]+` for function references
 
 ```vim
 let to_string = function('string')
 ```
 
-- Don't require unnecessary back slashes in trivial cases
+- Don't require unnecessary back-slashes on trivial cases
 
 ```vim
 let xs = [
@@ -166,13 +182,19 @@ let xs = [
 ]
 
 echo map(xs, { _, x ->
-    f(x) + g(x)
+  f(x) + g(x)
 })
 ```
 
-- Don't require unnecessary quotes in dicts
+- Don't require unnecessary quotes on `{}` notation dicts
 
 ```vim
 echo {foo: 10} == {'foo': 10}
 " 1
+
+let x = {
+  aaa: 'caramel',   " Allowed because all keys are named by [a-z_]+
+  " keba-b: 'sweet',  " Not allowed because a name uses a char '-'
+  'keba-b': 'sweet',  " Not allowed because a name uses a char '-'
+}
 ```
