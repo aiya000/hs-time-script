@@ -41,7 +41,7 @@ test_let =
       process "let [x, y] = z" `toBe` syntax
         (Let (LDestuct [SimpleLocal "x", SimpleLocal "y"])
          Nothing
-         $ RVar (SimpleLocal "y"))
+         $ RVar (SimpleLocal "z"))
 
     testLetAtomicTypes = do
       process "let x: Type = y" `toBe` syntax
