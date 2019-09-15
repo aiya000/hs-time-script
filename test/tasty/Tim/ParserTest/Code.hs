@@ -6,8 +6,8 @@ import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase)
 import Tim.Parser.Types
-import Tim.Test
 import qualified Tim.String.Parser as P
+import Tim.Test
 
 -- | A code
 syntax :: Syntax -> AST
@@ -34,6 +34,10 @@ test_let =
         (Let (LVar $ SimpleLocal "x")
          Nothing
          $ RVar (SimpleLocal "y"))
+      process "let [x] = z" `toBe` syntax
+        (Let (LDestuct [SimpleLocal "x"])
+         Nothing
+         $ RVar (SimpleLocal "z"))
       process "let [x, y] = z" `toBe` syntax
         (Let (LDestuct [SimpleLocal "x", SimpleLocal "y"])
          Nothing
