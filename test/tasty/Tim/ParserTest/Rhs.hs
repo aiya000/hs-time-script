@@ -6,7 +6,7 @@ import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase)
 import Tim.Char (LowerChar (..), AlphaChar (..))
-import Tim.Lexer.Types hiding (AtomicLiteral(..), QualifiedVar(..))
+import Tim.Lexer.Types hiding (AtomicLiteral(..), QualifiedIdent(..))
 import Tim.Parser.Types
 import Tim.Test
 

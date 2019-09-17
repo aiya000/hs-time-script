@@ -23,9 +23,9 @@ module Tim.Lexer.Types
   , pattern Let
   , unIdent
   , parseIdent
-  , QualifiedVar (..)
-  , unQualifiedVar
-  , parseQualifiedVar
+  , QualifiedIdent (..)
+  , unQualifiedIdent
+  , parseQualifiedIdent
   , Scope (..)
   , scopeToChar
   , parseScope
@@ -233,12 +233,12 @@ identDelimiters = [ ' '
 -- because these has same representation.
 -- unqualified variables and (Vim buildtin) commands has "[a-z][a-zA-Z0-9]*".
 -- types and (user defined) comands has "[A-Z][a-zA-Z0-9]*".
-data Ident = SpecialIdent QualifiedVar -- ^ identifiers that can be resolved by the lexer.
+data Ident = QualifiedIdent QualifiedIdent -- ^ identifiers that can be resolved by the lexer.
            | GeneralIdent Name.NonEmpty -- ^ identifiers that cannot be resolved by the lexer (unqualified variables, types, and commands).
   deriving (Show, Eq)
 
 instance Pretty Ident where
-  pretty (SpecialIdent x) = pretty x
+  pretty (QualifiedIdent x) = pretty x
   pretty (GeneralIdent x) = pretty x
 
 -- | The identifier of "let"
@@ -246,12 +246,12 @@ pattern Let :: Ident
 pattern Let = GeneralIdent (Name.NonEmpty 'l' "et")
 
 unIdent :: Ident -> String
-unIdent (SpecialIdent x) = unQualifiedVar x
+unIdent (QualifiedIdent x) = unQualifiedIdent x
 unIdent (GeneralIdent x) = Name.unNonEmpty x
 
 parseIdent :: CodeParsing m => m Ident
 parseIdent =
-  SpecialIdent <$> parseQualifiedVar <|>
+  QualifiedIdent <$> parseQualifiedIdent <|>
   GeneralIdent <$> parseGeneralIdent
 
 parseGeneralIdent :: CodeParsing m => m Name.NonEmpty
@@ -262,23 +262,23 @@ parseGeneralIdent =
 
 
 -- | (At here, non scoped variable "[a-zA-Z][a-zA-Z0-9]*" is resolved as `General x :: Ident`.)
-data QualifiedVar = Scoped Scope String -- ^ g:, l:foo
-                  | Register Register -- ^ @+, @u
-                  | Option Option -- ^ &nu, &number
+data QualifiedIdent = Scoped Scope String -- ^ g:, l:foo
+                    | Register Register -- ^ @+, @u
+                    | Option Option -- ^ &nu, &number
   deriving (Show, Eq)
 
-instance Pretty QualifiedVar where
+instance Pretty QualifiedIdent where
   pretty (Scoped x name) = String.fromString [i|${scopeToChar x}:${name}|]
   pretty (Register x) = pretty x
   pretty (Option x) = pretty x
 
-unQualifiedVar :: QualifiedVar -> String
-unQualifiedVar (Scoped x name) = scopeToChar x : ':' : name
-unQualifiedVar (Register x)    = ['@', registerToChar x]
-unQualifiedVar (Option x)      = unOption x
+unQualifiedIdent :: QualifiedIdent -> String
+unQualifiedIdent (Scoped x name) = scopeToChar x : ':' : name
+unQualifiedIdent (Register x)    = ['@', registerToChar x]
+unQualifiedIdent (Option x)      = unOption x
 
-parseQualifiedVar :: CodeParsing m => m QualifiedVar
-parseQualifiedVar =
+parseQualifiedIdent :: CodeParsing m => m QualifiedIdent
+parseQualifiedIdent =
   uncurry Scoped <$> parseScoped <|>
   Register <$> parseRegister <|>
   Option <$> parseOption
