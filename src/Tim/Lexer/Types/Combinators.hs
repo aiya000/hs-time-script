@@ -8,42 +8,42 @@ import Control.Monad.State.Class (get, put)
 import Data.Generics.Product (field)
 import RIO
 import Text.Megaparsec (MonadParsec)
+import qualified Text.Megaparsec.Char as P
 import Tim.Lexer.Types
 import Tim.Processor (TokenPos)
-import qualified Text.Megaparsec.Char as P
 
 -- |
 -- Executes the taken lexer and increments 'colNum' by the taken `Int`,
 -- and returns the lexer result with the token position.
 forward :: Lexer a -> Int -> Lexer (a, TokenPos)
 forward lexer len =
-  forwardVia lexer $ const len
+  forwardBy lexer $ const len
 
 infixl 5 `forward`
 
 -- |
 -- Simular to 'forward',
 -- but increments by taken function with the lexer result.
-forwardVia :: Lexer a -> (a -> Int) -> Lexer (a, TokenPos)
-forwardVia lexer makeLength = do
+forwardBy :: Lexer a -> (a -> Int) -> Lexer (a, TokenPos)
+forwardBy lexer makeLength = do
   pos <- get
   x <- lexer
   field @"colNum" += makeLength x
   pure (x, pos)
 
-infixl 5 `forwardVia`
+infixl 5 `forwardBy`
 
 forward' :: Lexer a -> Int -> Lexer a
 forward' lexer len =
-  (fst <$>) . forwardVia lexer $ const len
+  (fst <$>) . forwardBy lexer $ const len
 
 infixl 5 `forward'`
 
-forwardVia' :: Lexer a -> (a -> Int) -> Lexer a
-forwardVia' lexer makeLength =
-  fst <$> forwardVia lexer makeLength
+forwardBy' :: Lexer a -> (a -> Int) -> Lexer a
+forwardBy' lexer makeLength =
+  fst <$> forwardBy lexer makeLength
 
-infixl 5 `forwardVia'`
+infixl 5 `forwardBy'`
 
 -- |
 -- Simular to 'forward',

@@ -54,6 +54,7 @@ import RIO.List
 import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec hiding (Token, SourcePos)
 import qualified Text.Megaparsec as P
+import qualified Text.Megaparsec.Char as P
 import Tim.Char hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Tim.Megaparsec
 import Tim.Processor
@@ -212,19 +213,6 @@ instance Pretty Token where
   pretty (Literal x) = pretty x
 
 
--- | Delimitters to split an rhs or lhs identifier and an another token.
-identDelimiters :: [Char]
-identDelimiters = [ ' '
-                  , '='
-                  , '('
-                  , ')'
-                  , '{'
-                  , '}'
-                  , '['
-                  , ']'
-                  ]
-
-
 -- |
 -- Any identifiers.
 --
@@ -233,35 +221,39 @@ identDelimiters = [ ' '
 -- because these has same representation.
 -- unqualified variables and (Vim buildtin) commands has "[a-z][a-zA-Z0-9]*".
 -- types and (user defined) comands has "[A-Z][a-zA-Z0-9]*".
-data Ident = QualifiedIdent QualifiedIdent -- ^ identifiers that can be resolved by the lexer.
-           | GeneralIdent Name.NonEmpty -- ^ identifiers that cannot be resolved by the lexer (unqualified variables, types, and commands).
+data Ident = QualifiedIdent QualifiedIdent
+           | UnqualifiedIdent Name.NonEmpty
   deriving (Show, Eq)
 
 instance Pretty Ident where
   pretty (QualifiedIdent x) = pretty x
-  pretty (GeneralIdent x) = pretty x
+  pretty (UnqualifiedIdent x) = pretty x
 
 -- | The identifier of "let"
 pattern Let :: Ident
-pattern Let = GeneralIdent (Name.NonEmpty 'l' "et")
+pattern Let = UnqualifiedIdent (Name.NonEmpty 'l' "et")
 
 unIdent :: Ident -> String
 unIdent (QualifiedIdent x) = unQualifiedIdent x
-unIdent (GeneralIdent x) = Name.unNonEmpty x
+unIdent (UnqualifiedIdent x) = Name.unNonEmpty x
 
 parseIdent :: CodeParsing m => m Ident
 parseIdent =
   QualifiedIdent <$> parseQualifiedIdent <|>
-  GeneralIdent <$> parseGeneralIdent
+  UnqualifiedIdent <$> parseUnqualifiedIdent
 
-parseGeneralIdent :: CodeParsing m => m Name.NonEmpty
-parseGeneralIdent =
+parseUnqualifiedIdent :: forall m. CodeParsing m => m Name.NonEmpty
+parseUnqualifiedIdent =
   Name.NonEmpty
-    <$> P.noneOf identDelimiters
-    <*> P.many (P.noneOf identDelimiters)
+    <$> headChar
+    <*> P.many tailChar
+  where
+    headChar :: m Char
+    headChar = P.upperChar <|> P.lowerChar <|> P.char '_'
 
+    tailChar :: m Char
+    tailChar = headChar <|> P.digitChar
 
--- | (At here, non scoped variable "[a-zA-Z][a-zA-Z0-9]*" is resolved as `General x :: Ident`.)
 data QualifiedIdent = Scoped Scope String -- ^ g:, l:foo
                     | Register Register -- ^ @+, @u
                     | Option Option -- ^ &nu, &number
@@ -287,7 +279,7 @@ parseScoped :: CodeParsing m => m (Scope, String)
 parseScoped = P.try $ do
   s <- parseScope
   _ <- P.single ':'
-  ident <- P.many (P.noneOf identDelimiters)
+  ident <- unNonEmpty <$> parseUnqualifiedIdent
   pure (s, ident)
 
 

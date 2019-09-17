@@ -6,15 +6,15 @@ import Control.Lens ((+=))
 import Control.Monad.State.Class (get)
 import Data.Generics.Product (field)
 import Data.Text (Text)
+import qualified Data.Text as Text
 import Numeric.Natural (Natural)
 import RIO
-import Tim.Lexer.Types
-import Tim.Lexer.Types.Combinators
-import Tim.Processor (Failure, TokenPos)
-import qualified Data.Text as Text
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P hiding (space)
+import Tim.Lexer.Types
+import Tim.Lexer.Types.Combinators
+import Tim.Processor (Failure, TokenPos)
 
 -- | Tokenizes a code
 lex :: Text -> Either Failure [(Token, TokenPos)]
@@ -22,7 +22,7 @@ lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
 lexer = P.many $ do
-  _ <- P.many P.spaceChar `forwardVia` length
+  _ <- P.many P.spaceChar `forwardBy` length
   symbol <|>
     first Literal <$> literal <|>
     first Ident <$> ident
@@ -61,7 +61,7 @@ literal =
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
 natLiteral =
-  first Nat <$> P.try P.decimal `forwardVia` length . show
+  first Nat <$> P.try P.decimal `forwardBy` length . show
 
 intLiteral :: Lexer (AtomicLiteral, TokenPos)
 intLiteral = restoreOnFail $
@@ -79,13 +79,13 @@ intLiteral = restoreOnFail $
 
 floatLiteral :: Lexer (AtomicLiteral, TokenPos)
 floatLiteral =
-  first Float <$> P.try P.float `forwardVia` length . show
+  first Float <$> P.try P.float `forwardBy` length . show
 
 stringLiteral :: Lexer (AtomicLiteral, TokenPos)
 stringLiteral = P.try $ do
     (q, pos) <- quote `forward` 1
     -- +1 is a length of `q`
-    (str, _) <- flip forwardVia ((+1) . length) $ P.manyTill P.charLiteral $ P.char (quoteToChar q)
+    (str, _) <- flip forwardBy ((+1) . length) $ P.manyTill P.charLiteral $ P.char (quoteToChar q)
     pure (String' q str, pos)
 
 -- | Parses a string that surrounded by `'` or `"`
@@ -110,4 +110,4 @@ sign IntMinus nat = negate $ fromIntegral nat
 
 ident :: Lexer (Ident, TokenPos)
 ident =
-  parseIdent `forwardVia` length . unIdent
+  parseIdent `forwardBy` length . unIdent
