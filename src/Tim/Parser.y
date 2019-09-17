@@ -71,41 +71,32 @@ import qualified Tim.String.Parser as P
   let { (Token.Ident Token.Let, _) }
 
   -- variable identifiers
-  varScopedG { (Token.Ident (Token.unIdent -> 'g' : ':' : $$), _) }
-  varScopedS { (Token.Ident (Token.unIdent -> 's' : ':' : $$), _) }
-  varScopedL { (Token.Ident (Token.unIdent -> 'l' : ':' : $$), _) }
-  varScopedA { (Token.Ident (Token.unIdent -> 'a' : ':' : $$), _) }
-  varScopedV { (Token.Ident (Token.unIdent -> 'v' : ':' : $$), _) }
-  varScopedB { (Token.Ident (Token.unIdent -> 'b' : ':' : $$), _) }
-  varScopedW { (Token.Ident (Token.unIdent -> 'w' : ':' : $$), _) }
-  varScopedT { (Token.Ident (Token.unIdent -> 't' : ':' : $$), _) }
+  varScopedG { (ScopedIdent G $$, _) }
+  varScopedS { (ScopedIdent S $$, _) }
+  varScopedL { (ScopedIdent L $$, _) }
+  varScopedA { (ScopedIdent A $$, _) }
+  varScopedV { (ScopedIdent V $$, _) }
+  varScopedB { (ScopedIdent B $$, _) }
+  varScopedW { (ScopedIdent W $$, _) }
+  varScopedT { (ScopedIdent T $$, _) }
 
-  varRegUnnamed   { (Token.Ident (Token.unIdent -> '@' : '"' : $$), _) }
-  varRegSmallDel  { (Token.Ident (Token.unIdent -> '@' : '-' : $$), _) }
-  varRegReadOnlyC { (Token.Ident (Token.unIdent -> '@' : ':' : $$), _) }
-  varRegReadonlyD { (Token.Ident (Token.unIdent -> '@' : '.' : $$), _) }
-  varRegReadOnlyP { (Token.Ident (Token.unIdent -> '@' : '%' : $$), _) }
-  varRegBuffer    { (Token.Ident (Token.unIdent -> '@' : '#' : $$), _) }
-  varRegExpr      { (Token.Ident (Token.unIdent -> '@' : '=' : $$), _) }
-  varRegClipS     { (Token.Ident (Token.unIdent -> '@' : '*' : $$), _) }
-  varRegClipP     { (Token.Ident (Token.unIdent -> '@' : '+' : $$), _) }
-  varRegBlackHole { (Token.Ident (Token.unIdent -> '@' : '_' : $$), _) }
-  varRegSeached   { (Token.Ident (Token.unIdent -> '@' : '/' : $$), _) }
-  varReg0         { (Token.Ident (Token.unIdent -> '@' : '0' : $$), _) }
-  varReg1         { (Token.Ident (Token.unIdent -> '@' : '1' : $$), _) }
-  varReg2         { (Token.Ident (Token.unIdent -> '@' : '2' : $$), _) }
-  varReg3         { (Token.Ident (Token.unIdent -> '@' : '3' : $$), _) }
-  varReg4         { (Token.Ident (Token.unIdent -> '@' : '4' : $$), _) }
-  varReg5         { (Token.Ident (Token.unIdent -> '@' : '5' : $$), _) }
-  varReg6         { (Token.Ident (Token.unIdent -> '@' : '6' : $$), _) }
-  varReg7         { (Token.Ident (Token.unIdent -> '@' : '7' : $$), _) }
-  varReg8         { (Token.Ident (Token.unIdent -> '@' : '8' : $$), _) }
-  varReg9         { (Token.Ident (Token.unIdent -> '@' : '9' : $$), _) }
-  varRegAlpha     { (Token.Ident (Token.unIdent -> '@' : $$), pos)     } -- a-zA-Z
+  varRegUnnamed   { (RegisterIdent Unnamed, _)         }
+  varRegSmallDel  { (RegisterIdent SmallDelete, _)     }
+  varRegReadOnlyC { (RegisterIdent ReadOnlyColon, _)   }
+  varRegReadonlyD { (RegisterIdent ReadOnlyDot, _)     }
+  varRegReadOnlyP { (RegisterIdent ReadOnlyPercent, _) }
+  varRegBuffer    { (RegisterIdent Buffer, _)          }
+  varRegExpr      { (RegisterIdent Expression, _)      }
+  varRegClipS     { (RegisterIdent ClipboardStar, _)   }
+  varRegClipP     { (RegisterIdent ClipboardPlus, _)   }
+  varRegBlackHole { (RegisterIdent BlackHole, _)       }
+  varRegSeached   { (RegisterIdent Searched, _)        }
+  varRegNum       { (RegisterIdent (Numeric $$), _)    } -- 1-9
+  varRegAlpha     { (RegisterIdent (Alphabetic $$), _) } -- a-zA-Z
 
-  varOptionScopedL  { (Token.Ident (Token.unIdent -> '&' : 'l' : ':' : $$), pos) }
-  varOptionScopedG  { (Token.Ident (Token.unIdent -> '&' : 'g' : ':' : $$), pos) }
-  varOptionUnscoped { (Token.Ident (Token.unIdent -> '&' : $$), pos)             }
+  varOption  { (OptionIdent $$, _)  }
+  varLOption { (LOptionIdent $$, _) }
+  varGOption { (GOptionIdent $$, _) }
 
   varSimpleLocal { (Token.Ident (Token.unIdent -> $$), pos) }
 
@@ -146,40 +137,31 @@ Camel :: { Camel }
   : ident {% resolveParsingCamel pos $ P.parseCamel $1 }
 
 Variable :: { Variable }
-  : varScopedG      { Scoped G $1              }
-  | varScopedS      { Scoped S $1              }
-  | varScopedL      { Scoped L $1              }
-  | varScopedA      { Scoped A $1              }
-  | varScopedV      { Scoped V $1              }
-  | varScopedB      { Scoped B $1              }
-  | varScopedW      { Scoped W $1              }
-  | varScopedT      { Scoped T $1              }
-  | varRegUnnamed   { Register Unnamed         }
-  | varRegSmallDel  { Register SmallDelete     }
-  | varRegReadOnlyC { Register ReadOnlyColon   }
-  | varRegReadonlyD { Register ReadOnlyDot     }
-  | varRegReadOnlyP { Register ReadOnlyPercent }
-  | varRegBuffer    { Register Buffer          }
-  | varRegExpr      { Register Expression      }
-  | varRegClipS     { Register ClipboardStar   }
-  | varRegClipP     { Register ClipboardPlus   }
-  | varRegBlackHole { Register BlackHole       }
-  | varRegSeached   { Register Searched        }
-  | varReg0         { Register $ Numeric D0    }
-  | varReg1         { Register $ Numeric D1    }
-  | varReg2         { Register $ Numeric D2    }
-  | varReg3         { Register $ Numeric D3    }
-  | varReg4         { Register $ Numeric D4    }
-  | varReg5         { Register $ Numeric D5    }
-  | varReg6         { Register $ Numeric D6    }
-  | varReg7         { Register $ Numeric D7    }
-  | varReg8         { Register $ Numeric D8    }
-  | varReg9         { Register $ Numeric D9    }
-  | varRegAlpha       {% fmap Register $ readRegAlpha $1 pos                         }
-  | varOptionScopedL  {% fmap (Option . LocalScopedOption) $ readLowerString $1 pos  }
-  | varOptionScopedG  {% fmap (Option . GlobalScopedOption) $ readLowerString $1 pos }
-  | varOptionUnscoped {% fmap (Option . UnscopedOption) $ readLowerString $1 pos     }
-  | varSimpleLocal { SimpleLocal $1 }
+  : varScopedG      { Scoped G $1                    }
+  | varScopedS      { Scoped S $1                    }
+  | varScopedL      { Scoped L $1                    }
+  | varScopedA      { Scoped A $1                    }
+  | varScopedV      { Scoped V $1                    }
+  | varScopedB      { Scoped B $1                    }
+  | varScopedW      { Scoped W $1                    }
+  | varScopedT      { Scoped T $1                    }
+  | varRegUnnamed   { Register Unnamed               }
+  | varRegSmallDel  { Register SmallDelete           }
+  | varRegReadOnlyC { Register ReadOnlyColon         }
+  | varRegReadonlyD { Register ReadOnlyDot           }
+  | varRegReadOnlyP { Register ReadOnlyPercent       }
+  | varRegBuffer    { Register Buffer                }
+  | varRegExpr      { Register Expression            }
+  | varRegClipS     { Register ClipboardStar         }
+  | varRegClipP     { Register ClipboardPlus         }
+  | varRegBlackHole { Register BlackHole             }
+  | varRegSeached   { Register Searched              }
+  | varRegNum       { Register $ Numeric $1          }
+  | varRegAlpha     { Register $ Alphabetic $1       }
+  | varLOption      { Option $ LocalScopedOption $1  }
+  | varGOption      { Option $ GlobalScopedOption $1 }
+  | varOption       { Option $ UnscopedOption $1     }
+  | varSimpleLocal  { SimpleLocal $1                 }
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }
@@ -214,6 +196,21 @@ DictInner :: { Map StringLit Literal }
   | StringLit ':' Literal ',' DictInner { Map.insert $1 $3 $5 }
 
 {
+pattern ScopedIdent :: Scope -> String -> Token
+pattern ScopedIdent s x = Token.Ident (Token.QualifiedIdent (Token.Scoped s x))
+
+pattern RegisterIdent :: Register -> Token
+pattern RegisterIdent r = Token.Ident (Token.QualifiedIdent (Token.Register r))
+
+pattern OptionIdent :: LowerString -> Token
+pattern OptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.UnscopedOption x)))
+
+pattern LOptionIdent :: LowerString -> Token
+pattern LOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.LocalScopedOption x)))
+
+pattern GOptionIdent :: LowerString -> Token
+pattern GOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.GlobalScopedOption x)))
+
 parse :: [(Token, TokenPos)] -> Either Failure AST
 parse = runProcessor . parseAST
 
@@ -245,16 +242,6 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
     replace [] = []
     replace ('\n' : xs) = ' ' : replace xs
     replace (x : xs) = x : replace xs
-
-readRegAlpha :: String -> TokenPos -> Processor Register
-readRegAlpha "" pos = throwTokenError pos "expected a register name, but no register name specified."
-readRegAlpha (x : _) pos = do
-  alpha <- Char.charToAlpha x & includeTokenStuff pos [i|invalid register name "@${x}"|]
-  pure $ Alphabetic alpha
-
-readLowerString :: String -> TokenPos -> Processor LowerString
-readLowerString x pos = parseMaybe String.parseLowerString x
-  & includeTokenStuff pos [i|expected a lower string "[a-z]+", but a not lower string is gotten.|]
 
 resolveParsingCamel :: TokenPos -> Either String Camel -> Processor Camel
 resolveParsingCamel _ (Right x) = pure x
