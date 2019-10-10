@@ -38,8 +38,8 @@ import qualified Data.List.NonEmpty as List
 import qualified Data.Map.Strict as Map
 import qualified Tim.Char as Char
 import qualified Tim.Lexer.Types as Token
-import qualified Tim.String as String
-import qualified Tim.String.Parser as P
+import qualified Tim.String as String hiding (parseCamel)
+import qualified Tim.String.Parser as String
 }
 
 %error { parseError }
@@ -98,9 +98,9 @@ import qualified Tim.String.Parser as P
   varLOption { (LOptionIdent $$, _) }
   varGOption { (GOptionIdent $$, _) }
 
-  varSimpleLocal { (Token.Ident (Token.unIdent -> $$), pos) }
-
-  -- An another identifier
+  -- An another identifier, e.g.
+  -- - An unscoped variable identifier
+  -- - A type identifier
   ident { (Token.Ident (Token.unIdent -> $$), pos) }
 
 %%
@@ -134,7 +134,7 @@ TypeArgs :: { [Type] }
   | Type TypeArgs { $1 : $2 }
 
 Camel :: { Camel }
-  : ident {% resolveParsingCamel pos $ P.parseCamel $1 }
+  : ident {% resolveParsingCamel pos $ String.parseCamel $1 }
 
 Variable :: { Variable }
   : varScopedG      { Scoped G $1                    }
@@ -161,7 +161,7 @@ Variable :: { Variable }
   | varLOption      { Option $ LocalScopedOption $1  }
   | varGOption      { Option $ GlobalScopedOption $1 }
   | varOption       { Option $ UnscopedOption $1     }
-  | varSimpleLocal  { SimpleLocal $1                 }
+  | ident           { SimpleLocal $1                 }
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }
