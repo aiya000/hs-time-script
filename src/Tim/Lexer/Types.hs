@@ -117,7 +117,6 @@ argue = intercalate "\n" . toList . fmap (("- " <>) . errorDetail)
     something offSet errors = [i|This message is TODO. What is this? offSet=${show offSet}, errors=${show errors}|]
 
 
-
 -- | A context for the lexer
 newtype Lexer a = Lexer
   { unLexer :: Naked a

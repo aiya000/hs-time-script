@@ -6,7 +6,7 @@ import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Test.Tasty.HUnit (testCase)
 import Tim.Parser.Types
-import qualified Tim.String.Parser as P
+import qualified Tim.String.Parser as String
 import Tim.Test
 
 -- | A code
@@ -15,7 +15,7 @@ syntax = Code . (: [])
 
 -- | Unsafe
 name :: String -> Type
-name = Name . ignore . P.parseCamel
+name = Name . ignore . String.parseCamel
   where
     ignore (Left x)  = error x
     ignore (Right x) = x
