@@ -2,145 +2,154 @@
 
 [![Build Status](https://travis-ci.org/aiya000/hs-time-script.svg?branch=master)](https://travis-ci.org/aiya000/hs-time-script)
 
-`Time script` = `Vim script` + strong static typing
+`Time script` = `Vim script` + `strong static typing`
 
 - [The introduction (Japanese)](https://aiya000.github.io/Maid/about-time-script/)
 
 ## Purpose
 
-- Introduce advanced experience to Vim script (e.g. string interpolations)
-- Introduce strong static types to Vim script (Please see below 'About' section :sunglasses:)
+To Vim script
+
+- Introduce strong static types: [here](#types)
+- Introduce advanced features: [here](#advanced-features)
 - The innovative, the consistency, and the easy to writeing is emphasizer than the backword compatibility
-    - Because Vim (script) definiately saves the backword compatibility
+    - Because Vim script definiately saves the backword compatibility
 
-## About
+## Types <a name="types"></a>
+### Basic
 
-about.tim
+Simular to `:help type()`.
 
 ```vim
-" Basic types (you can see at `:help type()`)
-let x: Int = 42 " Vim script's Number
-let s1: String = 'you'
-let s2: String = "me"
-let y: Float = 1.0
-let b: Bool = v:true
-let z1: Null = v:null
-let z2: Null = v:none
-let xs: List String = ['sugar', 'sweet', 'moon']
-let ys: Dict Int = {'foo': 10, 'bar': 20}
-let F: Int -> String = function('string')
+let x:  Int    =  42
+let y:  Int    = +10  " signs
+let z:  Int    = -20
+```
 
-"" [A] returns a value of A
-function! F1(x: Int) [String] abort
-  return string(a:x)
-endfunction
+```vim
+let x: String = 'you'
+let y: String = "me"
+```
 
-" Time script own types
-"" Natural numbers (non negative numbers)
+```vim
+let x:  Float  = 1.0
+let y:  Bool   = v:true
+let z1: Null   = v:null
+let z2: Null   = v:none
+```
+
+```vim
+" Compile error!
+" Because v:null is not an Int
+let num: Int = v:null
+```
+
+### Natural numbers
+
+Meaning non negative numbers
+
+```vim
 let n: Nat = 10
 let m: Nat = 0
-""" compile error! (integral signs means Int literals)
-"let l: Nat = +1
-"let l: Nat = -1
+let l: Nat = n - m  " 0
 
-"" Characters
+" Compile error!
+" Because integral signs means Int literals
+let i: Nat = +1
+let i: Nat = -1
+```
+
+### Characters
+
+```vim
 let c: Char = 'x'
-""" compile error! (two or more strings cannot assign)
-"let d: Char = 'xx'
+```
 
-"" Unions
-let foo: Int | Null = v:null
-""" compile error! (v:null cannot assign to non Null types)
-" let num: Int = v:null
+```vim
+" Compile error!
+" Because two or more strings cannot be assigned
+let d: Char = 'xx'
+```
 
-" Tuples
-let t: Tuple Char Nat = ['a', 97] " 2 dimensions
-let u: Tuple Int String Bool = [-10, 'me', v:true] " 3
-""" compile error! (3 dimensional Tuple cannot assign to 2 dimensional Tuple)
-"let v: Tuple Null Null = [v:null, v:null, v:null]
-""" compile error! (2 dimensional tuple doesn't have the 3rd element)
-"echo t[2]
+### Any
 
-"" Any
+```vim
 let foo: Any = 10
-""" Be typed by Any if the variable type omitted
-let foo = 'string'
+let foo = 'string'  " re-assignment
+let foo = v:null    " 
+```
 
-""" Be typed the returned value by Any for the same reason
-function! F2() abort
+In the latest spec, if the variable type omitted, be typed by `Any`.
+
+(In the future, to be inferenced concrete types.)
+
+```vim
+let bar = 'string'  " bar is an Any
+
+" The returned value is an Any
+function! F()
   return 10
 endfunction
 
-""" Be typed the argument by Any for the same reason
-function! F3(x) abort
-  " x is Any
-endfunction
-
-" type synonyms
-type Map = List (Tuple Char Nat)
-
-let char_code: Map = [
-  \ ['a', 97],
-  \ ['b', 98],
-  \ ['c', 99],
-\ ]
-```
-
-## Future
-### Typings
-
-- Type casts
-
-```vim
-" This often raises some problems
-let x: Int = 10
-let y: Any = x as Any
-```
-
-- Generics
-
-```vim
-function! Map<A, B>(x: A | Null, F: A -> B) [B | Null] abort
-  if a:x is v:null
-    return v:null
-  endif
-  return f(a:x as Any as A)
+" x is an Any
+function! G(x)
 endfunction
 ```
 
-- Sum types
+### Typing to functions
+
+Please also see [`abort` by default](#function-abort-by-default).
 
 ```vim
-type Mode = <Normal: Null, Insert: Null, Virtual: VKind>
-type VKind = <Charwise: Null, Linewise: Null, Blockwise: Null>
-
-let x: Mode = Normal v:null
-let y: Mode = Virtual (Charwise v:null)
+function F(x: Int) [String]
+  return string(a:x)
+endfunction
 ```
 
-- Structural subtypings
+### Builtin generic types
 
 ```vim
-TODO
+let xs: List String = ['sugar', 'sweet', 'moon']
+let ys: Dict Int    = {'foo': 10, 'bar': 20}
 ```
 
-- Type inferences
+Supporting defining generic functions is planned on [the future spec](#generic).
+
+### Function types
 
 ```vim
-" type(y) is Int (Now type(y) is Any)
-let x: Int = 10
-let y = x
+let F:  Int -> String     = function('string')
+let G:  (Int, Int) -> Int = function('range')
 ```
 
-- Type references
+### Unions
 
 ```vim
-let map: type(char_code) = char_code
+let foo: Int | Null = v:null
 ```
 
-### Advanced
+### Tuples
 
-- Multi-line comments
+```vim
+" 2 dimensions
+let t: Tuple Char Nat = ['a', 97]
+
+" 3 dimensions
+let u: Tuple Int String Bool = [-10, 'me', v:true]
+```
+
+```vim
+" Compile error!
+" Because 3 Dimensional Tuple cannot assign into 2 Dimensional
+let i: Tuple Null Null = [v:null, v:null, v:null]
+
+" Compile error!
+" Because 2 dimensional tuple doesn't have the 3rd element
+echo t[2]
+```
+
+## Advanced features <a name="advanced-features"></a>
+### Multi-line comments
 
 ```vim
 "*
@@ -151,14 +160,38 @@ let map: type(char_code) = char_code
  *"
 ```
 
-- Allow comments on all tails of lines
+### Allowing comments on all tails of lines
 
 ```vim
 command! -bar ContLine  " This is a command
     \ call gift#for#you()
 ```
 
-- String interpolations
+### Function `abort` by default <a name="function-abort-by-default"></a>
+
+```vim
+function s:f()
+  throw 'error!'
+  echo 'finish.'
+endfunction
+
+echo s:f()  " E605: Exception not caught: error!
+```
+
+Or `no-abort` allows continuations.
+
+```vim
+function s:g() no-abort
+  throw 'error!'
+  echo 'finish.'
+endfunction
+
+echo s:g()
+" E605: Exception not caught: error!
+" finish.
+```
+
+### String interpolations
 
 ```vim
 let n: Nat = 10
@@ -168,13 +201,13 @@ echo $'$n ${n + 1}'
 " 10 11
 ```
 
-- Allow to names of non upper cases `[a-z_]+` for function references
+### Allowing to names of non upper cases `[a-z_]+` for function references
 
 ```vim
 let to_string = function('string')
 ```
 
-- Don't require unnecessary back-slashes on trivial cases
+### Don't require unnecessary back-slashes on trivial cases
 
 ```vim
 let xs = [
@@ -186,7 +219,8 @@ echo map(xs, { _, x ->
 })
 ```
 
-- Don't require unnecessary quotes on `{}` notation dicts
+##### Don't require unnecessary quotes and `#` on `{}` notation dicts
+    - Also allowing mixin names both quoted and not quoted
 
 ```vim
 echo {foo: 10} == {'foo': 10}
@@ -197,4 +231,82 @@ let x = {
   " keba-b: 'sweet',  " Not allowed because a name uses a char '-'
   'keba-b': 'sweet',  " Not allowed because a name uses a char '-'
 }
+```
+
+##### Assigning new value without declrarations
+
+```vim
+let  x = 10
+let* x = 20  " Assign new value
+```
+
+```vim
+" Compile error!
+" Because y is never declared.
+let* y = 30
+
+let  z = {}
+let* z.a = 40  " error too!
+```
+
+## Future specs
+### Type synonyms
+
+```vim
+type Map = List (Tuple Char Nat)
+
+let char_code: Map = [
+  ['a', 97],
+  ['b', 98],
+  ['c', 99],
+]
+```
+
+### Type casts
+
+```vim
+" This often raises some problems
+let x: Int = 10
+let y: Any = x as Any
+```
+
+### Generics <a name="generics"></a>
+
+Naming `[a-z][a-zA-Z0-9_]` to types that is meaning generic type parameter
+
+```vim
+" In this case, `a` is a generic type parameter
+function Identity(x: a) [a]
+  return a:x
+endfunction
+
+let x: Nat = Identity[Nat](10)  " A type specifying
+let y: Nat = Identity(20)       " Or the specifying can be omited
+```
+
+### Sum types
+
+```vim
+type Mode = <Normal: Null, Insert: Null, Virtual: VKind>
+type VKind = <Charwise: Null, Linewise: Null, Blockwise: Null>
+
+let x: Mode = Normal v:null
+let y: Mode = Virtual (Charwise v:null)
+```
+
+### Structural subtypings
+
+TODO
+
+### Type inferences
+
+```vim
+let x: Int = some
+let y = x  " Now y is an Int
+```
+
+### Type references
+
+```vim
+let map: type(char_code) = char_code
 ```
