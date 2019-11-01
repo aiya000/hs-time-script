@@ -4,7 +4,7 @@
 
 `Time script` = `Vim script` + `strong static typing`
 
-- [The introduction (Japanese)](https://aiya000.github.io/Maid/about-time-script/)
+- [The introduction](https://aiya000.github.io/Maid/about-time-script/)
 
 ## Purpose
 
@@ -269,6 +269,8 @@ echo s:f()  " E605: Exception not caught: error!
 
 Or `no-abort` allows continuations.
 
+(Time script's function options is embraced by `[[]]`)
+
 ```vim
 function s:g() [[no-abort]]
   throw 'error!'
@@ -278,6 +280,16 @@ endfunction
 echo s:g()
 " E605: Exception not caught: error!
 " finish.
+```
+
+Tradictional options.
+
+(be embraced by `[]`)
+
+```vim
+function x.f(): Bool [dict]
+  return v:true
+endfunction
 ```
 
 ### String interpolations
