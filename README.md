@@ -1,3 +1,7 @@
+**Now this project is work in progress!**
+
+Please see the test and the test status to check this progress. 
+
 # :diamond_shape_with_a_dot_inside: Time script :diamond_shape_with_a_dot_inside:
 
 [![Build Status](https://travis-ci.org/aiya000/hs-time-script.svg?branch=master)](https://travis-ci.org/aiya000/hs-time-script)
