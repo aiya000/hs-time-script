@@ -145,7 +145,7 @@ echo xs[i]
 
 #### Dicts <a name="type-dicts"></a>
 
-Please also see [#unnecessary-quotes-in-dicts]#unnecessary-quotes-in-dicts).
+Please also see [unnecessary-quotes-in-dicts](#unnecessary-quotes-in-dicts).
 
 ```vim
 let x = Dict Int = {}
@@ -234,7 +234,7 @@ let i: Tuple Null Null = [v:null, v:null, v:null]
 
 " Compile error!
 " Because 2 dimensional tuple doesn't have the 3rd element
-echo t[2]
+echo i[2]
 ```
 
 ## Advanced features <a name="advanced-features"></a>
@@ -317,7 +317,7 @@ echo {foo: 10} == {'foo': 10}
 " 1
 
 let x = {
-  aaa: 'caramel',   " Allowed because all keys are named by [a-z_]+
+  aaa: 'caramel',     " Allowed because all keys are named by [a-z_]+
   " keba-b: 'sweet',  " Not allowed because a name uses a char '-'
   'keba-b': 'sweet',  " Not allowed because a name uses a char '-'
 }
@@ -366,7 +366,7 @@ Naming `[a-z][a-zA-Z0-9_]` to types that is meaning generic type parameter
 
 ```vim
 " In this case, `a` is a generic type parameter
-function Identity(x: a) [a]
+function Identity(x: a) a
   return a:x
 endfunction
 
