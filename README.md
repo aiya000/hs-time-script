@@ -101,7 +101,7 @@ endfunction
 Please also see [`abort` by default](#function-abort-by-default).
 
 ```vim
-function F(x: Int) [String]
+function F(x: Int): String
   return string(a:x)
 endfunction
 ```
@@ -270,7 +270,7 @@ echo s:f()  " E605: Exception not caught: error!
 Or `no-abort` allows continuations.
 
 ```vim
-function s:g() no-abort
+function s:g() [[no-abort]]
   throw 'error!'
   echo 'finish.'
 endfunction
