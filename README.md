@@ -21,9 +21,9 @@ To Vim script
 Simular to `:help type()`.
 
 ```vim
-let x:  Int    =  42
-let y:  Int    = +10  " signs
-let z:  Int    = -20
+let x: Int =  42
+let y: Int = +10  " signs
+let z: Int = -20
 ```
 
 ```vim
@@ -32,10 +32,10 @@ let y: String = "me"
 ```
 
 ```vim
-let x:  Float  = 1.0
-let y:  Bool   = v:true
-let z1: Null   = v:null
-let z2: Null   = v:none
+let x:  Float = 1.0
+let y:  Bool  = v:true
+let z1: Null  = v:null
+let z2: Null  = v:none
 ```
 
 ```vim
@@ -106,14 +106,103 @@ function F(x: Int) [String]
 endfunction
 ```
 
+Supporting defining generic functions is planned on [the future spec](#generic).
+
 ### Builtin generic types
 
 ```vim
 let xs: List String = ['sugar', 'sweet', 'moon']
-let ys: Dict Int    = {'foo': 10, 'bar': 20}
+let x:  Dict Int    = {'foo': 10, 'bar': 20}
 ```
 
-Supporting defining generic functions is planned on [the future spec](#generic).
+#### Lists
+
+```vim
+let xs: List Int = range(0, 10)  " Initialize with 10 elements
+let j: Nat = 0
+let i: Int = -1
+
+echo xs[i]  " 0
+let xs[i] = 999
+echo xs[i]  " 999
+
+echo xs[j]  " 10
+let xs[j] = 42
+echo xs[j]  " 42
+```
+
+```vim
+let xs: List Int = range(0, 10)
+let i: String = 'x'
+
+" Both compile error!
+" Because lists can be accessed only by Int or Nat in Time script
+let xs[i] = 999
+echo xs[i]
+
+" NOTE: Vim script allows using String as an index, it is used as a number 0.
+```
+
+#### Dicts <a name="type-dicts"></a>
+
+Please also see [#unnecessary-quotes-in-dicts]#unnecessary-quotes-in-dicts).
+
+```vim
+let x = Dict Int = {}
+let i: String = 'i'
+
+let x[i] = 10
+```
+
+```vim
+let x = Dict Int = {}
+```
+
+Please also see [unnecessary-trivial-back-slashes](#unnecessary-trivial-back-slashes).
+
+```vim
+let x: Dict Int = {
+  10: 100,  " This index same as a String '10'
+}
+
+" Compile error!
+" Because 10 is not a String
+echo x[10]
+
+" You should use '10' instead on getting the value
+echo x['10']
+```
+
+```vim
+" Compile error!
+" Because 'foo' is not an Int
+let x: Dict Int = {
+    foo: 'foo',
+}
+```
+
+### Objects
+
+Same as `Dict Any`.
+
+Please also see [unnecessary-trivial-back-slashes](#unnecessary-trivial-back-slashes).
+
+```vim
+let x: Object = {
+  foo: 10,
+  bar: 'bar',
+}
+```
+
+Please also see [type-dicts](#type-dicts) for this compile error.
+
+```vim
+let x: Object = {}
+
+" Compile error!
+" Because 0 is not a String
+echo x[0]
+```
 
 ### Function types
 
@@ -207,7 +296,7 @@ echo $'$n ${n + 1}'
 let to_string = function('string')
 ```
 
-### Don't require unnecessary back-slashes on trivial cases
+### Don't require unnecessary back-slashes on trivial cases <a name="unnecessary-trivial-back-slashes"></a>
 
 ```vim
 let xs = [
@@ -219,8 +308,9 @@ echo map(xs, { _, x ->
 })
 ```
 
-##### Don't require unnecessary quotes and `#` on `{}` notation dicts
-    - Also allowing mixin names both quoted and not quoted
+##### Don't require unnecessary quotes without `#{}` (on `{}` notation) dicts <a name="unnecessary-quotes-in-dicts"></a>
+
+Also allowing mixin names both quoted and not quoted.
 
 ```vim
 echo {foo: 10} == {'foo': 10}
