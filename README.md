@@ -175,10 +175,6 @@ let i: String = 'i'
 let x[i] = 10
 ```
 
-```vim
-let x = Dict Int = {}
-```
-
 Please also see [unnecessary-trivial-back-slashes](#unnecessary-trivial-back-slashes).
 
 ```vim
@@ -200,29 +196,6 @@ echo x['10']
 let x: Dict Int = {
     foo: 'foo',
 }
-```
-
-### Objects
-
-Same as `Dict Any`.
-
-Please also see [unnecessary-trivial-back-slashes](#unnecessary-trivial-back-slashes).
-
-```vim
-let x: Object = {
-  foo: 10,
-  bar: 'bar',
-}
-```
-
-Please also see [type-dicts](#type-dicts) for this compile error.
-
-```vim
-let x: Object = {}
-
-" Compile error!
-" Because 0 is not a String
-echo x[0]
 ```
 
 ### Function types
