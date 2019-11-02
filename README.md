@@ -1,6 +1,6 @@
-**Now this project is work in progress!**
+**Now this project is the implementing phase!**
 
-Please see the test and the test status to check this progress. 
+Please see the test and the test status to check this progress.
 
 # :diamond_shape_with_a_dot_inside: Time script :diamond_shape_with_a_dot_inside:
 
