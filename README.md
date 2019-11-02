@@ -48,6 +48,15 @@ let z2: Null  = v:none
 let num: Int = v:null
 ```
 
+Also types can be embraced by parens `()`.
+
+This is useful when use [generic types](#generic-types).
+
+```vim
+let you: (Int)  = 1000
+let me: ((Int)) = 000
+```
+
 ### Natural numbers
 
 Meaning non negative numbers
@@ -112,11 +121,19 @@ endfunction
 
 Supporting defining generic functions is planned on [the future spec](#generic).
 
-### Builtin generic types
+### Builtin generic types <a name="generic-types"></a>
 
 ```vim
 let xs: List String = ['sugar', 'sweet', 'moon']
 let x:  Dict Int    = {'foo': 10, 'bar': 20}
+```
+
+```vim
+let xss: List (List Int) = [range(0, 1), range(2, 3)]
+let x:   Dict (Dict Int) = {
+  'foo': { 'x': 10 },
+  'bar': { 'y': 20 },
+}
 ```
 
 #### Lists
@@ -215,6 +232,10 @@ let F:  Int -> String     = function('string')
 let G:  (Int, Int) -> Int = function('range')
 ```
 
+#### Variadic argument
+
+TODO
+
 ### Unions
 
 ```vim
@@ -225,7 +246,8 @@ let foo: Int | Null = v:null
 
 ```vim
 " 2 dimensions
-let t: Tuple Char Nat = ['a', 97]
+let t1: Tuple Char Nat = ['a', 97]
+let t2: Tuple (Tuple Char Nat) String = [t1, 'can be nested']
 
 " 3 dimensions
 let u: Tuple Int String Bool = [-10, 'me', v:true]
