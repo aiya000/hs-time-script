@@ -100,12 +100,12 @@ In the latest spec, if the variable type omitted, be typed by `Any`.
 let bar = 'string'  " bar is an Any
 
 " The returned value is an Any
-function! F()
+function F()
   return 10
 endfunction
 
 " x is an Any
-function! G(x)
+function G(x)
 endfunction
 ```
 
@@ -120,6 +120,18 @@ endfunction
 ```
 
 Supporting defining generic functions is planned on [the future spec](#generic).
+
+### Void
+
+Void is same as `Nat`.
+
+```vim
+function G(): Void
+endfunction
+
+" This spec is derived by below Vim script spec
+echo type(G()) is v:t_number  " true
+```
 
 ### Builtin generic types <a name="generic-types"></a>
 
@@ -203,6 +215,11 @@ let x: Dict Int = {
 ```vim
 let F:  Int -> String     = function('string')
 let G:  (Int, Int) -> Int = function('range')
+
+" Same as `Int -> (String -> Bool)`
+let H: Int -> String -> Bool = { _ ->
+  { _ -> v:true }
+}
 ```
 
 #### Variadic argument
@@ -398,6 +415,19 @@ let y: Mode = Virtual (Charwise v:null)
 ### Structural subtypings
 
 TODO
+
+```vim
+type IntContainer = {
+  " An associated type
+  type Element = Int
+
+  " A property
+  values: List Int
+
+  " A function (
+  map(f: Int -> Int): Void
+}
+```
 
 ### Type inferences
 
