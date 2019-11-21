@@ -14,7 +14,7 @@ test_literals :: [TestTree]
 test_literals =
   [ testCase "42" testNats
   , testCase "+42, -42" testInts
-  , testCase "'you'" testStrings
+  , testCase "'you', \"you\"" testStrings
   , testCase "1.0" testFloats
   , testCase "v:true, v:false, v:null" testLiteralLikeVimVars
   , testCase "['sugar', 'sweet', 'moon']" testLists
