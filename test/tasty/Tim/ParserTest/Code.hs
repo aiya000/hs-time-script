@@ -4,7 +4,6 @@ module Tim.ParserTest.Code where
 
 import RIO hiding (first)
 import Test.Tasty (TestTree)
-import Test.Tasty.HUnit (testCase)
 import Tim.Parser.Types
 import qualified Tim.String.Parser as String
 import Tim.Test
@@ -22,98 +21,114 @@ name = Name . ignore . String.parseCamel
 
 test_let :: [TestTree]
 test_let =
-  [ testCase "let x = y" testLet
-  , testCase "let x: A = y" testLetAtomicTypes
-  , testCase "let x: X A = y" testLetHigherKindTypes
-  , testCase "let x: A -> B = y" testLetFunctionTypes
-  , testCase "let x: A | B = y" testLetUnionTypes
-  ]
+  testLet <>
+  testLetAtomicTypes <>
+  testLetHigherTypes <>
+  testLetFunctionTypes <>
+  testLetUnionTypes
   where
-    testLet = do
-      process "let x = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
-         Nothing
-         $ RVar (SimpleLocal "y"))
-      process "let [x] = z" `toBe` syntax
-        (Let (LDestuct [SimpleLocal "x"])
-         Nothing
-         $ RVar (SimpleLocal "z"))
-      process "let [x, y] = z" `toBe` syntax
-        (Let (LDestuct [SimpleLocal "x", SimpleLocal "y"])
-         Nothing
-         $ RVar (SimpleLocal "z"))
+    testLet =
+      [ "let x = y" `shouldBe` syntax
+          (Let
+            (LVar $ SimpleLocal "x")
+            Nothing
+            (RVar (SimpleLocal "y")))
+      , "let [x] = z" `shouldBe` syntax
+          (Let
+            (LDestuct [SimpleLocal "x"])
+            Nothing
+            (RVar (SimpleLocal "z")))
+      , "let [x, y] = z" `shouldBe` syntax
+          (Let
+            (LDestuct [SimpleLocal "x", SimpleLocal "y"])
+            Nothing
+            (RVar (SimpleLocal "z")))
+      ]
 
-    testLetAtomicTypes = do
-      process "let x: Type = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+    testLetAtomicTypes =
+      [ "let x: Type = y" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "Type")
-          $ RVar (SimpleLocal "y"))
-      process "let x: (Type) = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: (Type) = y" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just . Parens $ name "Type")
-          $ RVar (SimpleLocal "y"))
-      process "let [x, y]: Type = z" `toBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but this is rejected by the syntax checker (not the parser).
-        (Let (LDestuct [SimpleLocal "x", SimpleLocal "y"])
+          (RVar (SimpleLocal "y")))
+      , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but this is rejected by the syntax checker (not the parser).
+        (Let
+          (LDestuct [SimpleLocal "x", SimpleLocal "y"])
           (Just $ name "Type")
-          $ RVar (SimpleLocal "z"))
+          (RVar (SimpleLocal "z")))
+      ]
 
-    testLetHigherKindTypes = do
-      -- simple
-      process "let x: X A = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+    testLetHigherTypes =
+      [ "let x: X A = y" `shouldBe` syntax  -- simple
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "X" `App` [name "A"])
-          $ RVar (SimpleLocal "y"))
-      -- two
-      process "let x: X A B = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: X A B = y" `shouldBe` syntax  -- two
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "X" `App` [name "A", name "B"])
-          $ RVar (SimpleLocal "y"))
-      -- simple parens onto head
-      process "let x: (X) A = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: (X) A = y" `shouldBe` syntax  -- simple parens onto head
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ Parens (name "X") `App` [name "A"])
-          $ RVar (SimpleLocal "y"))
-      -- parens onto head
-      process "let x: (X Y) A = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: (X Y) A = y" `shouldBe` syntax  -- parens onto head
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ Parens (name "X") `App` [name "A"])
-          $ RVar (SimpleLocal "y"))
-      -- parens onto tail
-      process "let x: List (Tuple Char Nat) = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: List (Tuple Char Nat) = y" `shouldBe` syntax  -- parens onto tail
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "List" `App` [
             name "Tuple" `App` [name "Char", name "Nat"]
           ])
-          $ RVar (SimpleLocal "y"))
+          (RVar (SimpleLocal "y")))
+      ]
 
-    testLetFunctionTypes = do
-      process "let x: A -> B = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+    testLetFunctionTypes =
+      [ "let x: A -> B = y" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "A" `Arrow` name "B")
-          $ RVar (SimpleLocal "y"))
-      process "let x: A -> B -> C = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: A -> B -> C = y" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $ name "A" `Arrow` (name "B" `Arrow` name "C"))
-          $ RVar (SimpleLocal "y"))
-      process "let x: List A -> Tuple A B = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
+          (RVar (SimpleLocal "y")))
+      , "let x: List A -> Tuple A B = y" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "x")
           (Just $
             name "List" `App` [name "A"]
               `Arrow` name "Tuple" `App` [name "A", name "B"])
-          $ RVar (SimpleLocal "y"))
+          (RVar (SimpleLocal "y")))
+      ]
 
-    testLetUnionTypes = do
-      process "let f: A | B = g" `toBe` syntax
-        (Let (LVar $ SimpleLocal "f")
+    testLetUnionTypes =
+      [ "let f: A | B = g" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "f")
           (Just $ name "A" `Union` name "B")
-          $ RVar (SimpleLocal "g"))
-      process "let f: A -> B | X -> Y = g" `toBe` syntax
-        (Let (LVar $ SimpleLocal "f")
+          (RVar (SimpleLocal "g")))
+      , "let f: A -> B | X -> Y = g" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "f")
           (Just $ (name "A" `Arrow` name "B") `Union` (name "X" `Arrow` name "Y"))
-          $ RVar (SimpleLocal "g"))
-      process "let f: List X | Tuple A B = g" `toBe` syntax
-        (Let (LVar $ SimpleLocal "f")
+          (RVar (SimpleLocal "g")))
+      , "let f: List X | Tuple A B = g" `shouldBe` syntax
+        (Let
+          (LVar $ SimpleLocal "f")
           (Just $
             name "List" `App` [name "X"]
               `Union` name "Tuple" `App` [name "A", name "B"])
-          $ RVar (SimpleLocal "g"))
+          (RVar (SimpleLocal "g")))
+      ]

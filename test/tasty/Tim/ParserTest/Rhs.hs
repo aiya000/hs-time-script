@@ -4,7 +4,6 @@ module Tim.ParserTest.Rhs where
 
 import RIO hiding (first)
 import Test.Tasty (TestTree)
-import Test.Tasty.HUnit (testCase)
 import Tim.Char (LowerChar (..), AlphaChar (..))
 import Tim.Lexer.Types hiding (AtomicLiteral(..), QualifiedIdent(..))
 import Tim.Parser.Types
@@ -12,57 +11,64 @@ import Tim.Test
 
 test_literals :: [TestTree]
 test_literals =
-  [ testCase "42" testNats
-  , testCase "+42, -42" testInts
-  , testCase "'you', \"you\"" testStrings
-  , testCase "1.0" testFloats
-  , testCase "v:true, v:false, v:null" testLiteralLikeVimVars
-  , testCase "['sugar', 'sweet', 'moon']" testLists
-  , testCase "{'foo': 10, 'bar': 20}" testDicts
+  testNats <>
+  testInts <>
+  testStrings <>
+  testFloats <>
+  testLiteralLikeVimVars <>
+  testLists <>
+  testDicts
   -- TODO
   -- , testCase "function('string')"
-  ]
   where
     testNats =
-      process "42" `toBe` Rhs (RLit $ Nat 42)
+      [ "42" `shouldBe` Rhs (RLit $ Nat 42)
+      ]
 
-    testInts = do
-      process "+42" `toBe` Rhs (RLit $ Int 42)
-      process "-42" `toBe` Rhs (RLit $ Int (-42))
+    testInts =
+      [ "+42" `shouldBe` Rhs (RLit $ Int 42)
+      , "-42" `shouldBe` Rhs (RLit $ Int (-42))
+      ]
 
     testFloats =
-      process "1.0" `toBe` Rhs (RLit $ Float 1.0)
+      [ "1.0" `shouldBe` Rhs (RLit $ Float 1.0)
+      ]
 
-    testStrings = do
-      process "'you'" `toBe` Rhs (RLit . String $ SingleQuoted "you")
-      process "\"you\"" `toBe` Rhs (RLit . String $ DoubleQuoted "you")
+    testStrings =
+      [ "'you'" `shouldBe` Rhs (RLit . String $ SingleQuoted "you")
+      , "\"you\"" `shouldBe` Rhs (RLit . String $ DoubleQuoted "you")
+      ]
 
-    testLiteralLikeVimVars = do
-      process "v:true"  `toBe` Rhs (RVar $ Scoped V "true")
-      process "v:false" `toBe` Rhs (RVar $ Scoped V "false")
-      process "v:null"  `toBe` Rhs (RVar $ Scoped V "null")
+    testLiteralLikeVimVars =
+      [ "v:true"  `shouldBe` Rhs (RVar $ Scoped V "true")
+      , "v:false" `shouldBe` Rhs (RVar $ Scoped V "false")
+      , "v:null"  `shouldBe` Rhs (RVar $ Scoped V "null")
+      ]
 
-    testLists = do
-      let expected = Rhs . RLit $
-            List [ String $ SingleQuoted "sugar"
-                 , String $ SingleQuoted "sweet"
-                 , String $ SingleQuoted "moon"
-                 ]
-      process "['sugar', 'sweet', 'moon']" `toBe` expected
+    testLists =
+      [
+        let expected = Rhs . RLit $
+              List [ String $ SingleQuoted "sugar"
+                   , String $ SingleQuoted "sweet"
+                   , String $ SingleQuoted "moon"
+                   ]
+         in "['sugar', 'sweet', 'moon']" `shouldBe` expected
+      ]
 
-    testDicts = do
-      process "{'foo': 10, 'bar': 20}" `toBe`
-        dict [ (SingleQuoted "foo", Nat 10)
-             , (SingleQuoted "bar", Nat 20)
-             ]
-      process "{\"foo\": 10, 'bar': 20}" `toBe`
-        dict [ (DoubleQuoted "foo", Nat 10)
-             , (SingleQuoted "bar", Nat 20)
-             ]
-      process "{\"foo\": 10, \"bar\": 20}" `toBe`
-        dict [ (DoubleQuoted "foo", Nat 10)
-             , (DoubleQuoted "bar", Nat 20)
-             ]
+    testDicts =
+      [ "{'foo': 10, 'bar': 20}" `shouldBe`
+          dict [ (SingleQuoted "foo", Nat 10)
+               , (SingleQuoted "bar", Nat 20)
+               ]
+      , "{\"foo\": 10, 'bar': 20}" `shouldBe`
+          dict [ (DoubleQuoted "foo", Nat 10)
+               , (SingleQuoted "bar", Nat 20)
+               ]
+      , "{\"foo\": 10, \"bar\": 20}" `shouldBe`
+          dict [ (DoubleQuoted "foo", Nat 10)
+               , (DoubleQuoted "bar", Nat 20)
+               ]
+      ]
        where
         dict :: Map StringLit Literal -> AST
         dict = Rhs . RLit . Dict
@@ -71,17 +77,18 @@ test_literals =
 -- | Non atomically expressions
 test_expressions :: [TestTree]
 test_expressions =
-  [ testCase "ident" testIdents
-  , testCase "(foo)" testParens
-  ]
+  testIdents <>
+  testParens
   where
-    testIdents = do
-      process "simple" `toBe` Rhs (RVar $ SimpleLocal "simple")
-      process "g:scoped" `toBe` Rhs (RVar $ Scoped G "scoped")
-      process "@a" `toBe` Rhs (RVar . Register . Alphabetic $ AlphaLower A_)
-      process "@+" `toBe` Rhs (RVar $ Register ClipboardPlus)
+    testIdents =
+      [ "simple" `shouldBe` Rhs (RVar $ SimpleLocal "simple")
+      , "g:scoped" `shouldBe` Rhs (RVar $ Scoped G "scoped")
+      , "@a" `shouldBe` Rhs (RVar . Register . Alphabetic $ AlphaLower A_)
+      , "@+" `shouldBe` Rhs (RVar $ Register ClipboardPlus)
+      ]
 
-    testParens = do
-      process "(10)" `toBe` Rhs (RParens . RLit $ Nat 10)
-      process "(ident)" `toBe` Rhs (RParens . RVar $ SimpleLocal "ident")
-      process "((nested))" `toBe` Rhs (RParens . RParens . RVar $ SimpleLocal "nested")
+    testParens =
+      [ "(10)" `shouldBe` Rhs (RParens . RLit $ Nat 10)
+      , "(ident)" `shouldBe` Rhs (RParens . RVar $ SimpleLocal "ident")
+      , "((nested))" `shouldBe` Rhs (RParens . RParens . RVar $ SimpleLocal "nested")
+      ]
