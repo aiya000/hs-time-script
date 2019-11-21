@@ -58,18 +58,27 @@ test_let =
           $ RVar (SimpleLocal "z"))
 
     testLetHigherKindTypes = do
+      -- simple
       process "let x: X A = y" `toBe` syntax
         (Let (LVar $ SimpleLocal "x")
           (Just $ name "X" `App` [name "A"])
           $ RVar (SimpleLocal "y"))
-      process "let x: (X) A = y" `toBe` syntax
-        (Let (LVar $ SimpleLocal "x")
-          (Just $ name "X" `App` [name "A"])
-          $ RVar (SimpleLocal "y"))
+      -- two
       process "let x: X A B = y" `toBe` syntax
         (Let (LVar $ SimpleLocal "x")
           (Just $ name "X" `App` [name "A", name "B"])
           $ RVar (SimpleLocal "y"))
+      -- simple parens onto head
+      process "let x: (X) A = y" `toBe` syntax
+        (Let (LVar $ SimpleLocal "x")
+          (Just $ Parens (name "X") `App` [name "A"])
+          $ RVar (SimpleLocal "y"))
+      -- parens onto head
+      process "let x: (X Y) A = y" `toBe` syntax
+        (Let (LVar $ SimpleLocal "x")
+          (Just $ Parens (name "X") `App` [name "A"])
+          $ RVar (SimpleLocal "y"))
+      -- parens onto tail
       process "let x: List (Tuple Char Nat) = y" `toBe` syntax
         (Let (LVar $ SimpleLocal "x")
           (Just $ name "List" `App` [
