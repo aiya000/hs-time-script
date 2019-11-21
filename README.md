@@ -39,7 +39,7 @@ let y: String = "me"
 let x:  Float = 1.0
 let y:  Bool  = v:true
 let z1: Null  = v:null
-let z2: Null  = v:none
+let z2: Null  = v:none  " This is a Null to save `type(v:null) is type(v:none)`
 ```
 
 ```vim
