@@ -4,13 +4,13 @@
 -- | Kinds of namings
 module Tim.String where
 
-import Data.Text.Prettyprint.Doc (Pretty(..))
-import RIO
-import Tim.Char
-import Tim.Megaparsec
 import qualified Data.String as String
+import Data.Text.Prettyprint.Doc (Pretty(..))
+import RIO hiding (NonEmpty)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
+import Tim.Char
+import Tim.Megaparsec
 
 -- | Non empty PascalCase names "[A-Z][a-zA-Z0-9]*"
 data Pascal = Pascal UpperChar [AlphaNumChar]
