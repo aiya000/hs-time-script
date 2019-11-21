@@ -50,6 +50,7 @@ ghcExtensions =
     , "-XScopedTypeVariables"
     , "-XStandaloneDeriving"
     , "-XTupleSections"
+    , "-XTypeApplications"
     , "-XTypeFamilies"
     , "-XTypeSynonymInstances"
     , "-XViewPatterns"
