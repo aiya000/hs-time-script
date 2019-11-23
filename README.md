@@ -434,6 +434,17 @@ const symbol =
   endmatch
 ```
 
+### Expressions
+
+```vim
+const x =
+  if g:foo is 0
+    return 10
+  else
+    return 20
+  endif
+```
+
 ### Structural subtypings
 
 TODO
