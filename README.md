@@ -402,14 +402,36 @@ let x: Nat = Identity[Nat](10)  " A type specifying
 let y: Nat = Identity(20)       " Or the specifying can be omited
 ```
 
-### Sum types
+### enum and pattern matching
 
 ```vim
-type Mode = <Normal: Null, Insert: Null, Virtual: VKind>
-type VKind = <Charwise: Null, Linewise: Null, Blockwise: Null>
+enum Mode
+  Normal
+  Command
+  Visual(kind: Virtual)  -- Can put one or more fields
+endenum
 
-let x: Mode = Normal v:null
-let y: Mode = Virtual (Charwise v:null)
+enum Virtual
+  Charwise
+  Linewise
+  Blockwise
+endenum
+```
+
+```vim
+const mode: Mode = Visual(Charwise)
+
+const symbol =
+  " All enum values must be exhaustive.
+  match(mode)
+    " Simple
+    Normal -> 'n'
+    Command -> 'c'
+    " Nested fields
+    Visual(Charwise) -> 'v'
+    Visual(Linewise) -> 'V'
+    Visual(Blockwise) -> ''
+  endmatch
 ```
 
 ### Structural subtypings
