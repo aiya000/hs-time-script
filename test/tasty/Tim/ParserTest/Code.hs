@@ -93,9 +93,7 @@ test_let =
             [ Parens
               (name "Tuple" `App`
               [ name "Char"
-              , name "Nat"
-              ])
-           ])
+              , name "Nat" ])])
           (RVar (SimpleLocal "y")))
       ]
 

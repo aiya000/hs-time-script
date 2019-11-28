@@ -2,12 +2,12 @@
 
 module Tim.Parser.Types where
 
+import qualified Data.List.NonEmpty as List
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
-import Tim.String
-import qualified Data.List.NonEmpty as List
 import qualified Tim.Lexer.Types as Lexers
+import Tim.String
 
 type Code = [Syntax]
 
@@ -47,7 +47,6 @@ data StringLit = SingleQuoted Text
   deriving (Show, Eq, Ord)
 
 
--- | Time script's types
 data Type = Name Camel -- ^ A Name of a higher kind or lower kind type (e.g. `Int`, `List`)
           | App Type [Type] -- ^ An application of a higher kind type and the argument types (e.g. `List Int`, `Dict Bool`)
           | Parens Type -- ^ `(Type)`, `(List X)`, `(List) X`

@@ -29,22 +29,23 @@ lexer = P.many $ do
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
-  aSymbol '=' Assign <|>
-  aSymbol ':' Colon <|>
-  aSymbol ',' Comma <|>
-  aSymbol '(' ParenBegin <|>
-  aSymbol ')' ParenEnd <|>
-  aSymbol '[' ListBegin <|>
-  aSymbol ']' ListEnd <|>
-  aSymbol '{' DictBegin <|>
-  aSymbol '}' DictEnd <|>
+  aSymbol "=" Assign <|>
+  aSymbol ":" Colon <|>
+  aSymbol "," Comma <|>
+  aSymbol "(" ParenBegin <|>
+  aSymbol ")" ParenEnd <|>
+  aSymbol "[" ListBegin <|>
+  aSymbol "]" ListEnd <|>
+  aSymbol "{" DictBegin <|>
+  aSymbol "}" DictEnd <|>
+  aSymbol "->" Arrow <|>
   lineBreak
   where
     -- Takes expected chars, and its correspound token
-    aSymbol :: Char -> Token -> Lexer (Token, TokenPos)
+    aSymbol :: String -> Token -> Lexer (Token, TokenPos)
     aSymbol expected itsToken =
       first (const itsToken) <$>
-        token (P.char expected) `forward` 1
+        token (P.string expected) `forwardBy` length
 
     lineBreak :: Lexer (Token, TokenPos)
     lineBreak =
