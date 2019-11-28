@@ -82,14 +82,20 @@ test_let =
       , "let x: (X Y) A = y" `shouldBe` syntax  -- parens onto head
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ Parens (name "X") `App` [name "A"])
+          (Just $
+            Parens (name "X" `App` [name "Y"]) `App`
+              [name "A"])
           (RVar (SimpleLocal "y")))
       , "let x: List (Tuple Char Nat) = y" `shouldBe` syntax  -- parens onto tail
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "List" `App` [
-            name "Tuple" `App` [name "Char", name "Nat"]
-          ])
+          (Just $ name "List" `App`
+            [ Parens
+              (name "Tuple" `App`
+              [ name "Char"
+              , name "Nat"
+              ])
+           ])
           (RVar (SimpleLocal "y")))
       ]
 
