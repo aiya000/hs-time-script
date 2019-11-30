@@ -49,7 +49,13 @@ fromString (x : xs) = Just $ NonEmpty x xs
 
 -- | Non empty camelCase names "[a-zA-Z][a-zA-Z0-9]*"
 data Camel = Camel AlphaChar [AlphaNumChar]
-  deriving (Show, Eq)
+  deriving (Eq)
+
+-- To easy to debug.
+--
+-- To strictly check, remove this instance and use `deriving (Show)`.
+instance Show Camel where
+  show (Camel x xs) = '"' : alphaToChar x : map alphaNumToChar xs <> "\""
 
 instance Pretty Camel where
   pretty = String.fromString . unCamel
