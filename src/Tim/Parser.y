@@ -123,15 +123,17 @@ Lhs :: { Lhs }
   | '[' DestVars ']' { LDestuct $2 }
 
 Type :: { Type }
-  : Camel          { Name $1     }
-  | Type TypeArgs  { App $1 $2   }
-  | '(' Type ')'   { Parens $2   }
-  | Type "->" Type { Arrow $1 $3 }
-  | Type '|' Type  { Union $1 $3 }
+  : Type "->" Type { Arrow $1 $3  }
+  | Type '|'  Type { Union $1 $3  }
+  | '(' Type ')'   { Parens $2    }
+  | Camel TypeArgs { Constr $1 $2 }
 
+-- TODO: 4 or more arguments?
 TypeArgs :: { [Type] }
-  : Type          { [$1]    }
-  | Type TypeArgs { $1 : $2 }
+  : {- empty -}       { []                                         }
+  | Camel             { [Constr $1 []]                             }
+  | Camel Camel       { [Constr $1 [], Constr $2 []]               }
+  | Camel Camel Camel { [Constr $1 [], Constr $2 [], Constr $3 []] }
 
 Camel :: { Camel }
   : ident {% resolveParsingCamel pos $ String.parseCamel $1 }

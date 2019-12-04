@@ -47,16 +47,15 @@ data StringLit = SingleQuoted Text
   deriving (Show, Eq, Ord)
 
 
-data Type = Name Camel -- ^ A Name of a higher kind or lower kind type (e.g. `Int`, `List`)
-          | App Type [Type] -- ^ An application of a higher kind type and the argument types (e.g. `List Int`, `Dict Bool`)
-          | Parens Type -- ^ `(Type)`, `(List X)`, `(List) X`
-          | Arrow Type Type -- ^ `X -> Y`
-          | Union Type Type -- ^ `X | Y`
+-- | Please see the parser implementation
+data Type = Constr Camel [Type]  -- ^ A constructor. e.g. a name "Foo", an applying "Foo Bar"
+          | Parens Type
+          | Arrow Type Type
+          | Union Type Type
   deriving (Show, Eq)
 
 infixr 3 `Arrow`
 infixr 4 `Union`
-infixl 5 `App`
 
 -- | The parser's variable identifiers
 data Variable = SimpleLocal String -- ^ simple_idents

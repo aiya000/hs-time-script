@@ -5,6 +5,7 @@ module Tim.ParserTest.Code where
 import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Tim.Parser.Types
+import Tim.String
 import qualified Tim.String.Parser as String
 import Tim.Test
 
@@ -13,11 +14,15 @@ syntax :: Syntax -> AST
 syntax = Code . (: [])
 
 -- | Unsafe
-name :: String -> Type
-name = Name . ignore . String.parseCamel
+name :: String -> Camel
+name = ignore . String.parseCamel
   where
     ignore (Left x)  = error x
     ignore (Right x) = x
+
+-- | Unsafe
+tName :: String -> Type
+tName = flip Constr [] . name
 
 test_let :: [TestTree]
 test_let =
@@ -49,17 +54,17 @@ test_let =
       [ "let x: Type = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "Type")
+          (Just $ Constr (name "Type") [])
           (RVar (SimpleLocal "y")))
       , "let x: (Type) = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just . Parens $ name "Type")
+          (Just . Parens $ Constr (name "Type") [])
           (RVar (SimpleLocal "y")))
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but this is rejected by the syntax checker (not the parser).
         (Let
           (LDestuct [SimpleLocal "x", SimpleLocal "y"])
-          (Just $ name "Type")
+          (Just $ Constr (name "Type") [])
           (RVar (SimpleLocal "z")))
       ]
 
@@ -67,33 +72,23 @@ test_let =
       [ "let x: X A = y" `shouldBe` syntax  -- simple
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "X" `App` [name "A"])
+          (Just $ Constr (name "X") [tName "A"])
           (RVar (SimpleLocal "y")))
       , "let x: X A B = y" `shouldBe` syntax  -- two
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "X" `App` [name "A", name "B"])
-          (RVar (SimpleLocal "y")))
-      , "let x: (X) A = y" `shouldBe` syntax  -- simple parens onto head
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ Parens (name "X") `App` [name "A"])
-          (RVar (SimpleLocal "y")))
-      , "let x: (X Y) A = y" `shouldBe` syntax  -- parens onto head
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $
-            Parens (name "X" `App` [name "Y"]) `App`
-              [name "A"])
+          (Just $ Constr (name "X") [tName "A", tName "B"])
           (RVar (SimpleLocal "y")))
       , "let x: List (Tuple Char Nat) = y" `shouldBe` syntax  -- parens onto tail
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "List" `App`
+          (Just $
+            Constr (name "List")
             [ Parens
-              (name "Tuple" `App`
-              [ name "Char"
-              , name "Nat" ])])
+              (Constr (name "Tuple")
+                [ tName "Char"
+                , tName "Nat"
+                ])])
           (RVar (SimpleLocal "y")))
       ]
 
@@ -101,19 +96,24 @@ test_let =
       [ "let x: A -> B = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "A" `Arrow` name "B")
+          (Just $ tName "A" `Arrow` tName "B")
           (RVar (SimpleLocal "y")))
-      , "let x: A -> B -> C = y" `shouldBe` syntax
+      , "let x: A -> B -> C = y" `shouldBe` syntax  -- right associated
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ name "A" `Arrow` (name "B" `Arrow` name "C"))
+          (Just
+            (Arrow
+              (tName "A")
+              (Arrow
+                (tName "B")
+                (tName "C"))))
           (RVar (SimpleLocal "y")))
       , "let x: List A -> Tuple A B = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
           (Just $
-            name "List" `App` [name "A"]
-              `Arrow` name "Tuple" `App` [name "A", name "B"])
+            Constr (name "List") [tName "A"]
+              `Arrow` Constr (name "Tuple") [tName "A", tName "B"])
           (RVar (SimpleLocal "y")))
       ]
 
@@ -121,18 +121,18 @@ test_let =
       [ "let f: A | B = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
-          (Just $ name "A" `Union` name "B")
+          (Just $ tName "A" `Union` tName "B")
           (RVar (SimpleLocal "g")))
       , "let f: A -> B | X -> Y = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
-          (Just $ (name "A" `Arrow` name "B") `Union` (name "X" `Arrow` name "Y"))
+          (Just $ (tName "A" `Arrow` tName "B") `Union` (tName "X" `Arrow` tName "Y"))
           (RVar (SimpleLocal "g")))
       , "let f: List X | Tuple A B = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
           (Just $
-            name "List" `App` [name "X"]
-              `Union` name "Tuple" `App` [name "A", name "B"])
+            Constr (name "List") [tName "X"]
+              `Union` Constr (name "Tuple") [tName "A", tName "B"])
           (RVar (SimpleLocal "g")))
       ]
