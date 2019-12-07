@@ -48,7 +48,8 @@ data StringLit = SingleQuoted Text
 
 
 -- | Please see the parser implementation
-data Type = Constr Camel [Type]  -- ^ A constructor. e.g. a name "Foo", an applying "Foo Bar"
+data Type = Con Camel
+          | App Type [Type]
           | Parens Type
           | Arrow Type Type
           | Union Type Type
