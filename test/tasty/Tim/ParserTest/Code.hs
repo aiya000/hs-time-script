@@ -21,8 +21,16 @@ name = ignore . String.parseCamel
     ignore (Right x) = x
 
 -- | Unsafe
-tName :: String -> Type
-tName = Con . name
+con :: String -> Type
+con = Con . name
+
+-- | Test '???' of 'let x: ??? = y'
+typedBy :: Type -> AST
+typedBy expected =
+  syntax (Let
+      (LVar $ SimpleLocal "x")
+      (Just expected)
+      (RVar $ SimpleLocal "y"))
 
 test_let :: [TestTree]
 test_let =
@@ -54,81 +62,72 @@ test_let =
       [ "let x: Type = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ tName "Type")
+          (Just $ con "Type")
           (RVar (SimpleLocal "y")))
       , "let x: (Type) = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just . Parens $ tName "Type")
+          (Just . Parens $ con "Type")
           (RVar (SimpleLocal "y")))
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but this is rejected by the syntax checker (not the parser).
         (Let
           (LDestuct [SimpleLocal "x", SimpleLocal "y"])
-          (Just $ tName "Type")
+          (Just $ con "Type")
           (RVar (SimpleLocal "z")))
       ]
 
     testLetHigherTypes =
-      [ "let x: X A = y" `shouldBe` syntax  -- simple
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ App (tName "X") [tName "A"])
-          (RVar (SimpleLocal "y")))
-      , "let x: (X) A = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ App (Parens $ tName "X") [tName "A"])
-          (RVar (SimpleLocal "y")))
-      , "let x: X (A) = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ App (tName "X") [Parens $ tName "A"])
-          (RVar (SimpleLocal "y")))
-      , "let x: (X A) = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just . Parens $ App (tName "X") [tName "A"])
-          (RVar (SimpleLocal "y")))
-      , "let x: X A B = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ App (tName "X") [tName "A", tName "B"])
-          (RVar (SimpleLocal "y")))
-      , "let x: List (Tuple Char Nat) = y" `shouldBe` syntax  -- parens onto tail
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $
+      [ "let x: X A = y" `shouldBe`
+          typedBy (App (con "X") [con "A"])
+      , "let x: X A B = y" `shouldBe`
+          typedBy (App (con "X") [con "A", con "B"])
+      , "let x: (X) A B = y" `shouldBe`
+          typedBy
             (App
-              (tName "List")
-              [(App (tName "Tuple")
-                  [ tName "Char"
-                  , tName "Nat"
-                  ])]))
-          (RVar (SimpleLocal "y")))
+              (Parens $ con "X")
+              [con "A", con "B"])
+      , "let x: X (A) B = y" `shouldBe`
+          typedBy (App (con "X") [Parens $ con "A", con "B"])
+      , "let x: X A (B) = y" `shouldBe`
+          typedBy (App (con "X") [con "A", Parens $ con "B"])
+      , "let x: (X A) B = y" `shouldBe`
+          typedBy
+            (App
+              (App (con "X") [con "A"])
+              [con "B"])
+      , "let x: X (A B) = y" `shouldBe`
+          typedBy
+            (App (con "X")
+                 [App (con "A")
+                      [con "B"]])
+      , "let x: (X A B) = y" `shouldBe`
+          typedBy
+            (Parens
+              (App (con "X") [con "A", con "B"]))
       ]
 
     testLetFunctionTypes =
       [ "let x: A -> B = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
-          (Just $ tName "A" `Arrow` tName "B")
+          (Just $ con "A" `Arrow` con "B")
           (RVar (SimpleLocal "y")))
       , "let x: A -> B -> C = y" `shouldBe` syntax  -- right associated
         (Let
           (LVar $ SimpleLocal "x")
           (Just
             (Arrow
-              (tName "A")
+              (con "A")
               (Arrow
-                (tName "B")
-                (tName "C"))))
+                (con "B")
+                (con "C"))))
           (RVar (SimpleLocal "y")))
       , "let x: List A -> Tuple A B = y" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "x")
           (Just $
-            App (tName "List") [tName "A"]
-              `Arrow` App (tName "Tuple") [tName "A", tName "B"])
+            App (con "List") [con "A"]
+              `Arrow` App (con "Tuple") [con "A", con "B"])
           (RVar (SimpleLocal "y")))
       ]
 
@@ -136,18 +135,18 @@ test_let =
       [ "let f: A | B = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
-          (Just $ tName "A" `Union` tName "B")
+          (Just $ con "A" `Union` con "B")
           (RVar (SimpleLocal "g")))
       , "let f: A -> B | X -> Y = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
-          (Just $ (tName "A" `Arrow` tName "B") `Union` (tName "X" `Arrow` tName "Y"))
+          (Just $ (con "A" `Arrow` con "B") `Union` (con "X" `Arrow` con "Y"))
           (RVar (SimpleLocal "g")))
       , "let f: List X | Tuple A B = g" `shouldBe` syntax
         (Let
           (LVar $ SimpleLocal "f")
           (Just $
-            App (tName "List") [tName "X"]
-              `Union` App (tName "Tuple") [tName "A", tName "B"])
+            App (con "List") [con "X"]
+              `Union` App (con "Tuple") [con "A", con "B"])
           (RVar (SimpleLocal "g")))
       ]
