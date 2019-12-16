@@ -126,13 +126,13 @@ Type :: { Type }
   : Type "->" Type { Arrow $1 $3 }
   | Type '|'  Type { Union $1 $3 }
   | Camel          { Con $1      }
-  | '(' Type ')'   { Parens $2   }
-  | Type TypeArgs  { App $1 $2   }
+  | '(' Type ')'   { $2          }
+  | TypeApp        { $1          }
 
-TypeArgs :: { [Type] }
-  : Camel            { [Con $1]    }
-  | Camel TypeArgs   { Con $1 : $2 }
-  | '(' TypeArgs ')' { $2          }
+-- lefty bias
+TypeApp :: { Type }
+  : Type Camel        { App $1 (Con $2) }
+  | Type '(' Type ')' { App $1 $3       }
 
 Camel :: { Camel }
   : ident {% resolveParsingCamel pos $ String.parseCamel $1 }

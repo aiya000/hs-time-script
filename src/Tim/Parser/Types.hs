@@ -50,7 +50,6 @@ data StringLit = SingleQuoted Text
 -- | Please see the parser implementation
 data Type = Con Camel
           | App Type Type
-          | Parens Type
           | Arrow Type Type
           | Union Type Type
   deriving (Show, Eq)
