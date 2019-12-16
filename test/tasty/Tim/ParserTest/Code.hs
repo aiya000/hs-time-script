@@ -59,16 +59,10 @@ test_let =
       ]
 
     testLetAtomicTypes =
-      [ "let x: Type = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just $ con "Type")
-          (RVar (SimpleLocal "y")))
-      , "let x: (Type) = y" `shouldBe` syntax
-        (Let
-          (LVar $ SimpleLocal "x")
-          (Just . Parens $ con "Type")
-          (RVar (SimpleLocal "y")))
+      [ "let x: Type = y" `shouldBe`
+          typedBy (con "Type")
+      , "let x: (Type) = y" `shouldBe`
+          typedBy (con "Type")
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but it is rejected by the syntax checker (not the parser).
         (Let
           (LDestuct [SimpleLocal "x", SimpleLocal "y"])
@@ -78,17 +72,22 @@ test_let =
 
     testLetHigherTypes =
       [ "let x: X A = y" `shouldBe`
-          typedBy (App (con "X") (con "A"))
+          typedBy
+            (App
+              (con "X")
+              (con "A"))
       , "let x: X A B = y" `shouldBe`
           typedBy
             (App
-              (App (con "X") (con "A"))
+              (App
+                (con "X")
+                (con "A"))
               (con "B"))
       , "let x: (X) A B = y" `shouldBe`
           typedBy
             (App
               (App
-                (Parens (con "X"))
+                (con "X")
                 (con "A"))
               (con "B"))
       , "let x: X (A) B = y" `shouldBe`
@@ -96,7 +95,7 @@ test_let =
             (App
               (App
                 (con "X")
-                (Parens (con "A")))
+                (con "A"))
               (con "B"))
       , "let x: X A (B) = y" `shouldBe`
           typedBy
@@ -104,13 +103,13 @@ test_let =
               (App
                 (con "X")
                 (con "A"))
-              (Parens (con "B")))
+              (con "B"))
       , "let x: (X A) B = y" `shouldBe`
           typedBy
             (App
-              (Parens (App
+              (App
                 (con "X")
-                (con "A")))
+                (con "A"))
               (con "B"))
       , "let x: X (A B) = y" `shouldBe`
           typedBy
@@ -119,13 +118,6 @@ test_let =
               (App
                 (con "A")
                 (con "B")))
-      , "let x: (X A B) = y" `shouldBe`
-          typedBy (Parens
-            (App
-              (App
-                (con "X")
-                (con "A"))
-              (con "B")))
       , "let x: X A B C = y" `shouldBe`
           typedBy
             (App
