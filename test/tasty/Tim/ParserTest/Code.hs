@@ -126,6 +126,15 @@ test_let =
                 (con "X")
                 (con "A"))
               (con "B")))
+      , "let x: X A B C = y" `shouldBe`
+          typedBy
+            (App
+              (App
+                (App
+                  (con "X")
+                  (con "A"))
+                (con "B"))
+              (con "C"))
       ]
 
     testLetFunctionTypes =
