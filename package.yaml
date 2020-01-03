@@ -20,6 +20,7 @@ default-extensions:
   - AutoDeriveTypeable
   - BangPatterns
   - BinaryLiterals
+  - BlockArguments
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
