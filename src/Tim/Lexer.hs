@@ -38,6 +38,7 @@ symbol =
   aSymbol "]" ListEnd <|>
   aSymbol "{" DictBegin <|>
   aSymbol "}" DictEnd <|>
+  aSymbol "|" Bar <|>
   aSymbol "->" Arrow <|>
   lineBreak
   where

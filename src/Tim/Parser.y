@@ -103,6 +103,9 @@ import qualified Tim.String.Parser as String
   -- - A type identifier
   ident { (Token.Ident (Token.unIdent -> $$), pos) }
 
+%right '|'
+%right "->"
+
 %%
 
 AST :: { AST }
