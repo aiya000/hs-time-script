@@ -66,6 +66,7 @@ dependencies:
   - containers
   - data-default
   - generic-lens
+  - haskeline
   - here
   - lens
   - megaparsec
