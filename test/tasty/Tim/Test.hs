@@ -7,13 +7,29 @@ import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Tim.Main (process, PrettyFailure)
 import Tim.Parser.Types
+import Tim.String (Camel)
+import qualified Tim.String.Parser as String
 
 infixl 1 `shouldBe`
 
 shouldBe :: HasCallStack => TestName -> AST -> TestTree
-shouldBe name expected =
-  testCase name $
-    process (Text.pack name) `toBe` expected
+shouldBe expr expected =
+  testCase expr $
+    process (Text.pack expr) `toBe` expected
   where
     toBe :: HasCallStack => Either PrettyFailure AST -> AST -> Assertion
     actual `toBe` expected' = actual @?= Right expected'
+
+syntax :: Syntax -> AST
+syntax = Code . (: [])
+
+-- | Unsafe
+name :: String -> Camel
+name = ignore . String.parseCamel
+  where
+    ignore (Left x)  = error x
+    ignore (Right x) = x
+
+-- | Unsafe
+con :: String -> Type
+con = Con . name

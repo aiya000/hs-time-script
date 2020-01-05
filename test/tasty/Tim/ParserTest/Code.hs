@@ -5,24 +5,7 @@ module Tim.ParserTest.Code where
 import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Tim.Parser.Types
-import Tim.String
-import qualified Tim.String.Parser as String
 import Tim.Test
-
--- | A code
-syntax :: Syntax -> AST
-syntax = Code . (: [])
-
--- | Unsafe
-name :: String -> Camel
-name = ignore . String.parseCamel
-  where
-    ignore (Left x)  = error x
-    ignore (Right x) = x
-
--- | Unsafe
-con :: String -> Type
-con = Con . name
 
 -- | Test '???' of 'let x: ??? = y'
 typedBy :: Type -> AST
@@ -31,6 +14,7 @@ typedBy expected =
       (LVar $ SimpleLocal "x")
       (Just expected)
       (RVar $ SimpleLocal "y"))
+
 
 test_let :: [TestTree]
 test_let =
