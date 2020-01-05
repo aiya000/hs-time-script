@@ -272,7 +272,7 @@ command! -bar ContLine  " This is a command
     \ call gift#for#you()
 ```
 
-### Function `abort` by default <a name="function-abort-by-default"></a>
+### Function `abort` and `closure` by default <a name="function-abort-by-default"></a>
 
 ```vim
 function s:f()
@@ -297,6 +297,8 @@ echo s:g()
 " E605: Exception not caught: error!
 " finish.
 ```
+
+Also `[[no-closure]]` is same as it.
 
 Tradictional options.
 
@@ -349,6 +351,19 @@ let x = {
   " keba-b: 'sweet',  " Not allowed because a name uses a char '-'
   'keba-b': 'sweet',  " Not allowed because a name uses a char '-'
 }
+```
+
+##### Named function arguments
+
+```vim
+function Log(name, message) abort
+    echo a:name .. ': ' .. a:message
+endfunction
+
+call Log(
+    message: 'howdy!',
+    name: 'flowey',
+    )
 ```
 
 ##### Assigning new value without declrarations
@@ -434,15 +449,24 @@ const symbol =
   endmatch
 ```
 
-### Expressions
+### Decorators
 
 ```vim
-const x =
-  if g:foo is 0
-    return 10
-  else
-    return 20
-  endif
+@DeepConst
+const x = {xx: 10}
+
+@Assert({ x, y -> y > 0 })
+function Div(x, y) abort
+  return x / y
+endfunction
+
+function DeepConst(ast_of_binding: AST): Either CompileError AST
+  " Modifying of ast_of_binding
+endfunction
+
+function Assert(ast_of_div: AST): Either CompileError AST
+  " Return a CompileError value if you want to abort compiling
+endfunction
 ```
 
 ### Structural subtypings
