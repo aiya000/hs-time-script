@@ -253,6 +253,15 @@ let i: Tuple Null Null = [v:null, v:null, v:null]
 echo i[2]
 ```
 
+### Objects
+
+```vim
+let x: {x: Nat, y: String} = {
+  y: '000',
+  x: 1000,
+}
+```
+
 ## Advanced features <a name="advanced-features"></a>
 ### Multi-line comments
 
@@ -469,7 +478,21 @@ function Assert(ast_of_div: AST): Either CompileError AST
 endfunction
 ```
 
-### Structural subtypings
+### Structural subtyping
+
+```vim
+const a: {x: Nat, y: Char} = {
+  x: 10,
+  y: 'a',
+}
+
+function F(x: {x: Nat}): Void
+endfunction
+
+call F(a)
+```
+
+### ???
 
 TODO
 
