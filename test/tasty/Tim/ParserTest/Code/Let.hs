@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
 
-module Tim.ParserTest.Code where
+module Tim.ParserTest.Code.Let where
 
 import RIO hiding (first)
 import Test.Tasty (TestTree)
