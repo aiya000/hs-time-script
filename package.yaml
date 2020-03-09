@@ -98,6 +98,7 @@ tests:
       - test/tasty
       - src
     dependencies:
+      - here
       - smallcheck
       - tasty
       - tasty-discover
