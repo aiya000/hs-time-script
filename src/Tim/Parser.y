@@ -141,31 +141,31 @@ Camel :: { Camel }
   : ident {% resolveParsingCamel pos $ String.parseCamel $1 }
 
 Variable :: { Variable }
-  : varScopedG      { Scoped G $1                    }
-  | varScopedS      { Scoped S $1                    }
-  | varScopedL      { Scoped L $1                    }
-  | varScopedA      { Scoped A $1                    }
-  | varScopedV      { Scoped V $1                    }
-  | varScopedB      { Scoped B $1                    }
-  | varScopedW      { Scoped W $1                    }
-  | varScopedT      { Scoped T $1                    }
-  | varRegUnnamed   { Register Unnamed               }
-  | varRegSmallDel  { Register SmallDelete           }
-  | varRegReadOnlyC { Register ReadOnlyColon         }
-  | varRegReadonlyD { Register ReadOnlyDot           }
-  | varRegReadOnlyP { Register ReadOnlyPercent       }
-  | varRegBuffer    { Register Buffer                }
-  | varRegExpr      { Register Expression            }
-  | varRegClipS     { Register ClipboardStar         }
-  | varRegClipP     { Register ClipboardPlus         }
-  | varRegBlackHole { Register BlackHole             }
-  | varRegSeached   { Register Searched              }
-  | varRegNum       { Register $ Numeric $1          }
-  | varRegAlpha     { Register $ Alphabetic $1       }
-  | varLOption      { Option $ LocalScopedOption $1  }
-  | varGOption      { Option $ GlobalScopedOption $1 }
-  | varOption       { Option $ UnscopedOption $1     }
-  | ident           { SimpleLocal $1                 }
+  : varScopedG      { GeneralVar $ ScopedVar G $1         }
+  | varScopedS      { GeneralVar $ ScopedVar S $1         }
+  | varScopedL      { GeneralVar $ ScopedVar L $1         }
+  | varScopedA      { GeneralVar $ ScopedVar A $1         }
+  | varScopedV      { GeneralVar $ ScopedVar V $1         }
+  | varScopedB      { GeneralVar $ ScopedVar B $1         }
+  | varScopedW      { GeneralVar $ ScopedVar W $1         }
+  | varScopedT      { GeneralVar $ ScopedVar T $1         }
+  | varRegUnnamed   { RegisterVar Unnamed               }
+  | varRegSmallDel  { RegisterVar SmallDelete           }
+  | varRegReadOnlyC { RegisterVar ReadOnlyColon         }
+  | varRegReadonlyD { RegisterVar ReadOnlyDot           }
+  | varRegReadOnlyP { RegisterVar ReadOnlyPercent       }
+  | varRegBuffer    { RegisterVar Buffer                }
+  | varRegExpr      { RegisterVar Expression            }
+  | varRegClipS     { RegisterVar ClipboardStar         }
+  | varRegClipP     { RegisterVar ClipboardPlus         }
+  | varRegBlackHole { RegisterVar BlackHole             }
+  | varRegSeached   { RegisterVar Searched              }
+  | varRegNum       { RegisterVar $ Numeric $1          }
+  | varRegAlpha     { RegisterVar $ Alphabetic $1       }
+  | varLOption      { OptionVar $ LocalScopedOption $1  }
+  | varGOption      { OptionVar $ GlobalScopedOption $1 }
+  | varOption       { OptionVar $ UnscopedOption $1     }
+  | ident           { GeneralVar $ UnqualifiedVar $1    }
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }

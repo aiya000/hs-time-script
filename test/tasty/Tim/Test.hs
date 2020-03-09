@@ -5,6 +5,7 @@ import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
+import qualified Tim.Lexer.Types as Lexers
 import Tim.Main (process, PrettyFailure)
 import Tim.Parser.Types
 import Tim.String (Camel)
@@ -33,3 +34,9 @@ name = ignore . String.parseCamel
 -- | Unsafe
 con :: String -> Type
 con = Con . name
+
+unqualifiedVar :: String -> Variable
+unqualifiedVar = GeneralVar . UnqualifiedVar
+
+scopedVar :: Lexers.Scope -> String -> Variable
+scopedVar = (GeneralVar .) . ScopedVar

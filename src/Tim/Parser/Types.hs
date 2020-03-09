@@ -58,8 +58,13 @@ infixr 3 `Arrow`
 infixr 4 `Union`
 
 -- | The parser's variable identifiers
-data Variable = SimpleLocal String -- ^ simple_idents
-              | Scoped Lexers.Scope String -- ^ g:, l:foo
-              | Register Lexers.Register -- ^ @+, @u
-              | Option Lexers.Option -- ^ &nu, &number
+data Variable = GeneralVar GeneralVariable
+              | RegisterVar Lexers.Register -- ^ @+, @u
+              | OptionVar Lexers.Option -- ^ &nu, &number
+  deriving (Show, Eq)
+
+-- TODO: Rename SimpleLocal to Unqualified
+-- | e.g. g:, l:foo
+data GeneralVariable = UnqualifiedVar String -- ^ simple_idents
+                     | ScopedVar Lexers.Scope String -- ^ s:coped
   deriving (Show, Eq)

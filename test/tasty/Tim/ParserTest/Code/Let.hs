@@ -11,9 +11,9 @@ import Tim.Test
 typedBy :: Type -> AST
 typedBy expected =
   syntax (Let
-      (LVar $ SimpleLocal "x")
+      (LVar $ unqualifiedVar "x")
       (Just expected)
-      (RVar $ SimpleLocal "y"))
+      (RVar $ unqualifiedVar "y"))
 
 
 test_let :: [TestTree]
@@ -27,19 +27,19 @@ test_let =
     testLet =
       [ "let x = y" `shouldBe` syntax
           (Let
-            (LVar $ SimpleLocal "x")
+            (LVar $ unqualifiedVar "x")
             Nothing
-            (RVar (SimpleLocal "y")))
+            (RVar $ unqualifiedVar "y"))
       , "let [x] = z" `shouldBe` syntax
           (Let
-            (LDestuct [SimpleLocal "x"])
+            (LDestuct [unqualifiedVar "x"])
             Nothing
-            (RVar (SimpleLocal "z")))
+            (RVar $ unqualifiedVar "z"))
       , "let [x, y] = z" `shouldBe` syntax
           (Let
-            (LDestuct [SimpleLocal "x", SimpleLocal "y"])
+            (LDestuct [unqualifiedVar "x", unqualifiedVar "y"])
             Nothing
-            (RVar (SimpleLocal "z")))
+            (RVar $ unqualifiedVar "z"))
       ]
 
     testLetAtomicTypes =
@@ -49,9 +49,9 @@ test_let =
           typedBy (con "Type")
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but it is rejected by the syntax checker (not the parser).
         (Let
-          (LDestuct [SimpleLocal "x", SimpleLocal "y"])
+          (LDestuct [unqualifiedVar "x", unqualifiedVar "y"])
           (Just $ con "Type")
-          (RVar (SimpleLocal "z")))
+          (RVar $ unqualifiedVar "z"))
       ]
 
     testLetHigherTypes =
