@@ -281,7 +281,14 @@ command! -bar ContLine  " This is a command
     \ call gift#for#you()
 ```
 
-### Function `abort` and `closure` by default <a name="function-abort-by-default"></a>
+### Enable function options by default <a name="function-abort-by-default"></a>
+
+Below options are enabled by default.
+
+- `abort`
+- `closure`
+- `range`
+- `dict` (Only if dict qualified names specified. Like `x.f`, `x.y.f`)
 
 ```vim
 function s:f()
@@ -292,9 +299,7 @@ endfunction
 echo s:f()  " E605: Exception not caught: error!
 ```
 
-Or `no-abort` allows continuations.
-
-(Time script's function options is embraced by `[[]]`)
+But you can disable `abort` by `[[no-abort]]`.
 
 ```vim
 function s:g() [[no-abort]]
@@ -307,17 +312,11 @@ echo s:g()
 " finish.
 ```
 
-Also `[[no-closure]]` is same as it.
+Also below same as it.
 
-Tradictional options.
-
-(be embraced by `[]`)
-
-```vim
-function x.f(): Bool [dict]
-  return v:true
-endfunction
-```
+ - `[[no-closure]]`
+ - `[[no-range]]`
+ - `[[no-dict]]`
 
 ### String interpolations
 
