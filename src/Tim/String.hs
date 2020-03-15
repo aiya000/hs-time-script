@@ -187,7 +187,7 @@ sneakQ = QuasiQuoter
       pure $ ConE (mkName "Sneak") `AppE` z `AppE` ListE zs
 
 
--- | Non empty "veryflatten" names
+-- | Non empty "veryflatten" names [a-z]+
 data LowerString = LowerString LowerChar [LowerChar]
   deriving (Show, Eq)
 
@@ -199,3 +199,24 @@ unLowerString (LowerString x xs) = lowerToChar x : map lowerToChar xs
 
 parseLowerString :: CodeParsing m => m LowerString
 parseLowerString = LowerString <$> lowerChar <*> P.many lowerChar
+
+-- |
+-- Simular to 'nonEmptyQ',
+-- but naming outsides of 'LowerString' will be rejected.
+--
+-- >>> [lowerStringQ|imavimmer|]
+-- LowerString I_ [M_,A_,V_,I_,M_,M_,E_,R_]
+lowerStringQ :: QuasiQuoter
+lowerStringQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "lowerStringQ required a non empty string, but the empty string is specified."
+    expQ (x : xs) = do
+      z <- (quoteExp lowerCharQ) [x]
+      zs <- mapM (quoteExp lowerCharQ) $ map (: []) xs
+      pure $ ConE (mkName "LowerString") `AppE` z `AppE` ListE zs
