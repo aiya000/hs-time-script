@@ -26,12 +26,19 @@ data FuncName = UnqualifiedFuncName Pascal -- ^ e.g. F, G
               | PathFuncName String (List.NonEmpty String) -- ^ e.g. foo#bar to `PathFuncName "foo" ("bar" :| [])`.
   deriving (Show, Eq)
 
+data FuncOpt = NoAbort
+             | NoClosureFuncOpt
+             | NoRangeFuncOpt
+             | NoDict
+  deriving (Show, Eq)
+
 -- | Time script's commands (extended Vim's commands)
 data Syntax = Let Lhs (Maybe Type) Rhs -- ^ 'let foo: Bar = expr' or 'let foo = expr'
             | Function
                 FuncName -- ^ The function name
                 [FuncParam]
                 (Maybe Type) -- ^ The return type (can be omitted)
+                [FuncOpt]
                 [Syntax]  -- ^ Function declaretions (not `:function /{pattern}`)
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
