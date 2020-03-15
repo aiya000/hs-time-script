@@ -8,7 +8,7 @@ module Tim.String.Parser
 
 import Data.String.Here (i)
 import RIO
-import RIO.List.Partial ((!!)) -- ^ For happy processing
+import RIO.List.Partial ((!!)) -- For happy processing
 import Tim.Char
 import Tim.Lexer.Types (Token)
 import Tim.Processor
