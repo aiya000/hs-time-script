@@ -163,6 +163,14 @@ parseSneakCase =
 -- Simular to 'nonEmptyQ',
 -- but naming outsides of 'Sneak' will be rejected.
 --
+-- >>> [sneakQ|foo_bar|]
+-- Sneak (SneakHeadAlpha (AlphaLower F_)) [SneakAlphaNum (AlphaNumAlpha (AlphaLower O_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower O_)),SneakUnderscore,SneakAlphaNum (AlphaNumAlpha (AlphaLower B_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower A_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower R_))]
+--
+-- >>> [sneakQ|__constructor|]
+-- Sneak SneakHeadUnderscore [SneakUnderscore,SneakAlphaNum (AlphaNumAlpha (AlphaLower C_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower O_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower N_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower S_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower T_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower R_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower U_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower C_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower T_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower O_)),SneakAlphaNum (AlphaNumAlpha (AlphaLower R_))]
+--
+-- >>> [sneakQ|FOO_MEE_9|]
+-- Sneak (SneakHeadAlpha (AlphaUpper F)) [SneakAlphaNum (AlphaNumAlpha (AlphaUpper O)),SneakAlphaNum (AlphaNumAlpha (AlphaUpper O)),SneakUnderscore,SneakAlphaNum (AlphaNumAlpha (AlphaUpper M)),SneakAlphaNum (AlphaNumAlpha (AlphaUpper E)),SneakAlphaNum (AlphaNumAlpha (AlphaUpper E)),SneakUnderscore,SneakAlphaNum (AlphaNumDigit D9)]
 sneakQ :: QuasiQuoter
 sneakQ = QuasiQuoter
   { quoteExp  = expQ
@@ -174,8 +182,8 @@ sneakQ = QuasiQuoter
     expQ :: String -> Q Exp
     expQ [] = fail "sneakQ required a non empty string, but the empty string is specified."
     expQ (x : xs) = do
-      z <- (quoteExp alphaCharQ) [x]
-      zs <- mapM (quoteExp alphaNumCharQ) $ map (: []) xs
+      z <- (quoteExp sneakHeadCharQ) [x]
+      zs <- mapM (quoteExp sneakCharQ) $ map (: []) xs
       pure $ ConE (mkName "Sneak") `AppE` z `AppE` ListE zs
 
 
