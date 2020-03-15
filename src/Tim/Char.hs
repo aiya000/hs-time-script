@@ -1,14 +1,22 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Kinds of characters
 module Tim.Char where
 
 import Data.Map.Strict (Map)
-import Data.Maybe (fromJust)
-import Data.Tuple (swap)
-import RIO
-import Tim.Megaparsec
 import qualified Data.Map.Strict as Map
+import Data.Maybe (fromJust)
+import Data.String.Here (i)
+import Data.Tuple (swap)
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote (QuasiQuoter(..))
+import RIO
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
+import Tim.Megaparsec
+
+-- $setup
+-- >>> :set -XQuasiQuotes
 
 data AlphaNumChar = AlphaNumAlpha AlphaChar
                   | AlphaNumDigit DigitChar
@@ -22,6 +30,41 @@ alphaNumChar :: CodeParsing m => m AlphaNumChar
 alphaNumChar =
   AlphaNumAlpha <$> alphaChar <|>
   AlphaNumDigit <$> digitChar
+
+charToAlphaNum :: Char -> Maybe AlphaNumChar
+charToAlphaNum x = P.parseMaybe alphaNumChar [x]
+
+-- |
+-- Simular to 'alphaCharQ' and 'digitCharQ'.
+--
+-- >>> [alphaNumCharQ|x|]
+-- AlphaNumAlpha (AlphaLower X_)
+--
+-- >>> [alphaNumCharQ|X|]
+-- AlphaNumAlpha (AlphaUpper X)
+--
+-- >>> [alphaNumCharQ|1|]
+-- AlphaNumDigit D1
+alphaNumCharQ :: QuasiQuoter
+alphaNumCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "alphaNumCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToAlphaNum x of
+      Nothing -> fail [i|'${x}' is not an AlphaNumChar.|]
+      Just (AlphaNumAlpha _) ->
+        (ConE (mkName "AlphaNumAlpha") `AppE`) <$> (quoteExp alphaCharQ) [x]
+      Just (AlphaNumDigit _) ->
+        (ConE (mkName "AlphaNumDigit") `AppE`) <$> (quoteExp digitCharQ) [x]
+
+    expQ xs@(_ : _) = fail [i|alphaNumCharQ required a Char, but a String is specified: ${xs}|]
+
 
 data AlphaChar = AlphaLower LowerChar
                | AlphaUpper UpperChar
@@ -38,6 +81,28 @@ alphaChar :: CodeParsing m => m AlphaChar
 alphaChar =
   AlphaLower <$> lowerChar <|>
   AlphaUpper <$> upperChar
+
+-- | Simular to 'lowerCharQ' and 'upperCharQ'.
+alphaCharQ :: QuasiQuoter
+alphaCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "alphaCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToAlpha x of
+      Nothing -> fail [i|'${x}' is not an AlphaChar.|]
+      Just (AlphaLower _) ->
+        (ConE (mkName "AlphaLower") `AppE`) <$> (quoteExp lowerCharQ) [x]
+      Just (AlphaUpper _) ->
+        (ConE (mkName "AlphaUpper") `AppE`) <$> (quoteExp upperCharQ) [x]
+
+    expQ xs@(_ : _) = fail [i|alphaCharQ required a Char, but a String is specified: ${xs}|]
+
 
 data UpperChar = A | B | C | D | E | F | G | H | I | J | K | L | M | N | O | P | Q | R | S | T | U | V | W | X | Y | Z
   deriving (Show, Eq, Ord)
@@ -66,6 +131,27 @@ upperChar = do
     Nothing -> fail "non upper char"
     Just x -> pure x
 
+charToUpper :: Char -> Maybe UpperChar
+charToUpper x = P.parseMaybe upperChar [x]
+
+upperCharQ :: QuasiQuoter
+upperCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "upperCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToUpper x of
+      Nothing -> fail [i|'${x}' is not an UpperChar.|]
+      Just z -> conE . mkName $ show z
+
+    expQ xs@(_ : _) = fail [i|upperCharQ required a Char, but a String is specified: ${xs}|]
+
+
 data LowerChar = A_ | B_ | C_ | D_ | E_ | F_ | G_ | H_ | I_ | J_ | K_ | L_ | M_ | N_ | O_ | P_ | Q_ | R_ | S_ | T_ | U_ | V_ | W_ | X_ | Y_ | Z_
   deriving (Show, Eq, Ord)
 
@@ -92,6 +178,27 @@ lowerChar = do
   case maybeLower of
     Nothing -> fail "non lower char"
     Just x -> pure x
+
+charToLower :: Char -> Maybe LowerChar
+charToLower x = P.parseMaybe lowerChar [x]
+
+lowerCharQ :: QuasiQuoter
+lowerCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "lowerCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToLower x of
+      Nothing -> fail [i|'${x}' is not a LowerChar.|]
+      Just z -> conE . mkName $ show z
+
+    expQ xs@(_ : _) = fail [i|lowerCharQ required a Char, but a String is specified: ${xs}|]
+
 
 data DigitChar = D0
                | D1
@@ -123,6 +230,27 @@ digitChar = do
   case maybeNum of
     Nothing -> fail "non numeric char"
     Just x -> pure x
+
+charToDigit :: Char -> Maybe DigitChar
+charToDigit x = P.parseMaybe digitChar [x]
+
+digitCharQ :: QuasiQuoter
+digitCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "digitCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToDigit x of
+      Nothing -> fail [i|'${x}' is not a DigitChar.|]
+      Just z -> conE . mkName $ show z
+
+    expQ xs@(_ : _) = fail [i|digitCharQ required a Char, but a String is specified: ${xs}|]
+
 
 dual :: Ord a => Map k a -> Map a k
 dual (Map.toList -> x) =
