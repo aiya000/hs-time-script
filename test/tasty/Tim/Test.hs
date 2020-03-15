@@ -5,7 +5,6 @@ import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
-import qualified Tim.Lexer.Types as Lexers
 import Tim.Main (process, PrettyFailure)
 import Tim.Parser.Types
 import Tim.String (Camel)
@@ -13,13 +12,16 @@ import qualified Tim.String.Parser as String
 
 infixl 1 `shouldBe`
 
-shouldBe :: HasCallStack => TestName -> AST -> TestTree
-shouldBe expr expected =
-  testCase expr $
+thatShouldBe :: HasCallStack => TestName -> AST -> String -> TestTree
+thatShouldBe testName expected expr =
+  testCase testName $
     process (Text.pack expr) `toBe` expected
   where
     toBe :: HasCallStack => Either PrettyFailure AST -> AST -> Assertion
     actual `toBe` expected' = actual @?= Right expected'
+
+shouldBe :: HasCallStack => TestName -> AST -> TestTree
+shouldBe expr expected = thatShouldBe expr expected expr
 
 syntax :: Syntax -> AST
 syntax = Code . (: [])
@@ -34,9 +36,3 @@ name = ignore . String.parseCamel
 -- | Unsafe
 con :: String -> Type
 con = Con . name
-
-unqualifiedVar :: String -> Variable
-unqualifiedVar = GeneralVar . UnqualifiedVar
-
-scopedVar :: Lexers.Scope -> String -> Variable
-scopedVar = (GeneralVar .) . ScopedVar

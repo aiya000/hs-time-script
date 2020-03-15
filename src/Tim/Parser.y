@@ -141,14 +141,14 @@ Camel :: { Camel }
   : ident {% resolveParsingCamel pos $ String.parseCamel $1 }
 
 Variable :: { Variable }
-  : varScopedG      { GeneralVar $ ScopedVar G $1         }
-  | varScopedS      { GeneralVar $ ScopedVar S $1         }
-  | varScopedL      { GeneralVar $ ScopedVar L $1         }
-  | varScopedA      { GeneralVar $ ScopedVar A $1         }
-  | varScopedV      { GeneralVar $ ScopedVar V $1         }
-  | varScopedB      { GeneralVar $ ScopedVar B $1         }
-  | varScopedW      { GeneralVar $ ScopedVar W $1         }
-  | varScopedT      { GeneralVar $ ScopedVar T $1         }
+  : varScopedG      { ScopedVar G $1         }
+  | varScopedS      { ScopedVar S $1         }
+  | varScopedL      { ScopedVar L $1         }
+  | varScopedA      { ScopedVar A $1         }
+  | varScopedV      { ScopedVar V $1         }
+  | varScopedB      { ScopedVar B $1         }
+  | varScopedW      { ScopedVar W $1         }
+  | varScopedT      { ScopedVar T $1         }
   | varRegUnnamed   { RegisterVar Unnamed               }
   | varRegSmallDel  { RegisterVar SmallDelete           }
   | varRegReadOnlyC { RegisterVar ReadOnlyColon         }
@@ -165,7 +165,7 @@ Variable :: { Variable }
   | varLOption      { OptionVar $ LocalScopedOption $1  }
   | varGOption      { OptionVar $ GlobalScopedOption $1 }
   | varOption       { OptionVar $ UnscopedOption $1     }
-  | ident           { GeneralVar $ UnqualifiedVar $1    }
+  | ident           { UnqualifiedVar $1    }
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }

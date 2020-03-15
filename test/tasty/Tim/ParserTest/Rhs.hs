@@ -40,9 +40,9 @@ test_literals =
       ]
 
     testLiteralLikeVimVars =
-      [ "v:true"  `shouldBe` Rhs (RVar $ scopedVar V "true")
-      , "v:false" `shouldBe` Rhs (RVar $ scopedVar V "false")
-      , "v:null"  `shouldBe` Rhs (RVar $ scopedVar V "null")
+      [ "v:true"  `shouldBe` Rhs (RVar $ ScopedVar V "true")
+      , "v:false" `shouldBe` Rhs (RVar $ ScopedVar V "false")
+      , "v:null"  `shouldBe` Rhs (RVar $ ScopedVar V "null")
       ]
 
     testLists =
@@ -81,14 +81,14 @@ test_expressions =
   testParens
   where
     testIdents =
-      [ "simple" `shouldBe` Rhs (RVar $ unqualifiedVar "simple")
-      , "g:scoped" `shouldBe` Rhs (RVar $ scopedVar G "scoped")
+      [ "simple" `shouldBe` Rhs (RVar $ UnqualifiedVar "simple")
+      , "g:scoped" `shouldBe` Rhs (RVar $ ScopedVar G "scoped")
       , "@a" `shouldBe` Rhs (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
       , "@+" `shouldBe` Rhs (RVar $ RegisterVar ClipboardPlus)
       ]
 
     testParens =
       [ "(10)" `shouldBe` Rhs (RParens . RLit $ Nat 10)
-      , "(ident)" `shouldBe` Rhs (RParens . RVar $ unqualifiedVar "ident")
-      , "((nested))" `shouldBe` Rhs (RParens . RParens . RVar $ unqualifiedVar "nested")
+      , "(ident)" `shouldBe` Rhs (RParens . RVar $ UnqualifiedVar "ident")
+      , "((nested))" `shouldBe` Rhs (RParens . RParens . RVar $ UnqualifiedVar "nested")
       ]

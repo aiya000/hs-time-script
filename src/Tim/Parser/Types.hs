@@ -16,8 +16,23 @@ data AST = Code Code -- ^ Whole of a code
          | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
+data FuncParam = UnboundFuncParam String -- ^ a variable that is not bound by a type: `x`
+               | BoundFuncParam String Type -- ^ bound by a type: `x: Int`
+               | VarFuncParams -- ^ variadic parameters: `...`
+  deriving (Show, Eq)
+
+data FuncName = UnqualifiedFuncName Pascal -- ^ e.g. F, G
+              | ScopedFuncName Lexers.Scope String -- ^ e.g. s:f, g:F
+              | PathFuncName String (List.NonEmpty String) -- ^ e.g. foo#bar to `PathFuncName "foo" ("bar" :| [])`.
+  deriving (Show, Eq)
+
 -- | Time script's commands (extended Vim's commands)
-data Syntax = Let Lhs (Maybe Type) Rhs -- ^ let foo: Bar = lit
+data Syntax = Let Lhs (Maybe Type) Rhs -- ^ 'let foo: Bar = expr' or 'let foo = expr'
+            | Function
+                FuncName -- ^ The function name
+                [FuncParam]
+                (Maybe Type) -- ^ The return type (can be omitted)
+                [Syntax]  -- ^ Function declaretions (not `:function /{pattern}`)
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
@@ -58,13 +73,9 @@ infixr 3 `Arrow`
 infixr 4 `Union`
 
 -- | The parser's variable identifiers
-data Variable = GeneralVar GeneralVariable
+data Variable = UnqualifiedVar String -- ^ simple_idents
+              | ScopedVar Lexers.Scope String -- ^ s:coped
+              | DictVar Variable [String] -- ^ self, and path. e.g. foo.bar.baz is `DictVar (UnqualifiedVar "foo") ["bar", "baz"]`.
               | RegisterVar Lexers.Register -- ^ @+, @u
               | OptionVar Lexers.Option -- ^ &nu, &number
-  deriving (Show, Eq)
-
--- TODO: Rename SimpleLocal to Unqualified
--- | e.g. g:, l:foo
-data GeneralVariable = UnqualifiedVar String -- ^ simple_idents
-                     | ScopedVar Lexers.Scope String -- ^ s:coped
   deriving (Show, Eq)
