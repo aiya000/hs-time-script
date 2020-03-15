@@ -142,27 +142,26 @@ camelQ = QuasiQuoter
       pure $ ConE (mkName "Camel") `AppE` z `AppE` ListE zs
 
 
--- TODO: Rename to Sneak
 -- | Non empty sneak_case names "[a-zA-Z_][a-zA-Z0-9_]*"
-data SneakCase = SneakCase SneakHeadChar [SneakChar]
+data Sneak = Sneak SneakHeadChar [SneakChar]
   deriving (Show, Eq)
 
-instance Pretty SneakCase where
+instance Pretty Sneak where
   pretty = String.fromString . unSneakCase
 
-unSneakCase :: SneakCase -> String
-unSneakCase (SneakCase x xs) =
+unSneakCase :: Sneak -> String
+unSneakCase (Sneak x xs) =
   unSneakHeadChar x : map unSneakChar xs
 
-parseSneakCase :: CodeParsing m => m SneakCase
+parseSneakCase :: CodeParsing m => m Sneak
 parseSneakCase =
-  SneakCase <$>
+  Sneak <$>
   sneakHeadChar <*>
   P.many sneakChar
 
 -- |
 -- Simular to 'nonEmptyQ',
--- but naming outsides of 'SneakCase' will be rejected.
+-- but naming outsides of 'Sneak' will be rejected.
 --
 sneakQ :: QuasiQuoter
 sneakQ = QuasiQuoter
@@ -177,7 +176,7 @@ sneakQ = QuasiQuoter
     expQ (x : xs) = do
       z <- (quoteExp alphaCharQ) [x]
       zs <- mapM (quoteExp alphaNumCharQ) $ map (: []) xs
-      pure $ ConE (mkName "SneakCase") `AppE` z `AppE` ListE zs
+      pure $ ConE (mkName "Sneak") `AppE` z `AppE` ListE zs
 
 
 -- | Non empty "veryflatten" names
