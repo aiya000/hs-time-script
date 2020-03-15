@@ -75,6 +75,7 @@ dependencies:
   - rio
   - safe
   - safe-exceptions
+  - template-haskell
   - text
   - tonatona
   - tonatona-logger
