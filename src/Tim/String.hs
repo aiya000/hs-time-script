@@ -1,14 +1,16 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 -- | Kinds of namings
 module Tim.String where
 
 import qualified Data.String as String
 import Data.Text.Prettyprint.Doc (Pretty(..))
+import Language.Haskell.TH
+import Language.Haskell.TH.Quote (QuasiQuoter(..))
 import RIO hiding (NonEmpty)
 import qualified Text.Megaparsec as P
-import qualified Text.Megaparsec.Char as P
 import Tim.Char
 import Tim.Megaparsec
 
@@ -26,6 +28,27 @@ unPascal (Pascal x xs) =
 parsePascal :: CodeParsing m => m Pascal
 parsePascal =
   Pascal <$> upperChar <*> P.many alphaNumChar
+
+-- |
+-- Simular to 'nonEmptyQ',
+-- but naming outsides of 'Pascal' will be rejected.
+--
+-- >>> [pascalQ|Pascal|]
+-- Pascal P [AlphaNumAlpha (AlphaLower A_),AlphaNumAlpha (AlphaLower S_),AlphaNumAlpha (AlphaLower C_),AlphaNumAlpha (AlphaLower A_),AlphaNumAlpha (AlphaLower L_)]
+pascalQ :: QuasiQuoter
+pascalQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "pascalQ required a non empty string, but the empty string is specified."
+    expQ (x : xs) = do
+      z <- (quoteExp upperCharQ) [x]
+      zs <- mapM (quoteExp alphaNumCharQ) $ map (: []) xs
+      pure $ ConE (mkName "Pascal") `AppE` z `AppE` ListE zs
 
 
 -- | Non empty names ".+"
@@ -45,6 +68,33 @@ parseNonEmpty =
 fromString :: String -> Maybe NonEmpty
 fromString "" = Nothing
 fromString (x : xs) = Just $ NonEmpty x xs
+
+-- |
+-- Makes a non empty string from String on the compile time.
+-- Also throws compile error if the empty string is passed.
+--
+-- >>> [nonEmptyQ|x|]
+-- NonEmpty 'x' ""
+--
+-- >>> [nonEmptyQ|foo|]
+-- NonEmpty 'f' "oo"
+--
+-- >>> [nonEmptyQ|Bar|]
+-- NonEmpty 'B' "ar"
+nonEmptyQ :: QuasiQuoter
+nonEmptyQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "nonEmptyQ required a non empty string, but the empty string is specified."
+    expQ (x : xs) =
+      pure $ ConE (mkName "NonEmpty")
+        `AppE` LitE (CharL x)
+        `AppE` ListE (map (LitE . CharL) xs)
 
 
 -- | Non empty camelCase names "[a-zA-Z][a-zA-Z0-9]*"
@@ -67,9 +117,34 @@ parseCamel :: CodeParsing m => m Camel
 parseCamel =
   Camel <$> alphaChar <*> P.many alphaNumChar
 
+-- |
+-- Simular to 'nonEmptyQ',
+-- but naming outsides of 'Camel' will be rejected.
+--
+-- >>> [camelQ|camel|]
+-- "camel"
+--
+-- >>> [camelQ|Pascal|]
+-- "Pascal"
+camelQ :: QuasiQuoter
+camelQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "camelQ required a non empty string, but the empty string is specified."
+    expQ (x : xs) = do
+      z <- (quoteExp alphaCharQ) [x]
+      zs <- mapM (quoteExp alphaNumCharQ) $ map (: []) xs
+      pure $ ConE (mkName "Camel") `AppE` z `AppE` ListE zs
 
+
+-- TODO: Rename to Sneak
 -- | Non empty sneak_case names "[a-zA-Z_][a-zA-Z0-9_]*"
-data SneakCase = SneakCase HeadSneakCaseChar [SneakCaseChar]
+data SneakCase = SneakCase SneakHeadChar [SneakChar]
   deriving (Show, Eq)
 
 instance Pretty SneakCase where
@@ -77,41 +152,32 @@ instance Pretty SneakCase where
 
 unSneakCase :: SneakCase -> String
 unSneakCase (SneakCase x xs) =
-  unHeadSneakCaseChar x : map unSneakCaseChar xs
+  unSneakHeadChar x : map unSneakChar xs
 
 parseSneakCase :: CodeParsing m => m SneakCase
 parseSneakCase =
   SneakCase <$>
-  parseHeadSneakCaseChar <*>
-  P.many parseSneakCaseChar
+  sneakHeadChar <*>
+  P.many sneakChar
 
--- | [a-zA-Z_]
-data HeadSneakCaseChar = UnderScore'
-                       | AlphaChar AlphaChar
-  deriving (Show, Eq)
-
-unHeadSneakCaseChar :: HeadSneakCaseChar -> Char
-unHeadSneakCaseChar UnderScore' = '_'
-unHeadSneakCaseChar (AlphaChar x) = alphaToChar x
-
-parseHeadSneakCaseChar :: CodeParsing m => m HeadSneakCaseChar
-parseHeadSneakCaseChar =
-  UnderScore' <$ P.char '_' <|>
-  AlphaChar <$> alphaChar
-
--- | [a-zA-Z0-9_]
-data SneakCaseChar = UnderScore -- ^ _
-                   | AlphaNumChar AlphaNumChar -- ^ [a-zA-Z0-9]
-  deriving (Show, Eq)
-
-unSneakCaseChar :: SneakCaseChar -> Char
-unSneakCaseChar UnderScore = '_'
-unSneakCaseChar (AlphaNumChar x) = alphaNumToChar x
-
-parseSneakCaseChar :: CodeParsing m => m SneakCaseChar
-parseSneakCaseChar =
-  UnderScore <$ P.char '_' <|>
-  AlphaNumChar <$> alphaNumChar
+-- |
+-- Simular to 'nonEmptyQ',
+-- but naming outsides of 'SneakCase' will be rejected.
+--
+sneakQ :: QuasiQuoter
+sneakQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "sneakQ required a non empty string, but the empty string is specified."
+    expQ (x : xs) = do
+      z <- (quoteExp alphaCharQ) [x]
+      zs <- mapM (quoteExp alphaNumCharQ) $ map (: []) xs
+      pure $ ConE (mkName "SneakCase") `AppE` z `AppE` ListE zs
 
 
 -- | Non empty "veryflatten" names

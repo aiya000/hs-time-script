@@ -18,6 +18,11 @@ import Tim.Megaparsec
 -- $setup
 -- >>> :set -XQuasiQuotes
 
+dual :: Ord a => Map k a -> Map a k
+dual (Map.toList -> x) =
+  Map.fromList $ map swap x
+
+
 data AlphaNumChar = AlphaNumAlpha AlphaChar
                   | AlphaNumDigit DigitChar
   deriving (Show, Eq, Ord)
@@ -134,6 +139,15 @@ upperChar = do
 charToUpper :: Char -> Maybe UpperChar
 charToUpper x = P.parseMaybe upperChar [x]
 
+-- |
+-- Extracts a Char of [A-Z].
+-- Also throws compile error if non [A-Z] is passed.
+--
+-- >>> [upperCharQ|X|]
+-- X
+--
+-- >>> [upperCharQ|Y|]
+-- Y
 upperCharQ :: QuasiQuoter
 upperCharQ = QuasiQuoter
   { quoteExp  = expQ
@@ -182,6 +196,15 @@ lowerChar = do
 charToLower :: Char -> Maybe LowerChar
 charToLower x = P.parseMaybe lowerChar [x]
 
+-- |
+-- Extracts a Char of [a-z].
+-- Also throws compile error if non [a-z] is passed.
+--
+-- >>> [lowerCharQ|x|]
+-- X_
+--
+-- >>> [lowerCharQ|y|]
+-- Y_
 lowerCharQ :: QuasiQuoter
 lowerCharQ = QuasiQuoter
   { quoteExp  = expQ
@@ -200,6 +223,7 @@ lowerCharQ = QuasiQuoter
     expQ xs@(_ : _) = fail [i|lowerCharQ required a Char, but a String is specified: ${xs}|]
 
 
+-- | [0-9]
 data DigitChar = D0
                | D1
                | D2
@@ -234,6 +258,15 @@ digitChar = do
 charToDigit :: Char -> Maybe DigitChar
 charToDigit x = P.parseMaybe digitChar [x]
 
+-- |
+-- Extracts a Char of [0-9].
+-- Also throws compile error if non [a-z] is passed.
+--
+-- >>> [digitCharQ|0|]
+-- D0
+--
+-- >>> [digitCharQ|9|]
+-- D9
 digitCharQ :: QuasiQuoter
 digitCharQ = QuasiQuoter
   { quoteExp  = expQ
@@ -252,6 +285,110 @@ digitCharQ = QuasiQuoter
     expQ xs@(_ : _) = fail [i|digitCharQ required a Char, but a String is specified: ${xs}|]
 
 
-dual :: Ord a => Map k a -> Map a k
-dual (Map.toList -> x) =
-  Map.fromList $ map swap x
+-- |
+-- [a-zA-Z0-9_]
+--
+-- Please see 'Sneak'.
+data SneakChar = SneakUnderscore -- ^ _
+               | SneakAlphaNum AlphaNumChar -- ^ [a-zA-Z0-9]
+  deriving (Show, Eq)
+
+unSneakChar :: SneakChar -> Char
+unSneakChar SneakUnderscore = '_'
+unSneakChar (SneakAlphaNum x) = alphaNumToChar x
+
+sneakChar :: CodeParsing m => m SneakChar
+sneakChar =
+  SneakUnderscore <$ P.char '_' <|>
+  SneakAlphaNum <$> alphaNumChar
+
+charToSneak :: Char -> Maybe SneakChar
+charToSneak x = P.parseMaybe sneakChar [x]
+
+-- |
+-- Extracts a Char of [a-zA-Z0-9_].
+-- Also throws compile error if non [a-zA-Z0-9_] is passed.
+--
+-- >>> [sneakCharQ|x|]
+-- SneakAlphaNum (AlphaNumAlpha (AlphaLower X_))
+--
+-- >>> [sneakCharQ|X|]
+-- SneakAlphaNum (AlphaNumAlpha (AlphaUpper X))
+--
+-- >>> [sneakCharQ|_|]
+-- SneakUnderscore
+--
+-- >>> [sneakCharQ|9|]
+-- SneakAlphaNum (AlphaNumDigit D9)
+sneakCharQ :: QuasiQuoter
+sneakCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "sneakCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToSneak x of
+      Nothing -> fail [i|'${x}' is not a SneakChar.|]
+      Just SneakUnderscore ->
+        conE $ mkName "SneakUnderscore"
+      Just (SneakAlphaNum _) ->
+        (ConE (mkName "SneakAlphaNum") `AppE`) <$> (quoteExp alphaNumCharQ) [x]
+
+    expQ xs@(_ : _) = fail [i|sneakCharQ required a Char, but a String is specified: ${xs}|]
+
+
+-- |
+-- [a-zA-Z_]
+--
+-- Please see 'Sneak'.
+data SneakHeadChar = SneakHeadUnderscore
+                   | SneakHeadAlpha AlphaChar
+  deriving (Show, Eq)
+
+unSneakHeadChar :: SneakHeadChar -> Char
+unSneakHeadChar SneakHeadUnderscore = '_'
+unSneakHeadChar (SneakHeadAlpha x) = alphaToChar x
+
+sneakHeadChar :: CodeParsing m => m SneakHeadChar
+sneakHeadChar =
+  SneakHeadUnderscore <$ P.char '_' <|>
+  SneakHeadAlpha <$> alphaChar
+
+charToSneakHead :: Char -> Maybe SneakHeadChar
+charToSneakHead x = P.parseMaybe sneakHeadChar [x]
+
+-- |
+-- Extracts a Char of [a-zA-Z_].
+-- Also throws compile error if non [a-zA-Z_] is passed.
+--
+-- >>> [sneakHeadCharQ|x|]
+-- SneakHeadAlpha (AlphaLower X_)
+--
+-- >>> [sneakHeadCharQ|X|]
+-- SneakHeadAlpha (AlphaUpper X)
+--
+-- >>> [sneakHeadCharQ|_|]
+-- SneakHeadUnderscore
+sneakHeadCharQ :: QuasiQuoter
+sneakHeadCharQ = QuasiQuoter
+  { quoteExp  = expQ
+  , quotePat  = error "not supported"
+  , quoteType = error "not supported"
+  , quoteDec  = error "not supported"
+  }
+  where
+    expQ :: String -> Q Exp
+    expQ [] = fail "sneakHeadCharQ required a Char, but nothign is specified."
+
+    expQ (x : []) = case charToSneakHead x of
+      Nothing -> fail [i|'${x}' is not a SneakHeadChar.|]
+      Just SneakHeadUnderscore ->
+        conE $ mkName "SneakHeadUnderscore"
+      Just (SneakHeadAlpha _) ->
+        (ConE (mkName "SneakHeadAlpha") `AppE`) <$> (quoteExp alphaCharQ) [x]
+
+    expQ xs@(_ : _) = fail [i|sneakHeadCharQ required a Char, but a String is specified: ${xs}|]
