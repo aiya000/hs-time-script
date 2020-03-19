@@ -8,6 +8,36 @@ Please see the test and the test status to check this progress.
 
 `Time script` = `Vim script` + `strong static typing`
 
+```vim
+"*
+ * Comment
+ *"
+function ExecuteFizzBuzz(): Void  " abort by default
+  const xs: List<Int> = range(0, 100)
+  const fizzbuzz: List<String> = []
+
+  for x in xs
+    call add(    " Add comments anywhere.
+      fizzbuzz,  " Multi line without the line continuation '\'.
+      s:fizzbuzz(x),
+    )
+  endfor
+
+  echo string(fizzbuzz)
+endfunction
+
+function s:fizzbuzz(x: Int): String
+  return
+      x % 15 is 0 ? 'FizzBuzz' :
+      x %  5 is 0 ? 'Fizz' :
+      x %  3 is 0 : 'Buzz' : string(x)
+endfunction
+
+" Variables of functions by naming of [a-zA-Z0-9_]+ (not [A-Z][A-Za-z0-9_]+)
+const f: () => Void = ::FizzBuzz  " Function references by ::
+f()
+```
+
 - [The introduction](https://aiya000.github.io/Maid/about-time-script/)
 
 ## Purpose
@@ -274,7 +304,7 @@ let x: {x: Nat, y: String} = {
  *"
 ```
 
-### Allowing comments on all tails of lines
+### Allowing comments anywhere
 
 ```vim
 command! -bar ContLine  " This is a command
