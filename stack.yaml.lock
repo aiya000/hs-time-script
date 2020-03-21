@@ -100,6 +100,20 @@ packages:
     subdir: tonatona-servant
     git: https://github.com/tonatona-project/tonatona
     commit: 224e084fef661873808eaf3f70bb7887ff8b50e8
+- completed:
+    cabal-file:
+      size: 3391
+      sha256: 10f4adb037be6c96ce9444dded89b07fd363a95d6c9f7b860e550425d7b0cdd0
+    name: character-cases
+    version: 0.1.0.0
+    git: https://github.com/aiya000/hs-character-cases
+    pantry-tree:
+      size: 606
+      sha256: aa5407a1ced8995f7a98a5f0b1a6e41e277892963db09725a6d25a7be8e9526f
+    commit: e4561b8e849f8d487b82389d7177142786f1a9f8
+  original:
+    git: https://github.com/aiya000/hs-character-cases
+    commit: e4561b8e849f8d487b82389d7177142786f1a9f8
 snapshots:
 - completed:
     size: 525662

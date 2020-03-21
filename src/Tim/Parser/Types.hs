@@ -3,11 +3,11 @@
 module Tim.Parser.Types where
 
 import qualified Data.List.NonEmpty as List
+import Data.String.Cases
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
 import qualified Tim.Lexer.Types as Lexers
-import Tim.String
 
 type Code = [Syntax]
 

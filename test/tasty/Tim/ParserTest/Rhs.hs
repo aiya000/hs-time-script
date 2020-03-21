@@ -2,9 +2,9 @@
 
 module Tim.ParserTest.Rhs where
 
+import Data.Char.Cases (LowerChar (..), AlphaChar (..))
 import RIO hiding (first)
 import Test.Tasty (TestTree)
-import Tim.Char (LowerChar (..), AlphaChar (..))
 import Tim.Lexer.Types hiding (AtomicLiteral(..), QualifiedIdent(..))
 import Tim.Parser.Types
 import Tim.Test
@@ -83,8 +83,14 @@ test_expressions =
     testIdents =
       [ "simple" `shouldBe` Rhs (RVar $ UnqualifiedVar "simple")
       , "g:scoped" `shouldBe` Rhs (RVar $ ScopedVar G "scoped")
+      -- TODO
+      -- , "foo.bar.baz"
       , "@a" `shouldBe` Rhs (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
       , "@+" `shouldBe` Rhs (RVar $ RegisterVar ClipboardPlus)
+      -- TODO
+      -- , "&opt" `shouldBe` Rhs (RVar . OptionVar $ UnscopedOption 
+      -- , "l:&opt" `shouldBe` Rhs (RVar . OptionVar 
+      -- , "g:&opt" `shouldBe` Rhs (RVar . OptionVar 
       ]
 
     testParens =

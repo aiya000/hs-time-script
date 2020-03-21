@@ -63,6 +63,7 @@ default-extensions:
 dependencies:
   - array
   - base >= 4.7 && < 5
+  - character-cases
   - containers
   - data-default
   - generic-lens

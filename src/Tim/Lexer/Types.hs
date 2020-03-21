@@ -40,9 +40,12 @@ module Tim.Lexer.Types
 import Control.Monad.Except (MonadError)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
+import Data.Char.Cases hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Data.List.NonEmpty hiding (toList, map)
 import qualified Data.List.NonEmpty as List
 import qualified Data.String as String
+import Data.String.Cases
+import qualified Data.String.Cases as Name
 import Data.String.Here (i)
 import Data.Text (Text)
 import qualified Data.Text as Text
@@ -55,11 +58,8 @@ import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec hiding (Token, SourcePos)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
-import Tim.Char hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Tim.Megaparsec
 import Tim.Processor
-import Tim.String
-import qualified Tim.String as Name
 import Tim.Util.String
 
 type LexError = ParseError String Void

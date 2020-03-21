@@ -1,13 +1,13 @@
 -- | Helpers for tests.
 module Tim.Test where
 
+import Data.String.Cases (Camel)
 import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Tim.Main (process, PrettyFailure)
 import Tim.Parser.Types
-import Tim.String (Camel)
 import qualified Tim.String.Parser as String
 
 infixl 1 `shouldBe`

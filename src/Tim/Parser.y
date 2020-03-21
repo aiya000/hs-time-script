@@ -20,25 +20,24 @@ module Tim.Parser
 
 import Control.Arrow ((>>>))
 import Control.Monad.Except (throwError)
+import Data.Char.Cases (DigitChar(..))
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty(..), (<|))
 import Data.Map.Strict (Map)
+import Data.String.Cases
 import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
 import RIO.List
 import Text.Megaparsec (parseMaybe)
-import Tim.Char (DigitChar(..))
 import Tim.Lexer.Types (Token, Register(..), Option(..), Scope(..))
 import Tim.Parser.Types
 import Tim.Processor
-import Tim.String
 import qualified Data.List.NonEmpty as List
 import qualified Data.Map.Strict as Map
-import qualified Tim.Char as Char
+import qualified Data.String.Cases as String hiding (parseCamel)
 import qualified Tim.Lexer.Types as Token
-import qualified Tim.String as String hiding (parseCamel)
 import qualified Tim.String.Parser as String
 }
 
