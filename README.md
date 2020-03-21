@@ -292,7 +292,38 @@ let x: {x: Nat, y: String} = {
 }
 ```
 
+### Others
+#### Variadic parameters
+
+```vim
+function F(...) abort
+  " a:000 is typed by List<any>
+endfunction
+```
+
 ## Advanced features <a name="advanced-features"></a>
+### Optional parameter
+
+```vim
+function F(x?: Nat)
+  echo a:x
+endfunction
+
+call F(10)  " 10
+call F()    " v:null
+```
+
+### Default values for parameters
+
+```vim
+function F(x: Nat = 20)
+  echo a:x
+endfunction
+
+call F(10)  " 10
+call F()    " 20
+```
+
 ### Multi-line comments
 
 ```vim
