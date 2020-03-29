@@ -19,6 +19,7 @@ module Tim.Parser
   ) where
 
 import Control.Arrow ((>>>))
+import Control.Exception.Safe (displayException)
 import Control.Monad.Except (throwError)
 import Data.Char.Cases (DigitChar(..))
 import Data.Function ((&))
@@ -30,15 +31,15 @@ import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
 import RIO.List
-import Text.Megaparsec (parseMaybe)
+import Text.Megaparsec (runParser)
 import Tim.Lexer.Types (Token, Register(..), Option(..), Scope(..))
+import Tim.Megaparsec
 import Tim.Parser.Types
 import Tim.Processor
 import qualified Data.List.NonEmpty as List
 import qualified Data.Map.Strict as Map
-import qualified Data.String.Cases as String hiding (parseCamel)
+import qualified Data.String.Cases as String
 import qualified Tim.Lexer.Types as Token
-import qualified Tim.String.Parser as String
 }
 
 %error { parseError }
@@ -137,7 +138,7 @@ TypeApp :: { Type }
   | Type '(' Type ')' { App $1 $3       }
 
 Camel :: { Camel }
-  : ident {% resolveParsingCamel pos $ String.parseCamel $1 }
+  : ident {% runParserInProcessor pos String.parseCamel $1 }
 
 Variable :: { Variable }
   : varScopedG      { ScopedVar G $1         }
@@ -246,8 +247,9 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
     replace ('\n' : xs) = ' ' : replace xs
     replace (x : xs) = x : replace xs
 
-resolveParsingCamel :: TokenPos -> Either String Camel -> Processor Camel
-resolveParsingCamel _ (Right x) = pure x
-resolveParsingCamel pos (Left x) =
-  throwError $ Failure x (OnAToken pos)
+runParserInProcessor :: TokenPos -> CodeParsec a -> String -> Processor a
+runParserInProcessor pos parser input =
+  case runParser parser "time-script" input of
+    Right x -> pure x
+    Left  e -> throwError $ Failure (displayException e) (OnAToken pos)
 }

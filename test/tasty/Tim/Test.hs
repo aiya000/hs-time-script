@@ -1,14 +1,14 @@
 -- | Helpers for tests.
 module Tim.Test where
 
-import Data.String.Cases (Camel)
+import Data.String.Cases (Camel, parseCamel)
 import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
+import Text.Megaparsec
 import Tim.Main (process, PrettyFailure)
 import Tim.Parser.Types
-import qualified Tim.String.Parser as String
 
 infixl 1 `shouldBe`
 
@@ -28,10 +28,12 @@ syntax = Code . (: [])
 
 -- | Unsafe
 name :: String -> Camel
-name = ignore . String.parseCamel
+name = ignore parseCamel
   where
-    ignore (Left x)  = error x
-    ignore (Right x) = x
+    ignore parser input =
+      case runParser parser "time-script test" input of
+        Left  x -> error $ displayException x
+        Right x -> x
 
 -- | Unsafe
 con :: String -> Type
