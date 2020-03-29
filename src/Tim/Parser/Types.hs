@@ -15,17 +15,17 @@ data AST = Code Code -- ^ Whole of a code
          | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
-data FuncParam = UnboundFuncParam String.NonEmpty -- ^ a variable that is not bound by a type: `x`
-               | BoundFuncParam String.NonEmpty Type -- ^ bound by a type: `x: Int`
+data FuncParam = UnboundFuncParam String.Snake -- ^ a variable that is not bound by a type: `x`
+               | BoundFuncParam String.Snake Type -- ^ bound by a type: `x: Int`
                | VarFuncParams -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
 data FuncName = UnqualifiedFuncName Pascal -- ^ e.g. F, G
-              | ScopedFuncName Lexers.Scope String.NonEmpty -- ^ e.g. s:f, g:F
+              | ScopedFuncName Lexers.Scope String.Snake -- ^ e.g. s:f, g:F
               | DictFuncName
-                  (List.NonEmpty String.NonEmpty) -- ^ a receiver
-                  String.NonEmpty -- ^ e.g. foo.bar.baz to `DictFuncName ["foo", "bar"] "baz""
-              | AutoloadFuncName (List.NonEmpty String.NonEmpty) -- ^ e.g. foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
+                  (List.NonEmpty String.Snake) -- ^ a receiver
+                  String.Snake -- ^ e.g. foo.bar.baz to `DictFuncName ["foo", "bar"] "baz""
+              | AutoloadFuncName (List.NonEmpty String.Snake) -- ^ e.g. foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
 
 data FuncOpt = NoAbortFuncOpt
@@ -82,9 +82,9 @@ infixr 3 `Arrow`
 infixr 4 `Union`
 
 -- | The parser's variable identifiers
-data Variable = UnqualifiedVar String -- ^ simple_idents
-              | ScopedVar Lexers.Scope String -- ^ s:coped
-              | DictVar Variable [String] -- ^ self, and path. e.g. foo.bar.baz is `DictVar (UnqualifiedVar "foo") ["bar", "baz"]`.
+data Variable = UnqualifiedVar String.Snake -- ^ simple_idents
+              | ScopedVar Lexers.Scope String -- ^ s:coped, l:
+              | DictVar Variable (List.NonEmpty String.Snake) -- ^ self, and path. e.g. foo.bar.baz is `DictVar (UnqualifiedVar "foo") ["bar", "baz"]`.
               | RegisterVar Lexers.Register -- ^ @+, @u
               | OptionVar Lexers.Option -- ^ &nu, &number
   deriving (Show, Eq)
