@@ -12,6 +12,6 @@ extra-deps:
       - tonatona-persistent-sqlite
       - tonatona-servant
   - git: https://github.com/aiya000/hs-character-cases
-    commit: e4561b8e849f8d487b82389d7177142786f1a9f8
+    commit: d47babc633e7c396f04c44d75d0354f7a74b3460
 flags: {}
 extra-package-dbs: []
