@@ -1,6 +1,6 @@
 module Tim.Util.List where
 
-import Data.List.NonEmpty (NonEmpty(..), init)
+import Data.List.NonEmpty (init)
 import RIO
 import Safe
 

@@ -5,9 +5,7 @@ module Tim.Lexer (lex) where
 import Control.Lens ((+=))
 import Control.Monad.State.Class (get)
 import Data.Generics.Product (field)
-import Data.Text (Text)
 import qualified Data.Text as Text
-import Numeric.Natural (Natural)
 import RIO
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P

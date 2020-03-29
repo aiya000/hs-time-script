@@ -17,7 +17,6 @@ ghc-options:
   - -fprint-potential-instances
 
 default-extensions:
-  - AutoDeriveTypeable
   - BangPatterns
   - BinaryLiterals
   - BlockArguments
@@ -41,7 +40,6 @@ default-extensions:
   - InstanceSigs
   - KindSignatures
   - LambdaCase
-  - MonadFailDesugaring
   - MultiParamTypeClasses
   - MultiWayIf
   - NamedFieldPuns

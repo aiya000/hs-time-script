@@ -47,14 +47,10 @@ import qualified Data.String as String
 import Data.String.Cases
 import qualified Data.String.Cases as Name
 import Data.String.Here (i)
-import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc (Pretty(..))
-import Data.Void (Void)
-import Numeric.Natural (Natural)
 import RIO hiding (first)
 import RIO.List
-import Text.Megaparsec (MonadParsec, ParsecT, runParserT, ParseError(..))
 import Text.Megaparsec hiding (Token, SourcePos)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
@@ -122,6 +118,7 @@ newtype Lexer a = Lexer
   { unLexer :: Naked a
   } deriving ( Functor, Applicative, Monad
              , Alternative, MonadPlus
+             , MonadFail
              , MonadState TokenPos
              , MonadError Failure
              , MonadParsec Void String
