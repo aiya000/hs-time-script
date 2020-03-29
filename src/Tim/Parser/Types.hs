@@ -4,6 +4,7 @@ module Tim.Parser.Types where
 
 import qualified Data.List.NonEmpty as List
 import Data.String.Cases
+import qualified Data.String.Cases as String
 import Data.Text (Text)
 import Numeric.Natural (Natural)
 import RIO
@@ -22,8 +23,11 @@ data FuncParam = UnboundFuncParam String -- ^ a variable that is not bound by a 
   deriving (Show, Eq)
 
 data FuncName = UnqualifiedFuncName Pascal -- ^ e.g. F, G
-              | ScopedFuncName Lexers.Scope String -- ^ e.g. s:f, g:F
-              | PathFuncName String (List.NonEmpty String) -- ^ e.g. foo#bar to `PathFuncName "foo" ("bar" :| [])`.
+              | ScopedFuncName Lexers.Scope String.NonEmpty -- ^ e.g. s:f, g:F
+              | DictFuncName
+                  (List.NonEmpty String.NonEmpty) -- ^ a receiver
+                  String.NonEmpty -- ^ e.g. foo.bar.baz to `DictFuncName ["foo", "bar"] "baz""
+              | AutoloadFuncName (List.NonEmpty String.NonEmpty) -- ^ e.g. foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
 
 data FuncOpt = NoAbort
