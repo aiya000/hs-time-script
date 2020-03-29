@@ -17,8 +17,8 @@ data AST = Code Code -- ^ Whole of a code
          | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
-data FuncParam = UnboundFuncParam String -- ^ a variable that is not bound by a type: `x`
-               | BoundFuncParam String Type -- ^ bound by a type: `x: Int`
+data FuncParam = UnboundFuncParam String.NonEmpty -- ^ a variable that is not bound by a type: `x`
+               | BoundFuncParam String.NonEmpty Type -- ^ bound by a type: `x: Int`
                | VarFuncParams -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
@@ -30,10 +30,10 @@ data FuncName = UnqualifiedFuncName Pascal -- ^ e.g. F, G
               | AutoloadFuncName (List.NonEmpty String.NonEmpty) -- ^ e.g. foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
 
-data FuncOpt = NoAbort
+data FuncOpt = NoAbortFuncOpt
              | NoClosureFuncOpt
              | NoRangeFuncOpt
-             | NoDict
+             | NoDictFuncOpt
   deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
