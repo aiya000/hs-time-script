@@ -16,16 +16,16 @@ nameF :: FuncName
 nameF = UnqualifiedFuncName [pascalQ|F|]
 
 paramX :: FuncParam
-paramX = UnboundFuncParam [nonEmptyQ|x|]
+paramX = UnboundFuncParam [snakeQ|x|]
 
 paramY :: FuncParam
-paramY = UnboundFuncParam [nonEmptyQ|y|]
+paramY = UnboundFuncParam [snakeQ|y|]
 
 paramXNat :: FuncParam
-paramXNat = BoundFuncParam [nonEmptyQ|x|] $ Con [camelQ|Nat|]
+paramXNat = BoundFuncParam [snakeQ|x|] $ Con [camelQ|Nat|]
 
 paramYInt :: FuncParam
-paramYInt = BoundFuncParam [nonEmptyQ|y|] $ Con [camelQ|Int|]
+paramYInt = BoundFuncParam [snakeQ|y|] $ Con [camelQ|Int|]
 
 letXWith10 :: Syntax
 letXWith10 =
@@ -58,7 +58,7 @@ test_function = names <> params <> ret <> syn <> opts
             endfunction
           |]
       , ("scoped" `thatShouldBe` syntax
-          (Function (ScopedFuncName Scope.S [nonEmptyQ|f|]) [] Nothing [] []))
+          (Function (ScopedFuncName Scope.S [snakeQ|f|]) [] Nothing [] []))
           [i|
             function s:f()
             endfunction
