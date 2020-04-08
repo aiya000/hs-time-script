@@ -30,7 +30,7 @@ paramYInt = BoundFuncParam [snakeQ|y|] $ Con [camelQ|Int|]
 letXWith10 :: Syntax
 letXWith10 =
   Let
-    (LVar $ UnqualifiedVar "x")
+    (LVar $ UnqualifiedVar [snakeQ|x|])
     Nothing
     (RLit $ Nat 10)
 
@@ -63,18 +63,30 @@ test_function = names <> params <> ret <> syn <> opts
             function s:f()
             endfunction
           |]
-      , ("dict bound" `thatShouldBe` syntax
+      , ("bound by a dict as a property" `thatShouldBe` syntax
           (Function
-            (DictFuncName ([nonEmptyQ|foo|] :| [[nonEmptyQ|bar|]]) [nonEmptyQ|baz|])
+            (DictFuncName
+              (PropertyAccessDictVar
+                (UnqualifiedVarDictSelf [snakeQ|foo|]) [snakeQ|bar|]))
             [] Nothing [] []))
         [i|
-          function foo.bar.baz()
+          function foo.bar()
+          endfunction
+        |]
+      , ("bound by a dict as an index" `thatShouldBe` syntax
+          (Function
+            (DictFuncName
+              (PropertyAccessDictVar
+                (UnqualifiedVarDictSelf [snakeQ|foo|]) [snakeQ|bar|]))
+            [] Nothing [] []))
+        [i|
+          function foo['bar']()
           endfunction
         |]
       , ("autoload" `thatShouldBe` syntax
           (Function
             (AutoloadFuncName $
-              [nonEmptyQ|foo|] :| [ [nonEmptyQ|bar|], [nonEmptyQ|baz|]])
+              [snakeQ|foo|] :| [[snakeQ|bar|], [snakeQ|baz|]])
             [] Nothing [] []))
           [i|
             function foo#bar#baz()

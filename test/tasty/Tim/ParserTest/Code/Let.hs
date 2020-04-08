@@ -1,7 +1,10 @@
 {-# LANGUAGE OverloadedLists #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Tim.ParserTest.Code.Let where
 
+import Data.Char.Cases
+import Data.String.Cases
 import RIO hiding (first)
 import Test.Tasty (TestTree)
 import Tim.Parser.Types
@@ -11,9 +14,9 @@ import Tim.Test
 typedBy :: Type -> AST
 typedBy expected =
   syntax (Let
-      (LVar $ UnqualifiedVar "x")
+      (LVar $ UnqualifiedVar [snakeQ|x|])
       (Just expected)
-      (RVar $ UnqualifiedVar "y"))
+      (RVar $ UnqualifiedVar [snakeQ|y|]))
 
 
 test_let :: [TestTree]
@@ -27,19 +30,22 @@ test_let =
     testLet =
       [ "let x = y" `shouldBe` syntax
           (Let
-            (LVar $ UnqualifiedVar "x")
+            (LVar $ UnqualifiedVar [snakeQ|x|])
             Nothing
-            (RVar $ UnqualifiedVar "y"))
+            (RVar $ UnqualifiedVar [snakeQ|y|]))
       , "let [x] = z" `shouldBe` syntax
           (Let
-            (LDestuct [UnqualifiedVar "x"])
+            (LDestuct [UnqualifiedVar [snakeQ|x|]])
             Nothing
-            (RVar $ UnqualifiedVar "z"))
+            (RVar $ UnqualifiedVar [snakeQ|z|]))
       , "let [x, y] = z" `shouldBe` syntax
           (Let
-            (LDestuct [UnqualifiedVar "x", UnqualifiedVar "y"])
+            (LDestuct
+              [ UnqualifiedVar [snakeQ|x|]
+              , UnqualifiedVar [snakeQ|y|]
+              ])
             Nothing
-            (RVar $ UnqualifiedVar "z"))
+            (RVar $ UnqualifiedVar [snakeQ|z|]))
       ]
 
     testLetAtomicTypes =
@@ -49,9 +55,9 @@ test_let =
           typedBy (con "Type")
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but it is rejected by the syntax checker (not the parser).
         (Let
-          (LDestuct [UnqualifiedVar "x", UnqualifiedVar "y"])
+          (LDestuct [UnqualifiedVar [snakeQ|x|], UnqualifiedVar [snakeQ|y|]])
           (Just $ con "Type")
-          (RVar $ UnqualifiedVar "z"))
+          (RVar $ UnqualifiedVar [snakeQ|z|]))
       ]
 
     testLetHigherTypes =
