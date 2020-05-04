@@ -271,11 +271,11 @@ parseQualifiedIdent =
   Register <$> parseRegister <|>
   Option <$> parseOption
 
+-- | Parses `s:coped_var` or scope (`s:`, `g:`, `b:`, ...)
 parseScoped :: CodeParsing m => m (Scope, String)
 parseScoped = P.try $ do
   s <- parseScope
-  _ <- P.single ':'
-  ident <- unNonEmpty <$> parseUnqualifiedIdent
+  ident <- unSnake <$> parseSnake <|> P.string ""
   pure (s, ident)
 
 
@@ -295,14 +295,14 @@ scopeToChar T = 't'
 
 parseScope :: CodeParsing m => m Scope
 parseScope =
-  P.single 'g' $> G <|>
-  P.single 's' $> S <|>
-  P.single 'l' $> L <|>
-  P.single 'a' $> A <|>
-  P.single 'v' $> V <|>
-  P.single 'b' $> B <|>
-  P.single 'w' $> W <|>
-  P.single 't' $> T
+  P.string "g:" $> G <|>
+  P.string "s:" $> S <|>
+  P.string "l:" $> L <|>
+  P.string "a:" $> A <|>
+  P.string "v:" $> V <|>
+  P.string "b:" $> B <|>
+  P.string "w:" $> W <|>
+  P.string "t:" $> T
 
 
 -- | Please see `:help registers` on Vim
@@ -381,15 +381,15 @@ parseOption =
 
 parseLocalScopedOption :: CodeParsing m => m Option
 parseLocalScopedOption = P.try $ do
-  _ <- P.chunk "&l:"
+  _ <- P.string "&l:"
   LocalScopedOption <$> parseLowerString
 
 parseGlobalScopedOption :: CodeParsing m => m Option
 parseGlobalScopedOption = P.try $ do
-  _ <- P.chunk "&g:"
+  _ <- P.string "&g:"
   GlobalScopedOption <$> parseLowerString
 
 parseUnscopedOption :: CodeParsing m => m Option
 parseUnscopedOption = P.try $ do
-  _ <- P.chunk "&"
+  _ <- P.string "&"
   UnscopedOption <$> parseLowerString

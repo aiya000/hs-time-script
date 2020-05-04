@@ -87,8 +87,8 @@ test_expressions = testIdents <> testParens
       , "@a" `shouldBe` Rhs (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
       , "@+" `shouldBe` Rhs (RVar $ RegisterVar ClipboardPlus)
       , "&opt" `shouldBe` Rhs (RVar . OptionVar $ UnscopedOption [lowerStringQ|opt|])
-      , "l:&opt" `shouldBe` Rhs (RVar . OptionVar $ LocalScopedOption [lowerStringQ|opt|])
-      , "g:&opt" `shouldBe` Rhs (RVar . OptionVar $ GlobalScopedOption [lowerStringQ|opt|])
+      , "&l:opt" `shouldBe` Rhs (RVar . OptionVar $ LocalScopedOption [lowerStringQ|opt|])
+      , "&g:opt" `shouldBe` Rhs (RVar . OptionVar $ GlobalScopedOption [lowerStringQ|opt|])
       , "foo.bar" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
