@@ -71,14 +71,22 @@ import qualified Tim.Lexer.Types as Token
   let { (Token.Ident Token.Let, _) }
 
   -- variable identifiers
-  varScopedG { (ScopedIdent G $$, _) }
-  varScopedS { (ScopedIdent S $$, _) }
-  varScopedL { (ScopedIdent L $$, _) }
-  varScopedA { (ScopedIdent A $$, _) }
-  varScopedV { (ScopedIdent V $$, _) }
-  varScopedB { (ScopedIdent B $$, _) }
-  varScopedW { (ScopedIdent W $$, _) }
-  varScopedT { (ScopedIdent T $$, _) }
+  varG       { (ScopedIdent G "", _) }
+  varS       { (ScopedIdent S "", _) }
+  varL       { (ScopedIdent L "", _) }
+  varA       { (ScopedIdent A "", _) }
+  varV       { (ScopedIdent V "", _) }
+  varB       { (ScopedIdent B "", _) }
+  varW       { (ScopedIdent W "", _) }
+  varT       { (ScopedIdent T "", _) }
+  varScopedG { (ScopedIdent G $$, pos) }
+  varScopedS { (ScopedIdent S $$, pos) }
+  varScopedL { (ScopedIdent L $$, pos) }
+  varScopedA { (ScopedIdent A $$, pos) }
+  varScopedV { (ScopedIdent V $$, pos) }
+  varScopedB { (ScopedIdent B $$, pos) }
+  varScopedW { (ScopedIdent W $$, pos) }
+  varScopedT { (ScopedIdent T $$, pos) }
 
   varRegUnnamed   { (RegisterIdent Unnamed, _)         }
   varRegSmallDel  { (RegisterIdent SmallDelete, _)     }
@@ -141,31 +149,39 @@ Camel :: { Camel }
   : ident {% runParserInProcessor pos String.parseCamel $1 }
 
 Variable :: { Variable }
-  : varScopedG      { ScopedVar G $1                                           }
-  | varScopedS      { ScopedVar S $1                                           }
-  | varScopedL      { ScopedVar L $1                                           }
-  | varScopedA      { ScopedVar A $1                                           }
-  | varScopedV      { ScopedVar V $1                                           }
-  | varScopedB      { ScopedVar B $1                                           }
-  | varScopedW      { ScopedVar W $1                                           }
-  | varScopedT      { ScopedVar T $1                                           }
-  | varRegUnnamed   { RegisterVar Unnamed                                      }
-  | varRegSmallDel  { RegisterVar SmallDelete                                  }
-  | varRegReadOnlyC { RegisterVar ReadOnlyColon                                }
-  | varRegReadonlyD { RegisterVar ReadOnlyDot                                  }
-  | varRegReadOnlyP { RegisterVar ReadOnlyPercent                              }
-  | varRegBuffer    { RegisterVar Buffer                                       }
-  | varRegExpr      { RegisterVar Expression                                   }
-  | varRegClipS     { RegisterVar ClipboardStar                                }
-  | varRegClipP     { RegisterVar ClipboardPlus                                }
-  | varRegBlackHole { RegisterVar BlackHole                                    }
-  | varRegSeached   { RegisterVar Searched                                     }
-  | varRegNum       { RegisterVar $ Numeric $1                                 }
-  | varRegAlpha     { RegisterVar $ Alphabetic $1                              }
-  | varLOption      { OptionVar $ LocalScopedOption $1                         }
-  | varGOption      { OptionVar $ GlobalScopedOption $1                        }
-  | varOption       { OptionVar $ UnscopedOption $1                            }
-  | ident           {% fmap UnqualifiedVar $ runParserInProcessor pos parseSnake $1  }
+  : varG            { ScopedVar G EmptyScopedName                                                     }
+  | varS            { ScopedVar S EmptyScopedName                                                     }
+  | varL            { ScopedVar L EmptyScopedName                                                     }
+  | varA            { ScopedVar A EmptyScopedName                                                     }
+  | varV            { ScopedVar V EmptyScopedName                                                     }
+  | varB            { ScopedVar B EmptyScopedName                                                     }
+  | varW            { ScopedVar W EmptyScopedName                                                     }
+  | varT            { ScopedVar T EmptyScopedName                                                     }
+  | varScopedG      {% fmap (ScopedVar G . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedS      {% fmap (ScopedVar S . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedL      {% fmap (ScopedVar L . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedA      {% fmap (ScopedVar A . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedV      {% fmap (ScopedVar V . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedB      {% fmap (ScopedVar B . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedW      {% fmap (ScopedVar W . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedT      {% fmap (ScopedVar T . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varRegUnnamed   { RegisterVar Unnamed                                                             }
+  | varRegSmallDel  { RegisterVar SmallDelete                                                         }
+  | varRegReadOnlyC { RegisterVar ReadOnlyColon                                                       }
+  | varRegReadonlyD { RegisterVar ReadOnlyDot                                                         }
+  | varRegReadOnlyP { RegisterVar ReadOnlyPercent                                                     }
+  | varRegBuffer    { RegisterVar Buffer                                                              }
+  | varRegExpr      { RegisterVar Expression                                                          }
+  | varRegClipS     { RegisterVar ClipboardStar                                                       }
+  | varRegClipP     { RegisterVar ClipboardPlus                                                       }
+  | varRegBlackHole { RegisterVar BlackHole                                                           }
+  | varRegSeached   { RegisterVar Searched                                                            }
+  | varRegNum       { RegisterVar $ Numeric $1                                                        }
+  | varRegAlpha     { RegisterVar $ Alphabetic $1                                                     }
+  | varLOption      { OptionVar $ LocalScopedOption $1                                                }
+  | varGOption      { OptionVar $ GlobalScopedOption $1                                               }
+  | varOption       { OptionVar $ UnscopedOption $1                                                   }
+  | ident           {% fmap UnqualifiedVar $ runParserInProcessor pos parseSnake $1                      }
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }

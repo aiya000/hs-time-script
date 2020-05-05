@@ -81,10 +81,14 @@ infixr 4 `Union`
 
 -- | The parser's variable identifiers
 data Variable = UnqualifiedVar String.Snake -- ^ simple_idents
-              | ScopedVar Lexers.Scope String -- ^ s:coped, l:
+              | ScopedVar Lexers.Scope ScopedName -- ^ s:coped, l:
               | DictVar DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
               | RegisterVar Lexers.Register -- ^ @+, @u
               | OptionVar Lexers.Option -- ^ &nu, &number
+  deriving (Show, Eq)
+
+data ScopedName = EmptyScopedName -- ^ To allow g:, s:, l:, ...
+                | NonEmptyScopedName String.Snake
   deriving (Show, Eq)
 
 -- |
@@ -94,9 +98,9 @@ data Variable = UnqualifiedVar String.Snake -- ^ simple_idents
 -- - foo.bar.baz
 -- - foo[bar][baz]
 -- - foo.bar[baz]
-data DictVar = IndexAccessDictVar DictSelf String.Snake -- ^ `foo.bar`
+data DictVar = IndexAccessDictVar DictSelf Variable -- ^ `foo.bar`
              | PropertyAccessDictVar DictSelf String.Snake -- ^ `foo[bar]`
-             | IndexAccessChainDictVar DictVar String.Snake
+             | IndexAccessChainDictVar DictVar Variable
              | PropertyAccessChainDictVar DictVar String.Snake
   deriving (Show, Eq)
 

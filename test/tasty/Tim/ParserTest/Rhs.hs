@@ -42,9 +42,9 @@ test_literals =
       ]
 
     testLiteralLikeVimVars =
-      [ "v:true"  `shouldBe` Rhs (RVar $ ScopedVar V "true")
-      , "v:false" `shouldBe` Rhs (RVar $ ScopedVar V "false")
-      , "v:null"  `shouldBe` Rhs (RVar $ ScopedVar V "null")
+      [ "v:true"  `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|true|])
+      , "v:false" `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|false|])
+      , "v:null"  `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|null|])
       ]
 
     testLists =
@@ -81,48 +81,69 @@ test_expressions :: [TestTree]
 test_expressions = testIdents <> testParens
   where
     testIdents =
-      [ "simple" `shouldBe` Rhs (RVar $ UnqualifiedVar [snakeQ|simple|])
-      , "g:" `shouldBe` Rhs (RVar $ ScopedVar G "")
-      , "g:scoped" `shouldBe` Rhs (RVar $ ScopedVar G "scoped")
-      , "@a" `shouldBe` Rhs (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
-      , "@+" `shouldBe` Rhs (RVar $ RegisterVar ClipboardPlus)
-      , "&opt" `shouldBe` Rhs (RVar . OptionVar $ UnscopedOption [lowerStringQ|opt|])
-      , "&l:opt" `shouldBe` Rhs (RVar . OptionVar $ LocalScopedOption [lowerStringQ|opt|])
-      , "&g:opt" `shouldBe` Rhs (RVar . OptionVar $ GlobalScopedOption [lowerStringQ|opt|])
+      [ "simple" `shouldBe` Rhs
+          (RVar $ UnqualifiedVar [snakeQ|simple|])
+      , "g:" `shouldBe` Rhs
+          (RVar $ ScopedVar G EmptyScopedName)
+      , "g:scoped" `shouldBe` Rhs
+          (RVar . ScopedVar G $ NonEmptyScopedName [snakeQ|scoped|])
+      , "@a" `shouldBe` Rhs
+          (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
+      , "@+" `shouldBe` Rhs
+          (RVar $ RegisterVar ClipboardPlus)
+      , "&opt" `shouldBe` Rhs
+          (RVar . OptionVar $ UnscopedOption [lowerStringQ|opt|])
+      , "&l:opt" `shouldBe` Rhs
+          (RVar . OptionVar $ LocalScopedOption [lowerStringQ|opt|])
+      , "&g:opt" `shouldBe` Rhs
+          (RVar . OptionVar $ GlobalScopedOption [lowerStringQ|opt|])
+
       , "foo.bar" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
             [snakeQ|bar|])
+
       , "s:foo.bar" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (ScopedVarDictSelf S "foo")
             [snakeQ|bar|])
+
       , "g:.foo" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (ScopedVarDictSelf G "")
             [snakeQ|foo|])
+
       , "foo[x]" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
-            [snakeQ|x|])
+            (UnqualifiedVar [snakeQ|x|]))
+
+      , "foo[s:x]" `shouldBe` Rhs (RVar . DictVar $
+          IndexAccessDictVar
+            (UnqualifiedVarDictSelf [snakeQ|foo|])
+            (ScopedVar S $ NonEmptyScopedName [snakeQ|x|]))
+
       , "g:[x]" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar
             (ScopedVarDictSelf G "")
-            [snakeQ|x|])
+            (UnqualifiedVar [snakeQ|x|]))
+
       , "foo.bar.baz" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
             [snakeQ|bar|] `PropertyAccessChainDictVar`
             [snakeQ|baz|])
+
       , "foo.bar[x]" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
             [snakeQ|bar|] `IndexAccessChainDictVar`
-            [snakeQ|x|])
+            (UnqualifiedVar [snakeQ|x|]))
+
       , "foo[x].bar" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
-            [snakeQ|x|] `PropertyAccessChainDictVar`
+            (UnqualifiedVar [snakeQ|x|]) `PropertyAccessChainDictVar`
             [snakeQ|bar|])
       ]
 
