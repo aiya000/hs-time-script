@@ -151,7 +151,14 @@ TypeApp :: { Type }
 Camel :: { Camel }
   : ident {% runParserInProcessor pos String.parseCamel $1 }
 
+
 Variable :: { Variable }
+  : ScopedVariable { $1 }
+  | RegisterVariable { $1 }
+  | OptionVariable { $1 }
+  | UnqualifiedVariable { $1 }
+
+ScopedVariable :: { Variable }
   : varG            { ScopedVar $ GScopeVar EmptyScopedName                                                     }
   | varS            { ScopedVar $ SScopeVar EmptyScopedName                                                     }
   | varL            { ScopedVar $ LScopeVar EmptyScopedName                                                     }
@@ -167,23 +174,30 @@ Variable :: { Variable }
   | varScopedW      {% fmap (ScopedVar . WScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
   | varScopedT      {% fmap (ScopedVar . TScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
   | varScopedA      {% fmap (ScopedVar . AScopeVar) $ runParserInProcessor pos parseAScopeVar $1  }
-  | varRegUnnamed   { RegisterVar Unnamed                                                             }
-  | varRegSmallDel  { RegisterVar SmallDelete                                                         }
-  | varRegReadOnlyC { RegisterVar ReadOnlyColon                                                       }
-  | varRegReadonlyD { RegisterVar ReadOnlyDot                                                         }
-  | varRegReadOnlyP { RegisterVar ReadOnlyPercent                                                     }
-  | varRegBuffer    { RegisterVar Buffer                                                              }
-  | varRegExpr      { RegisterVar Expression                                                          }
-  | varRegClipS     { RegisterVar ClipboardStar                                                       }
-  | varRegClipP     { RegisterVar ClipboardPlus                                                       }
-  | varRegBlackHole { RegisterVar BlackHole                                                           }
-  | varRegSeached   { RegisterVar Searched                                                            }
-  | varRegNum       { RegisterVar $ Numeric $1                                                        }
-  | varRegAlpha     { RegisterVar $ Alphabetic $1                                                     }
-  | varLOption      { OptionVar $ LocalScopedOption $1                                                }
-  | varGOption      { OptionVar $ GlobalScopedOption $1                                               }
-  | varOption       { OptionVar $ UnscopedOption $1                                                   }
-  | ident           {% fmap UnqualifiedVar $ runParserInProcessor pos parseSnake $1                      }
+
+RegisterVariable :: { Variable }
+  : varRegUnnamed   { RegisterVar Unnamed         }
+  | varRegSmallDel  { RegisterVar SmallDelete     }
+  | varRegReadOnlyC { RegisterVar ReadOnlyColon   }
+  | varRegReadonlyD { RegisterVar ReadOnlyDot     }
+  | varRegReadOnlyP { RegisterVar ReadOnlyPercent }
+  | varRegBuffer    { RegisterVar Buffer          }
+  | varRegExpr      { RegisterVar Expression      }
+  | varRegClipS     { RegisterVar ClipboardStar   }
+  | varRegClipP     { RegisterVar ClipboardPlus   }
+  | varRegBlackHole { RegisterVar BlackHole       }
+  | varRegSeached   { RegisterVar Searched        }
+  | varRegNum       { RegisterVar $ Numeric $1    }
+  | varRegAlpha     { RegisterVar $ Alphabetic $1 }
+
+OptionVariable :: { Variable }
+  : varLOption { OptionVar $ LocalScopedOption $1  }
+  | varGOption { OptionVar $ GlobalScopedOption $1 }
+  | varOption  { OptionVar $ UnscopedOption $1     }
+
+UnqualifiedVariable :: { Variable }
+  : ident {% fmap UnqualifiedVar $ runParserInProcessor pos parseSnake $1 }
+
 
 -- Destructive assignee variables
 DestVars :: { List.NonEmpty Variable }
