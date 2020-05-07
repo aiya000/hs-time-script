@@ -42,9 +42,9 @@ test_literals =
       ]
 
     testLiteralLikeVimVars =
-      [ "v:true"  `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|true|])
-      , "v:false" `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|false|])
-      , "v:null"  `shouldBe` Rhs (RVar . ScopedVar V $ NonEmptyScopedName [snakeQ|null|])
+      [ "v:true"  `shouldBe` Rhs (RVar . ScopedVar . VScopeVar $ NonEmptyScopedName [snakeQ|true|])
+      , "v:false" `shouldBe` Rhs (RVar . ScopedVar . VScopeVar $ NonEmptyScopedName [snakeQ|false|])
+      , "v:null"  `shouldBe` Rhs (RVar . ScopedVar . VScopeVar $ NonEmptyScopedName [snakeQ|null|])
       ]
 
     testLists =
@@ -84,9 +84,15 @@ test_expressions = testIdents <> testParens
       [ "simple" `shouldBe` Rhs
           (RVar $ UnqualifiedVar [snakeQ|simple|])
       , "g:" `shouldBe` Rhs
-          (RVar $ ScopedVar G EmptyScopedName)
+          (RVar . ScopedVar $ GScopeVar EmptyScopedName)
       , "g:scoped" `shouldBe` Rhs
-          (RVar . ScopedVar G $ NonEmptyScopedName [snakeQ|scoped|])
+          (RVar . ScopedVar . GScopeVar $ NonEmptyScopedName [snakeQ|scoped|])
+      , "a:000" `shouldBe` Rhs
+          (RVar . ScopedVar $ AScopeVar VarAllAScopeName)
+      , "a:1" `shouldBe` Rhs
+          (RVar . ScopedVar . AScopeVar $ VarNumAScopeName 1)
+      , "a:foo" `shouldBe` Rhs
+          (RVar . ScopedVar . AScopeVar . NameAScopeName $ NonEmptyScopedName [snakeQ|foo|])
       , "@a" `shouldBe` Rhs
           (RVar . RegisterVar . Alphabetic $ AlphaLower A_)
       , "@+" `shouldBe` Rhs
@@ -121,7 +127,7 @@ test_expressions = testIdents <> testParens
       , "foo[s:x]" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar
             (UnqualifiedVarDictSelf [snakeQ|foo|])
-            (ScopedVar S $ NonEmptyScopedName [snakeQ|x|]))
+            (ScopedVar . SScopeVar $ NonEmptyScopedName [snakeQ|x|]))
 
       , "g:[x]" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar

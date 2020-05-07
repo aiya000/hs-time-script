@@ -18,6 +18,7 @@ module Tim.Parser
   ( parse
   ) where
 
+import Control.Applicative ((<|>))
 import Control.Arrow ((>>>))
 import Control.Exception.Safe (displayException)
 import Control.Monad.Except (throwError)
@@ -39,6 +40,8 @@ import Tim.Processor
 import qualified Data.List.NonEmpty as List
 import qualified Data.Map.Strict as Map
 import qualified Data.String.Cases as String
+import qualified Text.Megaparsec.Char as P
+import qualified Text.Megaparsec.Char.Lexer as P
 import qualified Tim.Lexer.Types as Token
 }
 
@@ -74,11 +77,11 @@ import qualified Tim.Lexer.Types as Token
   varG       { (ScopedIdent G "", _) }
   varS       { (ScopedIdent S "", _) }
   varL       { (ScopedIdent L "", _) }
-  varA       { (ScopedIdent A "", _) }
   varV       { (ScopedIdent V "", _) }
   varB       { (ScopedIdent B "", _) }
   varW       { (ScopedIdent W "", _) }
   varT       { (ScopedIdent T "", _) }
+  -- varA (the identifier 'a:') is parsed by parseAScopeVar
   varScopedG { (ScopedIdent G $$, pos) }
   varScopedS { (ScopedIdent S $$, pos) }
   varScopedL { (ScopedIdent L $$, pos) }
@@ -149,22 +152,21 @@ Camel :: { Camel }
   : ident {% runParserInProcessor pos String.parseCamel $1 }
 
 Variable :: { Variable }
-  : varG            { ScopedVar G EmptyScopedName                                                     }
-  | varS            { ScopedVar S EmptyScopedName                                                     }
-  | varL            { ScopedVar L EmptyScopedName                                                     }
-  | varA            { ScopedVar A EmptyScopedName                                                     }
-  | varV            { ScopedVar V EmptyScopedName                                                     }
-  | varB            { ScopedVar B EmptyScopedName                                                     }
-  | varW            { ScopedVar W EmptyScopedName                                                     }
-  | varT            { ScopedVar T EmptyScopedName                                                     }
-  | varScopedG      {% fmap (ScopedVar G . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedS      {% fmap (ScopedVar S . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedL      {% fmap (ScopedVar L . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedA      {% fmap (ScopedVar A . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedV      {% fmap (ScopedVar V . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedB      {% fmap (ScopedVar B . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedW      {% fmap (ScopedVar W . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedT      {% fmap (ScopedVar T . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  : varG            { ScopedVar $ GScopeVar EmptyScopedName                                                     }
+  | varS            { ScopedVar $ SScopeVar EmptyScopedName                                                     }
+  | varL            { ScopedVar $ LScopeVar EmptyScopedName                                                     }
+  | varV            { ScopedVar $ VScopeVar EmptyScopedName                                                     }
+  | varB            { ScopedVar $ BScopeVar EmptyScopedName                                                     }
+  | varW            { ScopedVar $ WScopeVar EmptyScopedName                                                     }
+  | varT            { ScopedVar $ TScopeVar EmptyScopedName                                                     }
+  | varScopedG      {% fmap (ScopedVar . GScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedS      {% fmap (ScopedVar . SScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedL      {% fmap (ScopedVar . LScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedV      {% fmap (ScopedVar . VScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedB      {% fmap (ScopedVar . BScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedW      {% fmap (ScopedVar . WScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedT      {% fmap (ScopedVar . TScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
+  | varScopedA      {% fmap (ScopedVar . AScopeVar) $ runParserInProcessor pos parseAScopeVar $1  }
   | varRegUnnamed   { RegisterVar Unnamed                                                             }
   | varRegSmallDel  { RegisterVar SmallDelete                                                         }
   | varRegReadOnlyC { RegisterVar ReadOnlyColon                                                       }
@@ -268,4 +270,16 @@ runParserInProcessor pos parser input =
   case runParser parser "time-script" input of
     Right x -> pure x
     Left  e -> throwError $ Failure (displayException e) (OnAToken pos)
+
+parseAScopeVar :: CodeParsec AScopeName
+parseAScopeVar =
+    varAll <|>
+    varNum <|>
+    nonEmptyName <|>
+    emptyName
+  where
+    varAll = VarAllAScopeName <$ P.string "000"
+    varNum = VarNumAScopeName <$> P.decimal
+    nonEmptyName = NameAScopeName . NonEmptyScopedName <$> parseSnake
+    emptyName = NameAScopeName EmptyScopedName <$ P.string ""
 }

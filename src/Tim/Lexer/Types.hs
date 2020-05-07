@@ -54,6 +54,7 @@ import RIO.List
 import Text.Megaparsec hiding (Token, SourcePos)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
+import qualified Text.Megaparsec.Char.Lexer as P
 import Tim.Megaparsec
 import Tim.Processor
 import Tim.Util.String
@@ -275,8 +276,10 @@ parseQualifiedIdent =
 parseScoped :: CodeParsing m => m (Scope, String)
 parseScoped = P.try $ do
   s <- parseScope
-  ident <- unSnake <$> parseSnake <|> P.string ""
+  ident <- (unSnake <$> parseSnake) <|> varArg <|> P.string ""
   pure (s, ident)
+  where
+    varArg = P.string "000" <|> (show <$> P.decimal @_ @_ @_ @Natural)
 
 
 -- | x:
