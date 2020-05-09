@@ -8,7 +8,6 @@ import Data.String.Cases
 import Data.String.Here (i)
 import RIO hiding (first)
 import Test.Tasty (TestTree)
-import qualified Tim.Lexer.Types as Scope
 import Tim.Parser.Types
 import Tim.Test
 
@@ -58,7 +57,7 @@ test_function = names <> params <> ret <> syn <> opts
             endfunction
           |]
       , ("scoped" `thatShouldBe` syntax
-          (Function (ScopedFuncName Scope.S [snakeQ|f|]) [] Nothing [] []))
+          (Function (ScopedFuncName . SScopeVar $ NonEmptyScopedName [snakeQ|f|]) [] Nothing [] []))
           [i|
             function s:f()
             endfunction

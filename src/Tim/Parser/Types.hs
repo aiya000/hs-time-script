@@ -21,7 +21,7 @@ data FuncParam = UnboundFuncParam String.Snake -- ^ a variable that is not bound
   deriving (Show, Eq)
 
 data FuncName = UnqualifiedFuncName Pascal -- ^ F, G
-              | ScopedFuncName Lexers.Scope String.Snake -- ^ s:f, g:F
+              | ScopedFuncName ScopeVar -- ^ s:f, g:F
               | DictFuncName DictVar -- ^ foo.bar
               | AutoloadFuncName (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
@@ -121,5 +121,5 @@ data DictVar = IndexAccessDictVar DictSelf Variable -- ^ `foo.bar`
 
 -- | A part of 'Variable' for 'DictVar'
 data DictSelf = UnqualifiedVarDictSelf String.Snake
-              | ScopedVarDictSelf Lexers.Scope String
+              | ScopedVarDictSelf ScopeVar
   deriving (Show, Eq)

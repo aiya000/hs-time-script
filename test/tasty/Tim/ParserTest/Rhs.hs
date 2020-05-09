@@ -111,12 +111,12 @@ test_expressions = testIdents <> testParens
 
       , "s:foo.bar" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
-            (ScopedVarDictSelf S "foo")
+            (ScopedVarDictSelf . SScopeVar $ NonEmptyScopedName [snakeQ|foo|])
             [snakeQ|bar|])
 
       , "g:.foo" `shouldBe` Rhs (RVar . DictVar $
           PropertyAccessDictVar
-            (ScopedVarDictSelf G "")
+            (ScopedVarDictSelf $ GScopeVar EmptyScopedName)
             [snakeQ|foo|])
 
       , "foo[x]" `shouldBe` Rhs (RVar . DictVar $
@@ -131,7 +131,7 @@ test_expressions = testIdents <> testParens
 
       , "g:[x]" `shouldBe` Rhs (RVar . DictVar $
           IndexAccessDictVar
-            (ScopedVarDictSelf G "")
+            (ScopedVarDictSelf $ GScopeVar EmptyScopedName)
             (UnqualifiedVar [snakeQ|x|]))
 
       , "foo.bar.baz" `shouldBe` Rhs (RVar . DictVar $
