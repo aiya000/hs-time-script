@@ -19,11 +19,14 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
-lexer = P.many $ do
+lexer = do
   _ <- P.many P.spaceChar `forwardBy` length
-  symbol <|>
-    first Literal <$> literal <|>
-    first Ident <$> ident
+  P.many $ do
+    x <- symbol <|>
+          first Literal <$> literal <|>
+          first Ident <$> ident
+    _ <- P.many P.spaceChar `forwardBy` length
+    pure x
 
 symbol :: Lexer (Token, TokenPos)
 symbol =

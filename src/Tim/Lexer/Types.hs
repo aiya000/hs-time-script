@@ -20,7 +20,6 @@ module Tim.Lexer.Types
   , pattern String'
   , Token (..)
   , Ident (..)
-  , pattern Let
   , unIdent
   , parseIdent
   , QualifiedIdent (..)
@@ -191,6 +190,7 @@ data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type
            | Literal AtomicLiteral
            | Comma -- ^ ,
            | Dot -- ^ .
+           | Sharp -- ^ #
            | LineBreak -- ^ "\n", "\r", "\r\n"
   deriving (Show, Eq)
 
@@ -207,6 +207,7 @@ instance Pretty Token where
   pretty Bar         = String.fromString "|"
   pretty Comma       = String.fromString ","
   pretty Dot         = String.fromString "."
+  pretty Sharp       = String.fromString "#"
   pretty LineBreak   = String.fromString "{a line break}"
   pretty (Ident x)   = pretty x
   pretty (Literal x) = pretty x
@@ -227,10 +228,6 @@ data Ident = QualifiedIdent QualifiedIdent
 instance Pretty Ident where
   pretty (QualifiedIdent x) = pretty x
   pretty (UnqualifiedIdent x) = pretty x
-
--- | The identifier of "let"
-pattern Let :: Ident
-pattern Let = UnqualifiedIdent (Name.NonEmpty 'l' "et")
 
 unIdent :: Ident -> String
 unIdent (QualifiedIdent x) = unQualifiedIdent x

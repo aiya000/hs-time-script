@@ -38,6 +38,7 @@ import Tim.Megaparsec
 import Tim.Parser.Types
 import Tim.Processor
 import qualified Data.List.NonEmpty as List
+import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Map.Strict as Map
 import qualified Data.String.Cases as String
 import qualified Text.Megaparsec.Char as P
@@ -69,10 +70,13 @@ import qualified Tim.Lexer.Types as Token
   '.'           { (Token.Dot, _)                                     }
   "->"          { (Token.Arrow, _)                                   }
   '|'           { (Token.Bar, _)                                     }
+  '#'           { (Token.Sharp, _)                                   }
   lineBreak     { (Token.LineBreak, _)                               }
 
-  -- Important command identifiers
-  let { (Token.Ident Token.Let, _) }
+  -- Important commands identifiers
+  let         { (Token.Ident LetI, _)         }
+  function    { (Token.Ident FunctionI, _)    }
+  endfunction { (Token.Ident EndFunctionI, _) }
 
   -- variable identifiers
   varG       { (ScopedIdent G "", _) }
@@ -130,6 +134,23 @@ Code :: { Code }
   | Syntax lineBreak Code { $1 : $3 }
 
 Syntax :: { Syntax }
+  : Let      { $1 }
+  | Function { $1 }
+
+Function :: { Syntax }
+  : function FuncName '(' ')' endfunction { Function $2 [] Nothing [] [] }
+
+FuncName :: { FuncName }
+  : UnqualifiedVar   { UnqualifiedFuncName $1                 }
+  | ScopedVar        { ScopedFuncName $1                      }
+  | DictVar          { DictFuncName $1                        }
+  | AutoloadFuncName { AutoloadFuncName $ NonEmpty.reverse $1 }
+
+AutoloadFuncName :: { List.NonEmpty Snake }
+  : UnqualifiedVar '#' UnqualifiedVar   { $3 :| [$1] }
+  | UnqualifiedVar '#' AutoloadFuncName { $1 <| $3   }
+
+Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
   | let Lhs '=' Rhs          { Let $2 Nothing $4   }
 
@@ -188,14 +209,14 @@ DictVariable :: { Variable }
   : DictVar { DictVar $1 }
 
 DictVar :: { DictVar }
-  : DictSelf '[' Variable ']'    { IndexAccessDictVar $1 $3         }
-  | DictSelf '.' UnqualifiedName { PropertyAccessDictVar $1 $3      }
-  | DictVar '[' Variable ']'     { IndexAccessChainDictVar $1 $3    }
-  | DictVar '.' UnqualifiedName  { PropertyAccessChainDictVar $1 $3 }
+  : DictSelf '[' Variable ']'   { IndexAccessDictVar $1 $3         }
+  | DictSelf '.' UnqualifiedVar { PropertyAccessDictVar $1 $3      }
+  | DictVar '[' Variable ']'    { IndexAccessChainDictVar $1 $3    }
+  | DictVar '.' UnqualifiedVar  { PropertyAccessChainDictVar $1 $3 }
 
 DictSelf :: { DictSelf }
-  : UnqualifiedName { UnqualifiedVarDictSelf $1 }
-  | ScopedVar       { ScopedVarDictSelf $1      }
+  : UnqualifiedVar { UnqualifiedVarDictSelf $1 }
+  | ScopedVar      { ScopedVarDictSelf $1      }
 
 RegisterVariable :: { Variable }
   : varRegUnnamed   { RegisterVar Unnamed         }
@@ -218,9 +239,9 @@ OptionVariable :: { Variable }
   | varOption  { OptionVar $ UnscopedOption $1     }
 
 UnqualifiedVariable :: { Variable }
-  : UnqualifiedName { UnqualifiedVar $1 }
+  : UnqualifiedVar { UnqualifiedVar $1 }
 
-UnqualifiedName :: { Snake }
+UnqualifiedVar :: { Snake }
   : ident {% runParserInProcessor pos parseSnake $1 }
 
 Rhs :: { Rhs }
@@ -265,6 +286,17 @@ pattern LOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.
 
 pattern GOptionIdent :: LowerString -> Token
 pattern GOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.GlobalScopedOption x)))
+
+
+pattern LetI :: Token.Ident
+pattern LetI = Token.UnqualifiedIdent (String.NonEmpty 'l' "et")
+
+pattern FunctionI :: Token.Ident
+pattern FunctionI = Token.UnqualifiedIdent (String.NonEmpty 'f' "unction")
+
+pattern EndFunctionI :: Token.Ident
+pattern EndFunctionI = Token.UnqualifiedIdent (String.NonEmpty 'e' "ndfunction")
+
 
 parse :: [(Token, TokenPos)] -> Either Failure AST
 parse = runProcessor . parseAST

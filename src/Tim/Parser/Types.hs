@@ -21,7 +21,7 @@ data FuncParam = UnboundFuncParam String.Snake -- ^ a variable that is not bound
                | VarFuncParams -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
-data FuncName = UnqualifiedFuncName Pascal -- ^ F, G
+data FuncName = UnqualifiedFuncName String.Snake -- ^ F, G
               | ScopedFuncName ScopedVar -- ^ s:f, g:F
               | DictFuncName DictVar -- ^ foo.bar
               | AutoloadFuncName (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
