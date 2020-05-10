@@ -87,17 +87,18 @@ compatible ParseErrorBundle{..} =
 -- When the lexer is failure,
 -- shows an error message for user.
 argue :: List.NonEmpty LexError -> String
-argue = intercalate "\n" . toList . fmap (("- " <>) . errorDetail)
+argue = intercalate "\n" . toList . fmap errorDetail
   where
     errorDetail :: LexError -> String
     errorDetail (TrivialError offSet maybeActual expected) = contrast offSet maybeActual expected
     errorDetail (FancyError offSet errors) = something offSet errors
 
+    -- TODO: What is offset? Unfortunately, it maybe not a line of the parse error.
     contrast :: Int -> Maybe LexErrorItem -> Set LexErrorItem -> String
-    contrast offSet Nothing expected =
-        [i|L${offSet}: Expected ${commaSeparated expected}|]
-    contrast offSet (Just actual) expected =
-      [i|L${offSet}: Got ${visible actual}, but expected ${commaSeparated expected}.|]
+    contrast _ Nothing expected =
+        [i|Expected ${commaSeparated expected}|]
+    contrast _ (Just actual) expected =
+      [i|Got ${visible actual}, but expected ${commaSeparated expected}.|]
 
     commaSeparated :: Set LexErrorItem -> String
     commaSeparated (toList -> items) =
