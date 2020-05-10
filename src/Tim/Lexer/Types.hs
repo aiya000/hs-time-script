@@ -189,7 +189,8 @@ data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type
            | Arrow -- ^ ->
            | Bar -- ^ |
            | Literal AtomicLiteral
-           | Comma
+           | Comma -- ^ ,
+           | Dot -- ^ .
            | LineBreak -- ^ "\n", "\r", "\r\n"
   deriving (Show, Eq)
 
@@ -205,6 +206,7 @@ instance Pretty Token where
   pretty Arrow       = String.fromString "->"
   pretty Bar         = String.fromString "|"
   pretty Comma       = String.fromString ","
+  pretty Dot         = String.fromString "."
   pretty LineBreak   = String.fromString "{a line break}"
   pretty (Ident x)   = pretty x
   pretty (Literal x) = pretty x

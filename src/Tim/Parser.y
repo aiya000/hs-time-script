@@ -66,6 +66,7 @@ import qualified Tim.Lexer.Types as Token
   '('           { (Token.ParenBegin, _)                              }
   ')'           { (Token.ParenEnd, _)                                }
   ','           { (Token.Comma, _)                                   }
+  '.'           { (Token.Dot, _)                                     }
   "->"          { (Token.Arrow, _)                                   }
   '|'           { (Token.Bar, _)                                     }
   lineBreak     { (Token.LineBreak, _)                               }
@@ -136,6 +137,11 @@ Lhs :: { Lhs }
   : Variable         { LVar $1     }
   | '[' DestVars ']' { LDestuct $2 }
 
+-- Destructive assignee variables
+DestVars :: { List.NonEmpty Variable }
+  : Variable              { ($1 :| []) }
+  | Variable ',' DestVars { $1 <| $3   }
+
 Type :: { Type }
   : Type "->" Type { Arrow $1 $3 }
   | Type '|'  Type { Union $1 $3 }
@@ -151,29 +157,45 @@ TypeApp :: { Type }
 Camel :: { Camel }
   : ident {% runParserInProcessor pos String.parseCamel $1 }
 
-
 Variable :: { Variable }
-  : ScopedVariable { $1 }
-  | RegisterVariable { $1 }
-  | OptionVariable { $1 }
+  : ScopedVariable      { $1 }
+  | DictVariable        { $1 }
+  | RegisterVariable    { $1 }
+  | OptionVariable      { $1 }
   | UnqualifiedVariable { $1 }
 
 ScopedVariable :: { Variable }
-  : varG            { ScopedVar $ GScopeVar EmptyScopedName                                                     }
-  | varS            { ScopedVar $ SScopeVar EmptyScopedName                                                     }
-  | varL            { ScopedVar $ LScopeVar EmptyScopedName                                                     }
-  | varV            { ScopedVar $ VScopeVar EmptyScopedName                                                     }
-  | varB            { ScopedVar $ BScopeVar EmptyScopedName                                                     }
-  | varW            { ScopedVar $ WScopeVar EmptyScopedName                                                     }
-  | varT            { ScopedVar $ TScopeVar EmptyScopedName                                                     }
-  | varScopedG      {% fmap (ScopedVar . GScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedS      {% fmap (ScopedVar . SScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedL      {% fmap (ScopedVar . LScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedV      {% fmap (ScopedVar . VScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedB      {% fmap (ScopedVar . BScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedW      {% fmap (ScopedVar . WScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedT      {% fmap (ScopedVar . TScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1  }
-  | varScopedA      {% fmap (ScopedVar . AScopeVar) $ runParserInProcessor pos parseAScopeVar $1  }
+  : ScopedVar { ScopedVar $1 }
+
+ScopedVar :: { ScopedVar }
+  : varG       { GScopeVar EmptyScopedName                                                       }
+  | varS       { SScopeVar EmptyScopedName                                                       }
+  | varL       { LScopeVar EmptyScopedName                                                       }
+  | varV       { VScopeVar EmptyScopedName                                                       }
+  | varB       { BScopeVar EmptyScopedName                                                       }
+  | varW       { WScopeVar EmptyScopedName                                                       }
+  | varT       { TScopeVar EmptyScopedName                                                       }
+  | varScopedG {% fmap (GScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedS {% fmap (SScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedL {% fmap (LScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedV {% fmap (VScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedB {% fmap (BScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedW {% fmap (WScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedT {% fmap (TScopeVar . NonEmptyScopedName) $ runParserInProcessor pos parseSnake $1 }
+  | varScopedA {% fmap AScopeVar $ runParserInProcessor pos parseAScopeVar $1                    }
+
+DictVariable :: { Variable }
+  : DictVar { DictVar $1 }
+
+DictVar :: { DictVar }
+  : DictSelf '[' Variable ']'    { IndexAccessDictVar $1 $3         }
+  | DictSelf '.' UnqualifiedName { PropertyAccessDictVar $1 $3      }
+  | DictVar '[' Variable ']'     { IndexAccessChainDictVar $1 $3    }
+  | DictVar '.' UnqualifiedName  { PropertyAccessChainDictVar $1 $3 }
+
+DictSelf :: { DictSelf }
+  : UnqualifiedName { UnqualifiedVarDictSelf $1 }
+  | ScopedVar       { ScopedVarDictSelf $1      }
 
 RegisterVariable :: { Variable }
   : varRegUnnamed   { RegisterVar Unnamed         }
@@ -196,13 +218,10 @@ OptionVariable :: { Variable }
   | varOption  { OptionVar $ UnscopedOption $1     }
 
 UnqualifiedVariable :: { Variable }
-  : ident {% fmap UnqualifiedVar $ runParserInProcessor pos parseSnake $1 }
+  : UnqualifiedName { UnqualifiedVar $1 }
 
-
--- Destructive assignee variables
-DestVars :: { List.NonEmpty Variable }
-  : Variable              { ($1 :| []) }
-  | Variable ',' DestVars { $1 <| $3   }
+UnqualifiedName :: { Snake }
+  : ident {% runParserInProcessor pos parseSnake $1 }
 
 Rhs :: { Rhs }
   : Variable    { RVar $1    }

@@ -30,6 +30,7 @@ symbol =
   aSymbol "=" Assign <|>
   aSymbol ":" Colon <|>
   aSymbol "," Comma <|>
+  aSymbol "." Dot <|>
   aSymbol "(" ParenBegin <|>
   aSymbol ")" ParenEnd <|>
   aSymbol "[" ListBegin <|>

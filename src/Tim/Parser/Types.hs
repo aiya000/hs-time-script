@@ -1,3 +1,4 @@
+{-# LANGUAGE NoDataKinds #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 module Tim.Parser.Types where
@@ -21,7 +22,7 @@ data FuncParam = UnboundFuncParam String.Snake -- ^ a variable that is not bound
   deriving (Show, Eq)
 
 data FuncName = UnqualifiedFuncName Pascal -- ^ F, G
-              | ScopedFuncName ScopeVar -- ^ s:f, g:F
+              | ScopedFuncName ScopedVar -- ^ s:f, g:F
               | DictFuncName DictVar -- ^ foo.bar
               | AutoloadFuncName (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
@@ -81,13 +82,13 @@ infixr 4 `Union`
 
 -- | The parser's variable identifiers
 data Variable = UnqualifiedVar String.Snake -- ^ simple_idents
-              | ScopedVar ScopeVar -- ^ s:coped, l:, a:000
+              | ScopedVar ScopedVar -- ^ s:coped, l:, a:000
               | DictVar DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
               | RegisterVar Lexers.Register -- ^ @+, @u
               | OptionVar Lexers.Option -- ^ &nu, &number
   deriving (Show, Eq)
 
-data ScopeVar = GScopeVar ScopedName
+data ScopedVar = GScopeVar ScopedName
               | SScopeVar ScopedName
               | LScopeVar ScopedName
               | VScopeVar ScopedName
@@ -121,5 +122,5 @@ data DictVar = IndexAccessDictVar DictSelf Variable -- ^ `foo.bar`
 
 -- | A part of 'Variable' for 'DictVar'
 data DictSelf = UnqualifiedVarDictSelf String.Snake
-              | ScopedVarDictSelf ScopeVar
+              | ScopedVarDictSelf ScopedVar
   deriving (Show, Eq)
