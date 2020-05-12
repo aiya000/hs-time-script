@@ -6,8 +6,8 @@ module Tim.Parser.Types where
 import qualified Data.List.NonEmpty as List
 import Data.String.Cases
 import qualified Data.String.Cases as String
-import RIO
-import qualified Tim.Lexer.Types as Lexers
+import RIO hiding (String)
+import qualified Tim.Lexer.Types as Lexer
 
 type Code = [Syntax]
 
@@ -16,21 +16,21 @@ data AST = Code Code -- ^ Whole of a code
          | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
-data FuncParam = UnboundFuncParam String.Snake -- ^ a variable that is not bound by a type: `x`
-               | BoundFuncParam String.Snake Type -- ^ bound by a type: `x: Int`
-               | VarFuncParams -- ^ variadic parameters: `...`
+data FuncParam = FuncParamUnbound String.Snake -- ^ a variable that is not bound by a type: `x`
+               | FuncParamBound String.Snake Type -- ^ bound by a type: `x: Int`
+               | FuncParamVariadic -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
-data FuncName = UnqualifiedFuncName String.Snake -- ^ F, G
-              | ScopedFuncName ScopedVar -- ^ s:f, g:F
-              | DictFuncName DictVar -- ^ foo.bar
-              | AutoloadFuncName (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
+data FuncName = FuncNameUnqualified String.Snake -- ^ F, G
+              | FuncNameScoped ScopedVar -- ^ s:f, g:F
+              | FuncNameDict DictVar -- ^ foo.bar
+              | FuncNameAutoload (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
   deriving (Show, Eq)
 
-data FuncOpt = NoAbortFuncOpt
-             | NoClosureFuncOpt
-             | NoRangeFuncOpt
-             | NoDictFuncOpt
+data FuncOpt = FuncOptNoAbort
+             | FuncOptNoClosure
+             | FuncOptNoRange
+             | FuncOptNoDict
   deriving (Show, Eq)
 
 -- | Time script's commands (extended Vim's commands)
@@ -45,66 +45,66 @@ data Syntax = Let Lhs (Maybe Type) Rhs -- ^ 'let foo: Bar = expr' or 'let foo = 
   deriving (Show, Eq)
 
 -- | The left hand side
-data Lhs = LVar Variable
-         | LDestuct (List.NonEmpty Variable) -- ^ [x, y] of (`let [x, y] = zs`)
+data Lhs = LhsVar Variable
+         | LhsDestuctVar (List.NonEmpty Variable) -- ^ [x, y] of (`let [x, y] = zs`)
   deriving (Show, Eq)
 
 -- | The right hand side
-data Rhs = RVar Variable
-         | RLit Literal
-         | RParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
+data Rhs = RhsVar Variable
+         | RhsLit Literal
+         | RhsParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
   deriving (Show, Eq)
 
-data Literal = Nat Natural
-             | Int Int
-             | Float Double
-             | String StringLit
-             | List [Literal]
-             | Dict (Map StringLit Literal) -- ^ {'foo': 10}
+data Literal = LiteralNat Natural
+             | LiteralInt Int
+             | LiteralFloat Double
+             | LiteralString String
+             | LiteralList [Literal]
+             | LiteralDict (Map String Literal) -- ^ {'foo': 10}
   deriving (Show, Eq)
 
 
 -- | The string literal, like `'foo'` `"bar"`.
-data StringLit = SingleQuoted Text
-               | DoubleQuoted Text
+data String = StringLiteral Text -- ^ literal-string
+            | StringDouble Text -- ^ string (be quoted by double quotes)
   deriving (Show, Eq, Ord)
 
 
 -- | Please see the parser implementation
-data Type = Con Camel
-          | App Type Type
-          | Arrow Type Type
-          | Union Type Type
+data Type = TypeCon Camel
+          | TypeApp Type Type
+          | TypeArrow Type Type
+          | TypeUnion Type Type
   deriving (Show, Eq)
 
-infixr 3 `Arrow`
-infixr 4 `Union`
+infixr 3 `TypeArrow`
+infixr 4 `TypeUnion`
 
 -- | The parser's variable identifiers
-data Variable = UnqualifiedVar String.Snake -- ^ simple_idents
-              | ScopedVar ScopedVar -- ^ s:coped, l:, a:000
-              | DictVar DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
-              | RegisterVar Lexers.Register -- ^ @+, @u
-              | OptionVar Lexers.Option -- ^ &nu, &number
+data Variable = VariableUnqualified String.Snake -- ^ simple_idents
+              | VariableScoped ScopedVar -- ^ s:coped, l:, a:000
+              | VariableDict DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
+              | VariableRegister Lexer.Register -- ^ @+, @u
+              | VariableOption Lexer.Option -- ^ &nu, &number
   deriving (Show, Eq)
 
-data ScopedVar = GScopeVar ScopedName
-              | SScopeVar ScopedName
-              | LScopeVar ScopedName
-              | VScopeVar ScopedName
-              | BScopeVar ScopedName
-              | WScopeVar ScopedName
-              | TScopeVar ScopedName
-              | AScopeVar AScopeName
+data ScopedVar = ScopeVarG ScopedName
+               | ScopeVarS ScopedName
+               | ScopeVarL ScopedName
+               | ScopeVarV ScopedName
+               | ScopeVarB ScopedName
+               | ScopeVarW ScopedName
+               | ScopeVarT ScopedName
+               | ScopeVarA AScopeName
   deriving (Show, Eq)
 
-data ScopedName = EmptyScopedName -- ^ To allow g:, s:, l:, ...
-                | NonEmptyScopedName String.Snake
+data ScopedName = ScopedNameEmpty -- ^ To allow g:, s:, l:, ...
+                | ScopedNameNonEmpty String.Snake
   deriving (Show, Eq)
 
-data AScopeName = VarAllAScopeName -- ^ a:000
-                | VarNumAScopeName Natural -- ^ a:0, a:1, ...
-                | NameAScopeName ScopedName -- ^ a:foo, a:bar
+data AScopeName = AScopeNameVarAll -- ^ a:000
+                | AScopeNameVarNum Natural -- ^ a:0, a:1, ...
+                | AScopeNameName ScopedName -- ^ a:foo, a:bar
   deriving (Show, Eq)
 
 -- |
@@ -114,13 +114,13 @@ data AScopeName = VarAllAScopeName -- ^ a:000
 -- - foo.bar.baz
 -- - foo[bar][baz]
 -- - foo.bar[baz]
-data DictVar = IndexAccessDictVar DictSelf Variable -- ^ `foo.bar`
-             | PropertyAccessDictVar DictSelf String.Snake -- ^ `foo[bar]`
-             | IndexAccessChainDictVar DictVar Variable
-             | PropertyAccessChainDictVar DictVar String.Snake
+data DictVar = DictVarIndexAccess DictSelf Variable -- ^ `foo.bar`
+             | DictVarPropertyAccess DictSelf String.Snake -- ^ `foo[bar]`
+             | DictVarIndexAccessChain DictVar Variable
+             | DictVarPropertyAccessChain DictVar String.Snake
   deriving (Show, Eq)
 
 -- | A part of 'Variable' for 'DictVar'
-data DictSelf = UnqualifiedVarDictSelf String.Snake
-              | ScopedVarDictSelf ScopedVar
+data DictSelf = DictSelfUnqualified String.Snake
+              | DictSelfScoped ScopedVar
   deriving (Show, Eq)

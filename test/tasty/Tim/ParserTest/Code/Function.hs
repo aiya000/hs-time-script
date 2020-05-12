@@ -12,38 +12,38 @@ import Tim.Parser.Types
 import Tim.Test
 
 nameF :: FuncName
-nameF = UnqualifiedFuncName [snakeQ|F|]
+nameF = FuncNameUnqualified [snakeQ|F|]
 
 paramX :: FuncParam
-paramX = UnboundFuncParam [snakeQ|x|]
+paramX = FuncParamUnbound [snakeQ|x|]
 
 paramY :: FuncParam
-paramY = UnboundFuncParam [snakeQ|y|]
+paramY = FuncParamUnbound [snakeQ|y|]
 
 paramXNat :: FuncParam
-paramXNat = BoundFuncParam [snakeQ|x|] $ Con [camelQ|Nat|]
+paramXNat = FuncParamBound [snakeQ|x|] $ TypeCon [camelQ|Nat|]
 
 paramYInt :: FuncParam
-paramYInt = BoundFuncParam [snakeQ|y|] $ Con [camelQ|Int|]
+paramYInt = FuncParamBound [snakeQ|y|] $ TypeCon [camelQ|Int|]
 
 letXWith10 :: Syntax
 letXWith10 =
   Let
-    (LVar $ UnqualifiedVar [snakeQ|x|])
+    (LhsVar $ VariableUnqualified [snakeQ|x|])
     Nothing
-    (RLit $ Nat 10)
+    (RhsLit $ LiteralNat 10)
 
 typeVoid :: Type
-typeVoid = Con [camelQ|Void|]
+typeVoid = TypeCon [camelQ|Void|]
 
 typeList :: Type
-typeList = Con [camelQ|List|]
+typeList = TypeCon [camelQ|List|]
 
 typeNat :: Type
-typeNat = Con [camelQ|Nat|]
+typeNat = TypeCon [camelQ|Nat|]
 
 typeInt :: Type
-typeInt = Con [camelQ|Int|]
+typeInt = TypeCon [camelQ|Int|]
 
 
 test_function :: [TestTree]
@@ -57,16 +57,16 @@ test_function = names <> params <> ret <> syn <> opts
             endfunction
           |]
       , ("scoped" `thatShouldBe` syntax
-          (Function (ScopedFuncName . SScopeVar $ NonEmptyScopedName [snakeQ|f|]) [] Nothing [] []))
+          (Function (FuncNameScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|f|]) [] Nothing [] []))
           [i|
             function s:f()
             endfunction
           |]
       , ("bound by a dict as a property" `thatShouldBe` syntax
           (Function
-            (DictFuncName
-              (PropertyAccessDictVar
-                (UnqualifiedVarDictSelf [snakeQ|foo|]) [snakeQ|bar|]))
+            (FuncNameDict
+              (DictVarPropertyAccess
+                (DictSelfUnqualified [snakeQ|foo|]) [snakeQ|bar|]))
             [] Nothing [] []))
         [i|
           function foo.bar()
@@ -74,9 +74,9 @@ test_function = names <> params <> ret <> syn <> opts
         |]
       , ("bound by a dict as an index" `thatShouldBe` syntax
           (Function
-            (DictFuncName
-              (PropertyAccessDictVar
-                (UnqualifiedVarDictSelf [snakeQ|foo|]) [snakeQ|bar|]))
+            (FuncNameDict
+              (DictVarPropertyAccess
+                (DictSelfUnqualified [snakeQ|foo|]) [snakeQ|bar|]))
             [] Nothing [] []))
         [i|
           function foo['bar']()
@@ -84,7 +84,7 @@ test_function = names <> params <> ret <> syn <> opts
         |]
       , ("autoload" `thatShouldBe` syntax
           (Function
-            (AutoloadFuncName $
+            (FuncNameAutoload $
               [snakeQ|foo|] :| [[snakeQ|bar|], [snakeQ|baz|]])
             [] Nothing [] []))
           [i|
@@ -113,13 +113,13 @@ test_function = names <> params <> ret <> syn <> opts
             endfunction
           |]
       , ("with variadic parameters" `thatShouldBe` syntax
-          (Function nameF [VarFuncParams] Nothing [] []))
+          (Function nameF [FuncParamVariadic] Nothing [] []))
           [i|
             function F(...)
             endfunction
           |]
       , ("with params and variadic parameters" `thatShouldBe` syntax
-          (Function nameF [paramX, VarFuncParams] Nothing [] []))
+          (Function nameF [paramX, FuncParamVariadic] Nothing [] []))
           [i|
             function F(x, ...)
             endfunction
@@ -134,19 +134,19 @@ test_function = names <> params <> ret <> syn <> opts
             endfunction
           |]
       , ("with a higher kind return type" `thatShouldBe` syntax
-          (Function nameF [] (Just $ typeList `App` typeNat) [] []))
+          (Function nameF [] (Just $ typeList `TypeApp` typeNat) [] []))
           [i|
             function F(): List Nat
             endfunction
           |]
       , ("with a function return type" `thatShouldBe` syntax
-          (Function nameF [] (Just $ typeNat `Arrow` typeInt) [] []))
+          (Function nameF [] (Just $ typeNat `TypeArrow` typeInt) [] []))
           [i|
             function F(): Nat -> Int
             endfunction
           |]
       , ("with a union return type" `thatShouldBe` syntax
-          (Function nameF [] (Just $ typeNat `Union` typeInt) [] []))
+          (Function nameF [] (Just $ typeNat `TypeUnion` typeInt) [] []))
           [i|
             function F(): Nat | Int
             endfunction
@@ -158,7 +158,7 @@ test_function = names <> params <> ret <> syn <> opts
       -- [ ("with let and return" `thatShouldBe` syntax
       --     (Function nameF [] Nothing []
       --       [ letXWith10
-      --       , Return . RVar $ UnqualifiedVar "x"
+      --       , Return . RVar $ VariableUnqualified "x"
       --       ]
       --      ))
       --     [i|
@@ -171,13 +171,13 @@ test_function = names <> params <> ret <> syn <> opts
 
     opts =
       [ ("with an option" `thatShouldBe` syntax
-          (Function nameF [] Nothing [NoAbortFuncOpt] []))
+          (Function nameF [] Nothing [FuncOptNoAbort] []))
           [i|
             function F() [[no-abort]]
             endfunction
           |]
       , ("with options" `thatShouldBe` syntax
-          (Function nameF [] Nothing [NoAbortFuncOpt, NoClosureFuncOpt] []))
+          (Function nameF [] Nothing [FuncOptNoAbort, FuncOptNoClosure] []))
           [i|
             function F() [[no-abort]] [[no-closure]]
             endfunction

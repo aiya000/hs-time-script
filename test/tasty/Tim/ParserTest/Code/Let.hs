@@ -14,9 +14,9 @@ import Tim.Test
 typedBy :: Type -> AST
 typedBy expected =
   syntax (Let
-      (LVar $ UnqualifiedVar [snakeQ|x|])
+      (LhsVar $ VariableUnqualified [snakeQ|x|])
       (Just expected)
-      (RVar $ UnqualifiedVar [snakeQ|y|]))
+      (RhsVar $ VariableUnqualified [snakeQ|y|]))
 
 
 test_let :: [TestTree]
@@ -30,22 +30,22 @@ test_let =
     testLet =
       [ "let x = y" `shouldBe` syntax
           (Let
-            (LVar $ UnqualifiedVar [snakeQ|x|])
+            (LhsVar $ VariableUnqualified [snakeQ|x|])
             Nothing
-            (RVar $ UnqualifiedVar [snakeQ|y|]))
+            (RhsVar $ VariableUnqualified [snakeQ|y|]))
       , "let [x] = z" `shouldBe` syntax
           (Let
-            (LDestuct [UnqualifiedVar [snakeQ|x|]])
+            (LhsDestuctVar [VariableUnqualified [snakeQ|x|]])
             Nothing
-            (RVar $ UnqualifiedVar [snakeQ|z|]))
+            (RhsVar $ VariableUnqualified [snakeQ|z|]))
       , "let [x, y] = z" `shouldBe` syntax
           (Let
-            (LDestuct
-              [ UnqualifiedVar [snakeQ|x|]
-              , UnqualifiedVar [snakeQ|y|]
+            (LhsDestuctVar
+              [ VariableUnqualified [snakeQ|x|]
+              , VariableUnqualified [snakeQ|y|]
               ])
             Nothing
-            (RVar $ UnqualifiedVar [snakeQ|z|]))
+            (RhsVar $ VariableUnqualified [snakeQ|z|]))
       ]
 
     testLetAtomicTypes =
@@ -55,64 +55,64 @@ test_let =
           typedBy (con "Type")
       , "let [x, y]: Type = z" `shouldBe` syntax  -- Time script doesn't allow the lhs `[x, y]` with non `Tuple X Y` types, but it is rejected by the syntax checker (not the parser).
         (Let
-          (LDestuct [UnqualifiedVar [snakeQ|x|], UnqualifiedVar [snakeQ|y|]])
+          (LhsDestuctVar [VariableUnqualified [snakeQ|x|], VariableUnqualified [snakeQ|y|]])
           (Just $ con "Type")
-          (RVar $ UnqualifiedVar [snakeQ|z|]))
+          (RhsVar $ VariableUnqualified [snakeQ|z|]))
       ]
 
     testLetHigherTypes =
       [ "let x: X A = y" `shouldBe`
           typedBy
-            (App
+            (TypeApp
               (con "X")
               (con "A"))
       , "let x: X A B = y" `shouldBe`
           typedBy
-            (App
-              (App
+            (TypeApp
+              (TypeApp
                 (con "X")
                 (con "A"))
               (con "B"))
       , "let x: (X) A B = y" `shouldBe`
           typedBy
-            (App
-              (App
+            (TypeApp
+              (TypeApp
                 (con "X")
                 (con "A"))
               (con "B"))
       , "let x: X (A) B = y" `shouldBe`
           typedBy
-            (App
-              (App
+            (TypeApp
+              (TypeApp
                 (con "X")
                 (con "A"))
               (con "B"))
       , "let x: X A (B) = y" `shouldBe`
           typedBy
-            (App
-              (App
+            (TypeApp
+              (TypeApp
                 (con "X")
                 (con "A"))
               (con "B"))
       , "let x: (X A) B = y" `shouldBe`
           typedBy
-            (App
-              (App
+            (TypeApp
+              (TypeApp
                 (con "X")
                 (con "A"))
               (con "B"))
       , "let x: X (A B) = y" `shouldBe`
           typedBy
-            (App
+            (TypeApp
               (con "X")
-              (App
+              (TypeApp
                 (con "A")
                 (con "B")))
       , "let x: X A B C = y" `shouldBe`
           typedBy
-            (App
-              (App
-                (App
+            (TypeApp
+              (TypeApp
+                (TypeApp
                   (con "X")
                   (con "A"))
                 (con "B"))
@@ -122,37 +122,37 @@ test_let =
     testLetFunctionTypes =
       [ "let x: A -> B = y" `shouldBe`
           typedBy
-            (Arrow
+            (TypeArrow
               (con "A")
               (con "B"))
       , "let x: A -> B -> C = y" `shouldBe`  -- right associated
           typedBy
-            (Arrow
+            (TypeArrow
               (con "A")
-              (Arrow
+              (TypeArrow
                 (con "B")
                 (con "C")))
-      , "let x: X A -> Y A = y" `shouldBe`  -- App is stronger than Arrow
+      , "let x: X A -> Y A = y" `shouldBe`  -- TypeApp is stronger than TypeArrow
         typedBy
-          (Arrow
-            (App (con "X") (con "A"))
-            (App (con "Y") (con "A")))
+          (TypeArrow
+            (TypeApp (con "X") (con "A"))
+            (TypeApp (con "Y") (con "A")))
       ]
 
     testLetUnionTypes =
       [ "let x: A | B = y" `shouldBe`
           typedBy
-            (Union
+            (TypeUnion
               (con "A")
               (con "B"))
-      , "let x: A -> B | X -> Y = y" `shouldBe`  -- Arrow is stronger than Union
+      , "let x: A -> B | X -> Y = y" `shouldBe`  -- TypeArrow is stronger than TypeUnion
           typedBy
-            (Union
-              (Arrow (con "A") (con "B"))
-              (Arrow (con "X") (con "Y")))
-      , "let x: X A | Y A = y" `shouldBe`  -- App is stronger than Union
+            (TypeUnion
+              (TypeArrow (con "A") (con "B"))
+              (TypeArrow (con "X") (con "Y")))
+      , "let x: X A | Y A = y" `shouldBe`  -- TypeApp is stronger than TypeUnion
           typedBy
-            (Union
-              (App (con "X") (con "A"))
-              (App (con "Y") (con "A")))
+            (TypeUnion
+              (TypeApp (con "X") (con "A"))
+              (TypeApp (con "Y") (con "A")))
       ]

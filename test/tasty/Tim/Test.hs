@@ -8,7 +8,7 @@ import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase)
 import Text.Megaparsec
 import Tim.Main (process, PrettyFailure)
-import Tim.Parser.Types
+import Tim.Parser.Types hiding (String)
 
 infixl 1 `shouldBe`
 
@@ -37,4 +37,4 @@ name = ignore parseCamel
 
 -- | Unsafe
 con :: String -> Type
-con = Con . name
+con = TypeCon . name

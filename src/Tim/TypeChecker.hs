@@ -1,7 +1,7 @@
 module Tim.TypeChecker where
 
 import RIO
-import Tim.Parser.Types
+import Tim.Parser.Types hiding (String)
 
 type Error = String
 
