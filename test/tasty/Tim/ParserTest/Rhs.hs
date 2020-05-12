@@ -123,17 +123,17 @@ test_expressions = testIdents <> testParens
       , "foo[x]" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarIndexAccess
             (DictSelfUnqualified [snakeQ|foo|])
-            (VariableUnqualified [snakeQ|x|]))
+            (RhsVar $ VariableUnqualified [snakeQ|x|]))
 
       , "foo[s:x]" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarIndexAccess
             (DictSelfUnqualified [snakeQ|foo|])
-            (VariableScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|x|]))
+            (RhsVar . VariableScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|x|]))
 
       , "g:[x]" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarIndexAccess
             (DictSelfScoped $ ScopeVarG ScopedNameEmpty)
-            (VariableUnqualified [snakeQ|x|]))
+            (RhsVar $ VariableUnqualified [snakeQ|x|]))
 
       , "foo.bar.baz" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarPropertyAccess
@@ -145,12 +145,12 @@ test_expressions = testIdents <> testParens
           DictVarPropertyAccess
             (DictSelfUnqualified [snakeQ|foo|])
             [snakeQ|bar|] `DictVarIndexAccessChain`
-            (VariableUnqualified [snakeQ|x|]))
+            (RhsVar $ VariableUnqualified [snakeQ|x|]))
 
       , "foo[x].bar" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarIndexAccess
             (DictSelfUnqualified [snakeQ|foo|])
-            (VariableUnqualified [snakeQ|x|]) `DictVarPropertyAccessChain`
+            (RhsVar $ VariableUnqualified [snakeQ|x|]) `DictVarPropertyAccessChain`
             [snakeQ|bar|])
       ]
 

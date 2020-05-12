@@ -114,9 +114,9 @@ data AScopeName = AScopeNameVarAll -- ^ a:000
 -- - foo.bar.baz
 -- - foo[bar][baz]
 -- - foo.bar[baz]
-data DictVar = DictVarIndexAccess DictSelf Variable -- ^ `foo.bar`
+data DictVar = DictVarIndexAccess DictSelf Rhs -- ^ `foo.bar`
              | DictVarPropertyAccess DictSelf String.Snake -- ^ `foo[bar]`
-             | DictVarIndexAccessChain DictVar Variable
+             | DictVarIndexAccessChain DictVar Rhs
              | DictVarPropertyAccessChain DictVar String.Snake
   deriving (Show, Eq)
 

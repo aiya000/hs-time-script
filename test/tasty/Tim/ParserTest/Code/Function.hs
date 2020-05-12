@@ -75,8 +75,9 @@ test_function = names <> params <> ret <> syn <> opts
       , ("bound by a dict as an index" `thatShouldBe` syntax
           (Function
             (FuncNameDict
-              (DictVarPropertyAccess
-                (DictSelfUnqualified [snakeQ|foo|]) [snakeQ|bar|]))
+              (DictVarIndexAccess
+                (DictSelfUnqualified [snakeQ|foo|])
+                (RhsLit . LiteralString $ StringLiteral "bar")))
             [] Nothing [] []))
         [i|
           function foo['bar']()
