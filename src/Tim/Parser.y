@@ -210,9 +210,9 @@ VariableDict :: { Variable }
   : DictVar { VariableDict $1 }
 
 DictVar :: { DictVar }
-  : DictSelf '[' Variable ']'    { DictVarIndexAccess $1 $3         }
+  : DictSelf '[' Rhs ']'         { DictVarIndexAccess $1 $3         }
   | DictSelf '.' UnqualifiedName { DictVarPropertyAccess $1 $3      }
-  | DictVar '[' Variable ']'     { DictVarIndexAccessChain $1 $3    }
+  | DictVar '[' Rhs ']'          { DictVarIndexAccessChain $1 $3    }
   | DictVar '.' UnqualifiedName  { DictVarPropertyAccessChain $1 $3 }
 
 DictSelf :: { DictSelf }
