@@ -7,7 +7,9 @@ import qualified Data.List.NonEmpty as List
 import Data.String.Cases
 import qualified Data.String.Cases as String
 import RIO hiding (String)
+import qualified Text.Megaparsec.Char as P
 import qualified Tim.Lexer.Types as Lexer
+import Tim.Megaparsec
 
 type Code = [Syntax]
 
@@ -24,7 +26,7 @@ data FuncParam = FuncParamUnbound String.Snake -- ^ a variable that is not bound
 data FuncName = FuncNameUnqualified String.Snake -- ^ F, G
               | FuncNameScoped ScopedVar -- ^ s:f, g:F
               | FuncNameDict DictVar -- ^ foo.bar
-              | FuncNameAutoload (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
+              | FuncNameAutoload AutoloadVar
   deriving (Show, Eq)
 
 data FuncOpt = FuncOptNoAbort
@@ -86,6 +88,7 @@ data Variable = VariableUnqualified String.Snake -- ^ simple_idents
               | VariableDict DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
               | VariableRegister Lexer.Register -- ^ @+, @u
               | VariableOption Lexer.Option -- ^ &nu, &number
+              | VariableAutoload AutoloadVar
   deriving (Show, Eq)
 
 data ScopedVar = ScopeVarG ScopedName
@@ -124,3 +127,22 @@ data DictVar = DictVarIndexAccess DictSelf Rhs -- ^ `foo.bar`
 data DictSelf = DictSelfUnqualified String.Snake
               | DictSelfScoped ScopedVar
   deriving (Show, Eq)
+
+-- |
+-- Autoload variables.
+-- - foo#bar
+-- - foo#bar#baz
+-- - x#
+data AutoloadVar = AutoloadVar
+  { names :: List.NonEmpty String.Snake -- ^ names excluding the last. e.g. `foo`, `bar` of `foo#bar#baz`
+  , lastName :: OmittableSnake -- ^ the last name. e.g. `baz` of `foo#bar#baz`, `` (the empty) of `x#`
+  } deriving (Show, Eq)
+
+data OmittableSnake = OmittableSnakeOmitted -- ^ an empty string
+                    | OmittableSnakeSnake String.Snake -- ^ a non-empty string
+  deriving (Show, Eq)
+
+parseOmittableSnake :: CodeParsing m => m OmittableSnake
+parseOmittableSnake =
+  OmittableSnakeSnake <$> parseSnake <|>
+  OmittableSnakeOmitted <$ P.string ""

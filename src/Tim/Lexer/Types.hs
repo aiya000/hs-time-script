@@ -42,6 +42,7 @@ import Data.Bifunctor (first)
 import Data.Char.Cases hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Data.List.NonEmpty hiding (toList, map)
 import qualified Data.List.NonEmpty as List
+import qualified Data.List.NonEmpty as NonEmptyList
 import qualified Data.String as String
 import Data.String.Cases
 import qualified Data.String.Cases as Name
@@ -252,23 +253,29 @@ parseUnqualifiedIdent =
     tailChar = headChar <|> P.digitChar
 
 data QualifiedIdent = Scoped Scope String -- ^ g:, l:foo
+                    | Autoload (List.NonEmpty Name.NonEmpty) String -- ^ foo#bar, x#
                     | Register Register -- ^ @+, @u
                     | Option Option -- ^ &nu, &number
   deriving (Show, Eq)
 
 instance Pretty QualifiedIdent where
-  pretty (Scoped x name) = String.fromString [i|${scopeToChar x}:${name}|]
-  pretty (Register x) = pretty x
-  pretty (Option x) = pretty x
+  pretty x@(Scoped _ _)   = String.fromString $ unQualifiedIdent x
+  pretty x@(Register _)   = String.fromString $ unQualifiedIdent x
+  pretty x@(Option _)     = String.fromString $ unQualifiedIdent x
+  pretty x@(Autoload _ _) = String.fromString $ unQualifiedIdent x
 
 unQualifiedIdent :: QualifiedIdent -> String
 unQualifiedIdent (Scoped x name) = scopeToChar x : ':' : name
 unQualifiedIdent (Register x)    = ['@', registerToChar x]
 unQualifiedIdent (Option x)      = unOption x
+unQualifiedIdent (Autoload names name) =
+  let names' = concat . NonEmptyList.intersperse "#" $ NonEmptyList.map unNonEmpty names
+  in [i|${names'}#${name}|]
 
 parseQualifiedIdent :: CodeParsing m => m QualifiedIdent
 parseQualifiedIdent =
   uncurry Scoped <$> parseScoped <|>
+  uncurry Autoload <$> parseAutoload <|>
   Register <$> parseRegister <|>
   Option <$> parseOption
 
@@ -281,6 +288,12 @@ parseScoped = P.try $ do
   where
     varArg = P.string "000" <|> (show <$> P.decimal @_ @_ @_ @Natural)
 
+parseAutoload :: forall m. CodeParsing m => m (List.NonEmpty Name.NonEmpty, String)
+parseAutoload = P.try $ do
+  name <- parseUnqualifiedIdent <* P.char '#'
+  names <- P.many $ parseUnqualifiedIdent <* P.char '#'
+  lastName <- (unNonEmpty <$> parseUnqualifiedIdent) <|> P.string ""
+  pure (name :| names, lastName)
 
 -- | x:
 data Scope = G | S | L | A | V | B | W | T

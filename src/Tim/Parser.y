@@ -40,7 +40,7 @@ import Tim.Processor
 import qualified Data.List.NonEmpty as List
 import qualified Data.List.NonEmpty as NonEmpty
 import qualified Data.Map.Strict as Map
-import qualified Data.String.Cases as String
+import qualified Data.String.Cases as Name
 import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P
 import qualified Tim.Lexer.Types as Token
@@ -114,6 +114,7 @@ import qualified Tim.Parser.Types as Parser
   varOption  { (OptionIdent $$, _)  }
   varLOption { (LOptionIdent $$, _) }
   varGOption { (GOptionIdent $$, _) }
+  varAutoload { $$@(AutoloadIdent _ _, _) }
 
   -- An another identifier, e.g.
   -- - An unscoped variable identifier
@@ -142,14 +143,10 @@ Function :: { Syntax }
   : function FuncName '(' ')' endfunction { Function $2 [] Nothing [] [] }
 
 FuncName :: { FuncName }
-  : UnqualifiedName  { FuncNameUnqualified $1                 }
-  | ScopedVar        { FuncNameScoped $1                      }
-  | DictVar          { FuncNameDict $1                        }
-  | FuncNameAutoload { FuncNameAutoload $ NonEmpty.reverse $1 }
-
-FuncNameAutoload :: { List.NonEmpty Snake }
-  : UnqualifiedName '#' UnqualifiedName  { $3 :| [$1] }
-  | UnqualifiedName '#' FuncNameAutoload { $1 <| $3   }
+  : UnqualifiedName { FuncNameUnqualified $1 }
+  | ScopedVar       { FuncNameScoped $1      }
+  | DictVar         { FuncNameDict $1        }
+  | AutoloadVar     { FuncNameAutoload $1    }
 
 Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
@@ -177,13 +174,14 @@ TypeApp :: { Type }
   | Type '(' Type ')' { TypeApp $1 $3           }
 
 Camel :: { Camel }
-  : ident {% runParserInProcessor pos String.parseCamel $1 }
+  : ident {% runParserInProcessor pos Name.parseCamel $1 }
 
 Variable :: { Variable }
   : VariableScoped      { $1 }
   | VariableDict        { $1 }
   | VariableRegister    { $1 }
   | VariableOption      { $1 }
+  | VariableAutoload    { $1 }
   | VariableUnqualified { $1 }
 
 VariableScoped :: { Variable }
@@ -239,6 +237,12 @@ VariableOption :: { Variable }
   | varGOption { VariableOption $ GlobalScopedOption $1 }
   | varOption  { VariableOption $ UnscopedOption $1     }
 
+VariableAutoload :: { Variable }
+  : AutoloadVar { VariableAutoload $1 }
+
+AutoloadVar :: { AutoloadVar }
+  : varAutoload {% unsafeParseAutoloadVar $1 }
+
 VariableUnqualified :: { Variable }
   : UnqualifiedName { VariableUnqualified $1 }
 
@@ -288,15 +292,29 @@ pattern LOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.
 pattern GOptionIdent :: LowerString -> Token
 pattern GOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.GlobalScopedOption x)))
 
+pattern AutoloadIdent :: List.NonEmpty Name.NonEmpty -> String -> Token
+pattern AutoloadIdent names name = Token.Ident (Token.QualifiedIdent (Token.Autoload names name))
+
+unsafeExtractAutoloadIdent :: Token -> (List.NonEmpty Name.NonEmpty, String)
+unsafeExtractAutoloadIdent (AutoloadIdent names name) = (names, name)
+unsafeExtractAutoloadIdent x = error $ "unsafeExtractAutoloadIdent: unknown item: " <> show x
+
+unsafeParseAutoloadVar :: (Token, TokenPos) -> Processor AutoloadVar
+unsafeParseAutoloadVar (autoloadIdent, pos) = do
+  let (names, lastName) = unsafeExtractAutoloadIdent autoloadIdent
+  names' <- mapM (runParserInProcessor pos parseSnake . unNonEmpty) names
+  lastName' <- runParserInProcessor pos parseOmittableSnake lastName
+  pure $ AutoloadVar names' lastName'
+
 
 pattern LetI :: Token.Ident
-pattern LetI = Token.UnqualifiedIdent (String.NonEmpty 'l' "et")
+pattern LetI = Token.UnqualifiedIdent (Name.NonEmpty 'l' "et")
 
 pattern FunctionI :: Token.Ident
-pattern FunctionI = Token.UnqualifiedIdent (String.NonEmpty 'f' "unction")
+pattern FunctionI = Token.UnqualifiedIdent (Name.NonEmpty 'f' "unction")
 
 pattern EndFunctionI :: Token.Ident
-pattern EndFunctionI = Token.UnqualifiedIdent (String.NonEmpty 'e' "ndfunction")
+pattern EndFunctionI = Token.UnqualifiedIdent (Name.NonEmpty 'e' "ndfunction")
 
 
 parse :: [(Token, TokenPos)] -> Either Failure AST
