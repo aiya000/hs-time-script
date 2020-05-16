@@ -38,7 +38,7 @@ import Tim.Megaparsec
 import Tim.Parser.Types hiding (String)
 import Tim.Processor
 import qualified Data.List.NonEmpty as List
-import qualified Data.List.NonEmpty as NonEmpty
+import qualified Data.List.NonEmpty as NonEmptyList
 import qualified Data.Map.Strict as Map
 import qualified Data.String.Cases as String
 import qualified Text.Megaparsec.Char as P
@@ -142,14 +142,10 @@ Function :: { Syntax }
   : function FuncName '(' ')' endfunction { Function $2 [] Nothing [] [] }
 
 FuncName :: { FuncName }
-  : UnqualifiedName  { FuncNameUnqualified $1                 }
-  | ScopedVar        { FuncNameScoped $1                      }
-  | DictVar          { FuncNameDict $1                        }
-  | FuncNameAutoload { FuncNameAutoload $ NonEmpty.reverse $1 }
-
-FuncNameAutoload :: { List.NonEmpty Snake }
-  : UnqualifiedName '#' UnqualifiedName  { $3 :| [$1] }
-  | UnqualifiedName '#' FuncNameAutoload { $1 <| $3   }
+  : UnqualifiedName { FuncNameUnqualified $1 }
+  | ScopedVar       { FuncNameScoped $1      }
+  | DictVar         { FuncNameDict $1        }
+  | AutoloadVar     { FuncNameAutoload $1    }
 
 Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
@@ -181,6 +177,7 @@ Camel :: { Camel }
 
 Variable :: { Variable }
   : VariableScoped      { $1 }
+  | VariableAutoload    { $1 }
   | VariableDict        { $1 }
   | VariableRegister    { $1 }
   | VariableOption      { $1 }
@@ -205,6 +202,17 @@ ScopedVar :: { ScopedVar }
   | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
   | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
   | varScopedA {% fmap ScopeVarA $ runParserInProcessor pos parseAScopeVar $1                    }
+
+VariableAutoload :: { Variable }
+  : AutoloadVar { VariableAutoload $1 }
+
+AutoloadVar :: { AutoloadVar }
+  : AutoloadVarNames '#'                 { AutoloadVar (NonEmptyList.reverse $1) OmittableSnakeOmitted    }
+  | AutoloadVarNames '#' UnqualifiedName { AutoloadVar (NonEmptyList.reverse $1) (OmittableSnakeSnake $3) }
+
+AutoloadVarNames :: { List.NonEmpty Snake }
+  : UnqualifiedName                      { $1 :| [] }
+  | AutoloadVarNames '#' UnqualifiedName { $3 <| $1 }
 
 VariableDict :: { Variable }
   : DictVar { VariableDict $1 }

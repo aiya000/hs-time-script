@@ -34,6 +34,7 @@ symbol =
   aSymbol ":" Colon <|>
   aSymbol "," Comma <|>
   aSymbol "." Dot <|>
+  aSymbol "#" Sharp <|>
   aSymbol "(" ParenBegin <|>
   aSymbol ")" ParenEnd <|>
   aSymbol "[" ListBegin <|>

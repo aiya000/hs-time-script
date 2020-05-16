@@ -24,7 +24,7 @@ data FuncParam = FuncParamUnbound String.Snake -- ^ a variable that is not bound
 data FuncName = FuncNameUnqualified String.Snake -- ^ F, G
               | FuncNameScoped ScopedVar -- ^ s:f, g:F
               | FuncNameDict DictVar -- ^ foo.bar
-              | FuncNameAutoload (List.NonEmpty String.Snake) -- ^ foo#bar#baz to `AutoloadPathFuncName ["foo", "bar", "baz"]`.
+              | FuncNameAutoload AutoloadVar
   deriving (Show, Eq)
 
 data FuncOpt = FuncOptNoAbort
@@ -83,6 +83,7 @@ infixr 4 `TypeUnion`
 -- | The parser's variable identifiers
 data Variable = VariableUnqualified String.Snake -- ^ simple_idents
               | VariableScoped ScopedVar -- ^ s:coped, l:, a:000
+              | VariableAutoload AutoloadVar
               | VariableDict DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
               | VariableRegister Lexer.Register -- ^ @+, @u
               | VariableOption Lexer.Option -- ^ &nu, &number
@@ -123,4 +124,18 @@ data DictVar = DictVarIndexAccess DictSelf Rhs -- ^ `foo.bar`
 -- | A part of 'Variable' for 'DictVar'
 data DictSelf = DictSelfUnqualified String.Snake
               | DictSelfScoped ScopedVar
+  deriving (Show, Eq)
+
+-- |
+-- Autoload variables.
+-- - foo#bar
+-- - foo#bar#baz
+-- - x#
+data AutoloadVar = AutoloadVar
+  { names :: List.NonEmpty String.Snake -- ^ names excluding the last. e.g. `foo`, `bar` of `foo#bar#baz`
+  , lastName :: OmittableSnake -- ^ the last name. e.g. `baz` of `foo#bar#baz`, `` (the empty) of `x#`
+  } deriving (Show, Eq)
+
+data OmittableSnake = OmittableSnakeOmitted -- ^ an empty string
+                    | OmittableSnakeSnake String.Snake -- ^ a non-empty string
   deriving (Show, Eq)
