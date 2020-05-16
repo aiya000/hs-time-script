@@ -105,6 +105,15 @@ test_expressions = testIdents <> testParens
       , "&g:opt" `shouldBe` Rhs
           (RhsVar . VariableOption $ GlobalScopedOption [lowerStringQ|opt|])
 
+      , "foo#bar" `shouldBe` Rhs (RhsVar . VariableAutoload $
+          AutoloadVar ([snakeQ|foo|] :| []) (OmittableSnakeSnake [snakeQ|bar|]))
+
+      , "foo#bar#baz" `shouldBe` Rhs (RhsVar . VariableAutoload $
+          AutoloadVar ([snakeQ|foo|] :| [[snakeQ|bar|]]) (OmittableSnakeSnake [snakeQ|baz|]))
+
+      , "foo#" `shouldBe` Rhs (RhsVar . VariableAutoload $
+          AutoloadVar ([snakeQ|foo|] :| []) OmittableSnakeOmitted)
+
       , "foo.bar" `shouldBe` Rhs (RhsVar . VariableDict $
           DictVarPropertyAccess
             (DictSelfUnqualified [snakeQ|foo|])
