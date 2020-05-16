@@ -86,7 +86,7 @@ test_function = names <> params <> ret <> syn <> opts
       , ("autoload" `thatShouldBe` syntax
           (Function
             (FuncNameAutoload $
-              AutoloadVar ([snakeQ|foo|] :| [[snakeQ|bar|]]) (OmittableSnakeSnake [snakeQ|baz|]))
+              [snakeQ|foo|] :| [[snakeQ|bar|], [snakeQ|baz|]])
             [] Nothing [] []))
           [i|
             function foo#bar#baz()
