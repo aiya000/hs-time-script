@@ -6,7 +6,11 @@ Please see the test and the test status to check this progress.
 
 [![Build Status](https://travis-ci.org/aiya000/hs-time-script.svg?branch=master)](https://travis-ci.org/aiya000/hs-time-script)
 
-`Time script` = `Vim script` + `strong static typing`
+**T**yped V**IM** **E**ngergisch **SCRIPT** = `Vim script` + `strong static typing`
+
+- [The introduction](https://aiya000.github.io/Maid/about-time-script/)
+
+### Overview
 
 ```vim
 "*
@@ -28,17 +32,19 @@ endfunction
 
 function s:fizzbuzz(x: Int): String
   return
-      x % 15 is 0 ? 'FizzBuzz' :
-      x %  5 is 0 ? 'Fizz' :
-      x %  3 is 0 : 'Buzz' : string(x)
+    x % 15 is 0 ? 'FizzBuzz' :
+    x %  5 is 0 ? 'Fizz' :
+    x %  3 is 0 : 'Buzz' : string(x)
 endfunction
 
-" Variables of functions by naming of [a-zA-Z0-9_]+ (not [A-Z][A-Za-z0-9_]+)
+"*
+ * Function variables with naming of snake_case (not PascalCase).
+ * snake_case: [a-zA-Z0-9_]+
+ * PascalCase: [A-Z][A-Za-z0-9_]+
+ *"
 const f: () => Void = ::FizzBuzz  " Function references by ::
 f()
 ```
-
-- [The introduction](https://aiya000.github.io/Maid/about-time-script/)
 
 ## Purpose
 
