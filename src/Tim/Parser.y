@@ -139,7 +139,7 @@ Syntax :: { Syntax }
   | Function { $1 }
 
 Function :: { Syntax }
-  : function FuncName '(' FuncParams ')' endfunction { Function $2 $4 Nothing [] [] }
+  : function FuncName '(' FuncParams ')' FuncReturnType endfunction { Function $2 $4 $6 [] [] }
 
 FuncName :: { FuncName }
   : UnqualifiedName { FuncNameUnqualified $1 }
@@ -156,6 +156,10 @@ FuncParam :: { FuncParam }
   : UnqualifiedName ':' Type { FuncParamBound $1 $3 }
   | UnqualifiedName          { FuncParamUnbound $1  }
   | '.' '.' '.'              { FuncParamVariadic    }
+
+FuncReturnType :: { Maybe Type }
+  : {- empty -} { Nothing }
+  | ':' Type    { Just $2 }
 
 Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
