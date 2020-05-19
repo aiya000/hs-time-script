@@ -75,9 +75,9 @@ import qualified Tim.Parser.Types as Parser
   lineBreak     { (Token.LineBreak, _)                               }
 
   -- Important commands identifiers
-  let         { (Token.Ident LetI, _)         }
-  function    { (Token.Ident FunctionI, _)    }
-  endfunction { (Token.Ident EndFunctionI, _) }
+  let         { (KeywordLet, _)         }
+  function    { (KeywordFunction, _)    }
+  endfunction { (KeywordEndFunction, _) }
 
   -- variable identifiers
   varG       { (ScopedIdent G "", _) }
@@ -115,6 +115,11 @@ import qualified Tim.Parser.Types as Parser
   varLOption { (LOptionIdent $$, _) }
   varGOption { (GOptionIdent $$, _) }
 
+  noAbort   { (KeywordNoAbort, _)   }
+  noClosure { (KeywordNoClosure, _) }
+  noRange   { (KeywordNoRange, _)   }
+  noDict    { (KeywordNoDict, _)    }
+
   -- An another identifier, e.g.
   -- - An unscoped variable identifier
   -- - A type identifier
@@ -139,7 +144,7 @@ Syntax :: { Syntax }
   | Function { $1 }
 
 Function :: { Syntax }
-  : function FuncName '(' FuncParams ')' FuncReturnType endfunction { Function $2 $4 $6 [] [] }
+  : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts endfunction { Function $2 $4 $6 $7 [] }
 
 FuncName :: { FuncName }
   : UnqualifiedName { FuncNameUnqualified $1 }
@@ -160,6 +165,16 @@ FuncParam :: { FuncParam }
 FuncReturnType :: { Maybe Type }
   : {- empty -} { Nothing }
   | ':' Type    { Just $2 }
+
+FuncOpts :: { [FuncOpt] }
+  : {- empty -} { [] }
+  | FuncOpt FuncOpts { $1 : $2 }
+
+FuncOpt :: { FuncOpt }
+  : '[' '[' noAbort   ']' ']' { FuncOptNoAbort   }
+  | '[' '[' noClosure ']' ']' { FuncOptNoClosure }
+  | '[' '[' noRange   ']' ']' { FuncOptNoRange   }
+  | '[' '[' noDict    ']' ']' { FuncOptNoDict    }
 
 Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
@@ -311,14 +326,26 @@ pattern GOptionIdent :: LowerString -> Token
 pattern GOptionIdent x = Token.Ident (Token.QualifiedIdent (Token.Option (Token.GlobalScopedOption x)))
 
 
-pattern LetI :: Token.Ident
-pattern LetI = Token.UnqualifiedIdent (String.NonEmpty 'l' "et")
+pattern KeywordLet :: Token
+pattern KeywordLet = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'l' "et"))
 
-pattern FunctionI :: Token.Ident
-pattern FunctionI = Token.UnqualifiedIdent (String.NonEmpty 'f' "unction")
+pattern KeywordFunction :: Token
+pattern KeywordFunction = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'f' "unction"))
 
-pattern EndFunctionI :: Token.Ident
-pattern EndFunctionI = Token.UnqualifiedIdent (String.NonEmpty 'e' "ndfunction")
+pattern KeywordEndFunction :: Token
+pattern KeywordEndFunction = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'e' "ndfunction"))
+
+pattern KeywordNoAbort :: Token
+pattern KeywordNoAbort = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-abort"))
+
+pattern KeywordNoClosure :: Token
+pattern KeywordNoClosure = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-closure"))
+
+pattern KeywordNoRange :: Token
+pattern KeywordNoRange = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-range"))
+
+pattern KeywordNoDict :: Token
+pattern KeywordNoDict = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-dict"))
 
 
 parse :: [(Token, TokenPos)] -> Either Failure AST

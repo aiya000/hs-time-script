@@ -249,7 +249,7 @@ parseUnqualifiedIdent =
     headChar = P.upperChar <|> P.lowerChar <|> P.char '_'
 
     tailChar :: m Char
-    tailChar = headChar <|> P.digitChar
+    tailChar = headChar <|> P.digitChar <|> P.char '-'
 
 data QualifiedIdent = Scoped Scope String -- ^ g:, l:foo
                     | Register Register -- ^ @+, @u
