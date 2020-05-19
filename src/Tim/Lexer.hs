@@ -19,14 +19,22 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
-lexer = do
-  _ <- P.many P.spaceChar `forwardBy` length
-  P.many $ do
-    x <- symbol <|>
-          first Literal <$> literal <|>
-          first Ident <$> ident
-    _ <- P.many P.spaceChar `forwardBy` length
-    pure x
+lexer =
+  sandwich . P.many $
+    symbol <|>
+      first Literal <$> literal <|>
+      first Ident <$> ident
+  where
+    sandwich lexer' = do
+      _ <- spaceChar
+      x <- lexer'
+      _ <- spaceChar
+      pure x
+
+    -- Simular to P.spaceChar but doesn't take line-breaks
+    spaceChar :: Lexer ()
+    spaceChar = P.space <|> void (P.many P.tab)
+ `forwardBy` length
 
 symbol :: Lexer (Token, TokenPos)
 symbol =

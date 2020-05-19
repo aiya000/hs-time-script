@@ -35,12 +35,13 @@ data FuncOpt = FuncOptNoAbort
 
 -- | Time script's commands (extended Vim's commands)
 data Syntax = Let Lhs (Maybe Type) Rhs -- ^ 'let foo: Bar = expr' or 'let foo = expr'
+            | Return Rhs
             | Function -- ^ Function declaretions (not `:function /{pattern}`)
                 FuncName -- ^ The function name
                 [FuncParam]
                 (Maybe Type) -- ^ The return type (can be omitted)
                 [FuncOpt]
-                [Syntax] -- ^ function details
+                Code -- ^ function details
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
