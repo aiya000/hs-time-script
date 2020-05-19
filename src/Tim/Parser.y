@@ -139,13 +139,23 @@ Syntax :: { Syntax }
   | Function { $1 }
 
 Function :: { Syntax }
-  : function FuncName '(' ')' endfunction { Function $2 [] Nothing [] [] }
+  : function FuncName '(' FuncParams ')' endfunction { Function $2 $4 Nothing [] [] }
 
 FuncName :: { FuncName }
   : UnqualifiedName { FuncNameUnqualified $1 }
   | ScopedVar       { FuncNameScoped $1      }
   | DictVar         { FuncNameDict $1        }
   | AutoloadVar     { FuncNameAutoload $1    }
+
+FuncParams :: { [FuncParam] }
+  : {- empty -}              { []      }
+  | FuncParam                { $1 : [] }
+  | FuncParam ',' FuncParams { $1 : $3 }
+
+FuncParam :: { FuncParam }
+  : UnqualifiedName ':' Type { FuncParamBound $1 $3 }
+  | UnqualifiedName          { FuncParamUnbound $1  }
+  | '.' '.' '.'              { FuncParamVariadic    }
 
 Let :: { Syntax }
   : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
