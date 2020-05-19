@@ -154,23 +154,6 @@ test_function_with_return_types =
       |]
   ]
 
-test_function_with_syntaxes :: [TestTree]
-test_function_with_syntaxes = []
-  -- TODO
-  -- [ ("with let and return" `thatShouldBe` syntax
-  --     (Function nameF [] Nothing []
-  --       [ letXWith10
-  --       , Return . RVar $ VariableUnqualified "x"
-  --       ]
-  --      ))
-  --     [i|
-  --       function F()
-  --         let x = 10
-  --         return x
-  --       endfunction
-  --     |]
-  -- ]
-
 test_function_options :: [TestTree]
 test_function_options =
   [ ("with an option" `thatShouldBe` syntax
@@ -183,6 +166,42 @@ test_function_options =
       (Function nameF [] Nothing [FuncOptNoAbort, FuncOptNoClosure] []))
       [i|
         function F() [[no-abort]] [[no-closure]]
+        endfunction
+      |]
+  ]
+
+test_function_with_syntaxes :: [TestTree]
+test_function_with_syntaxes =
+  [ "return 10" `shouldBe` syntax
+      (Return . RhsLit $ LiteralNat 10)
+
+  , ("with 'let'" `thatShouldBe` syntax
+      (Function nameF [] Nothing [] [letXWith10]))
+      [i|
+        function F()
+          let x = 10
+        endfunction
+      |]
+
+  , ("with 'return'" `thatShouldBe` syntax
+      (Function nameF [] Nothing []
+        [Return . RhsLit $ LiteralNat 10]))
+      [i|
+        function F()
+          return 10
+        endfunction
+      |]
+
+  , ("with 'let' and 'return'" `thatShouldBe` syntax
+      (Function nameF [] Nothing []
+        [ letXWith10
+        , Return . RhsVar $ VariableUnqualified [snakeQ|x|]
+        ]
+       ))
+      [i|
+        function F()
+          let x = 10
+          return x
         endfunction
       |]
   ]
