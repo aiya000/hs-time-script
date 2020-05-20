@@ -221,7 +221,7 @@ instance Pretty Token where
 -- Why identifiers of unqualified variable, types, and commands cannot be determined by the lexer?
 -- because these has same representation.
 -- unqualified variables and (Vim buildtin) commands has "[a-z][a-zA-Z0-9]*".
--- types and (user defined) comands has "[A-Z][a-zA-Z0-9]*".
+-- types and (user defined) commands has "[A-Z][a-zA-Z0-9]*".
 data Ident = QualifiedIdent QualifiedIdent
            | UnqualifiedIdent Name.NonEmpty
   deriving (Show, Eq)

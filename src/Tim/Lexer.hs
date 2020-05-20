@@ -53,7 +53,7 @@ symbol =
   aSymbol "->" Arrow <|>
   lineBreak
   where
-    -- Takes expected chars, and its correspound token
+    -- Takes expected chars, and its corresponding token
     aSymbol :: String -> Token -> Lexer (Token, TokenPos)
     aSymbol expected itsToken =
       first (const itsToken) <$>
