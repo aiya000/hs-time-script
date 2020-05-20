@@ -43,7 +43,7 @@ endfunction
  * PascalCase: [A-Z][A-Za-z0-9_]+
  *"
 const f: () => Void = ::FizzBuzz  " Function references by ::
-f()
+call f()
 ```
 
 ## Purpose
@@ -458,6 +458,27 @@ let* z.a = 40  " error too!
 ```
 
 ## Future specs
+### Calling functions without `:call`
+
+```vim
+F()
+
+" In this future, other than 'call', 'return', and 'echo' must be called with the prefix `:`.
+:vsplit
+:split
+
+" Conversely, 'call', 'return', and 'echo' must not be called with the prefix `:`.
+call F()
+echo 10
+function G() abort
+  return 10
+endfunction
+
+" This is able to be parsed, but without any optimizations of parsing.
+:call F()
+:echo 10
+```
+
 ### Type synonyms
 
 ```vim
