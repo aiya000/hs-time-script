@@ -19,14 +19,11 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
-lexer = do
-  _ <- P.many P.spaceChar `forwardBy` length
-  P.many $ do
-    x <- symbol <|>
-          first Literal <$> literal <|>
-          first Ident <$> ident
-    _ <- P.many P.spaceChar `forwardBy` length
-    pure x
+lexer = P.many $ do
+  _ <- P.many spaceChar `forwardBy` length
+  symbol <|>
+    first Literal <$> literal <|>
+    first Ident <$> ident
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
@@ -43,18 +40,13 @@ symbol =
   aSymbol "}" DictEnd <|>
   aSymbol "|" Bar <|>
   aSymbol "->" Arrow <|>
-  lineBreak
+  lineBreak &>> LineBreak
   where
     -- Takes expected chars, and its corresponding token
     aSymbol :: String -> Token -> Lexer (Token, TokenPos)
     aSymbol expected itsToken =
       first (const itsToken) <$>
         token (P.string expected) `forwardBy` length
-
-    lineBreak :: Lexer (Token, TokenPos)
-    lineBreak =
-      first (const LineBreak) <$>
-        down P.newline
 
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
