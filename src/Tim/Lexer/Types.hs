@@ -193,6 +193,7 @@ data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type
            | Dot -- ^ .
            | Sharp -- ^ #
            | LineBreak -- ^ "\n", "\r", "\r\n"
+           | EOF
   deriving (Show, Eq)
 
 instance Pretty Token where
