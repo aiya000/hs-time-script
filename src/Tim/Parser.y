@@ -78,6 +78,7 @@ import qualified Tim.Parser.Types as Parser
   let         { (KeywordLet, _)         }
   function    { (KeywordFunction, _)    }
   endfunction { (KeywordEndFunction, _) }
+  return      { (KeywordReturn, _)      }
 
   -- variable identifiers
   varG       { (ScopedIdent G "", _) }
@@ -141,7 +142,11 @@ Code :: { Code }
 
 Syntax :: { Syntax }
   : Let      { $1 }
+  | Return   { $1 }
   | Function { $1 }
+
+Return :: { Syntax }
+  : return Rhs { Return $2 }
 
 Function :: { Syntax }
   : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts endfunction { Function $2 $4 $6 $7 [] }
@@ -334,6 +339,9 @@ pattern KeywordFunction = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty '
 
 pattern KeywordEndFunction :: Token
 pattern KeywordEndFunction = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'e' "ndfunction"))
+
+pattern KeywordReturn :: Token
+pattern KeywordReturn = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'r' "eturn"))
 
 pattern KeywordNoAbort :: Token
 pattern KeywordNoAbort = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-abort"))
