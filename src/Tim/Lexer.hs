@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Tim.Lexer (lex, lexer, symbol, literal, ident) where
+module Tim.Lexer (lex) where
 
 import Control.Lens ((+=))
 import Control.Monad.State.Class (get)
@@ -19,85 +19,58 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
-lexer = do
-  _ <- padding
-  x <- P.many $
-        symbol <|>
-        first Literal <$> literal <|>
-        first Ident <$> ident
-  _ <- padding
-  pure x
+lexer =
+  sandwich . P.many $
+    symbol <|>
+      first Literal <$> literal <|>
+      first Ident <$> ident
+  where
+    sandwich lexer' = do
+      _ <- spaceChar
+      x <- lexer'
+      _ <- spaceChar
+      pure x
 
+    -- Simular to P.spaceChar but doesn't take line-breaks
+    spaceChar :: Lexer ()
+    spaceChar = P.space <|> void (P.many P.tab)
+ `forwardBy` length
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
-  assign <|>
-  colon <|>
-  comma <|>
-  dot <|>
-  sharp <|>
-  parenBegin <|>
-  parenEnd <|>
-  listBegin <|>
-  listEnd <|>
-  dictBegin <|>
-  dictEnd <|>
-  bar <|>
-  arrow <|>
+  aSymbol "=" Assign <|>
+  aSymbol ":" Colon <|>
+  aSymbol "," Comma <|>
+  aSymbol "." Dot <|>
+  aSymbol "#" Sharp <|>
+  aSymbol "(" ParenBegin <|>
+  aSymbol ")" ParenEnd <|>
+  aSymbol "[" ListBegin <|>
+  aSymbol "]" ListEnd <|>
+  aSymbol "{" DictBegin <|>
+  aSymbol "}" DictEnd <|>
+  aSymbol "|" Bar <|>
+  aSymbol "->" Arrow <|>
   lineBreak
   where
-    -- assignments
-    assign = spaces *> char '=' &>> Assign
+    -- Takes expected chars, and its corresponding token
+    aSymbol :: String -> Token -> Lexer (Token, TokenPos)
+    aSymbol expected itsToken =
+      first (const itsToken) <$>
+        token (P.string expected) `forwardBy` length
 
-    -- typing, calling commands
-    colon = spaces *> char ':' &>> Colon
-
-    -- destructive assignments, lists, dicts, function arguments&parameter.
-    comma = spaces *> char ',' &>> Comma
-
-    -- dict property accessing
-    dot = char '.' &>> Dot
-
-    -- autoload names
-    sharp = char '#' &>> Sharp
-
-    -- Rhs expressions, around function arguments&parameters, type arguments&parameters.
-    -- Both below are allowed.
-    -- - echo (10)          , echo(10)
-    -- - call f (10)        , call f(10)
-    -- - function f (x)     , function f(x)
-    -- - Maybe (Either E A) , Maybe(Either E A)
-    parenBegin = spaces *> (char '(') &>> ParenBegin
-    parenEnd   = spaces *> (char ')') &>> ParenEnd
-
-    -- destructive assignments, lists, dict index accessing, function options.
-    -- Both below are allowed.
-    -- - let [x, y]    , let [ x, y ]
-    -- - [x, y, z]     , [ x, y, z ]
-    -- - xs[x]         , xs[ x ]
-    -- - [[no-abort]]  , [ [no-abort] ]    , [ [ no-abort ] ]
-    listBegin = spaces *> (char '[') &>> ListBegin
-    listEnd   = spaces *> (char ']') &>> ListEnd
-
-    -- dicts, lambdas
-    dictBegin = spaces *> (char '{') &>> DictBegin
-    dictEnd   = spaces *> (char '}') &>> DictEnd
-
-    -- line splitting
-    bar = spaces *> (char '|') &>> Bar
-
-    -- arrow types, lambdas
-    arrow = spaces *> string "->" &>> Arrow
-
+    lineBreak :: Lexer (Token, TokenPos)
+    lineBreak =
+      first (const LineBreak) <$>
+        down P.newline
 
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
-literal = do
-  _ <- spaces
+literal =
   floatLiteral <|>
-    natLiteral <|>
-    intLiteral <|>
-    stringLiteral
+  natLiteral <|>
+  intLiteral <|>
+  stringLiteral
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
 natLiteral =
@@ -149,6 +122,5 @@ sign IntPlus nat = fromIntegral nat
 sign IntMinus nat = negate $ fromIntegral nat
 
 ident :: Lexer (Ident, TokenPos)
-ident = do
-  _ <- spaces
+ident =
   parseIdent `forwardBy` length . unIdent

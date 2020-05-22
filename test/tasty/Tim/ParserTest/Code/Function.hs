@@ -48,7 +48,7 @@ typeInt = TypeCon [camelQ|Int|]
 
 test_function_names :: [TestTree]
 test_function_names =
-  [ ("unqualified" `thatShouldBe` syntax
+  [ ("global" `thatShouldBe` syntax
       (Function nameF [] Nothing [] []))
       [i|
         function F()
