@@ -1,6 +1,6 @@
 {-# LANGUAGE TypeApplications #-}
 
-module Tim.Lexer (lex) where
+module Tim.Lexer (lex, lexer, symbol, literal, ident) where
 
 import Control.Lens ((+=))
 import Control.Monad.State.Class (get)
@@ -34,7 +34,6 @@ lexer =
     -- Simular to P.spaceChar but doesn't take line-breaks
     spaceChar :: Lexer ()
     spaceChar = P.space <|> void (P.many P.tab)
- `forwardBy` length
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
