@@ -41,7 +41,7 @@ data Syntax = Let Lhs (Maybe Type) Rhs -- ^ 'let foo: Bar = expr' or 'let foo = 
                 [FuncParam]
                 (Maybe Type) -- ^ The return type (can be omitted)
                 [FuncOpt]
-                Code -- ^ function details
+                [Syntax] -- ^ function details
             | Bar Syntax Syntax -- ^ `cmd1 | cmd2`
   deriving (Show, Eq)
 
