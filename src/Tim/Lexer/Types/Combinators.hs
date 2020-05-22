@@ -54,11 +54,12 @@ lineBreak =
 
 -- | Simular to P.spaceChar but doesn't take line-breaks.
 spaces :: Lexer ()
-spaces = void $ char ' '
+spaces = void $
+  (P.many $ P.char ' ' <|> P.char '\t') `forwardBy` length
 
 -- | spaces or lineBreak
 padding :: Lexer ()
-padding = spaces <|> void (P.many lineBreak)
+padding = spaces <|> void lineBreak
 
 -- | Simular to P.char, but increments state's colNum by 1.
 char :: Char -> Lexer (Char, TokenPos)
@@ -67,3 +68,6 @@ char x = P.char x `forward` 1
 -- | Simular to P.string, but increments state's colNum by the length of the string.
 string :: String -> Lexer (String, TokenPos)
 string x = P.string x `forwardBy` length
+
+(&>>) :: Lexer (a, TokenPos) -> b -> Lexer (b, TokenPos)
+lexer &>> result = lexer <&> first (const result)

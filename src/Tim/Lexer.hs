@@ -21,21 +21,31 @@ lex = runLexer lexer . Text.unpack
 lexer :: Lexer [(Token, TokenPos)]
 lexer = do
   _ <- padding
-  x <- P.many $ P.try symbol
-        -- symbol <|>
-        -- first Literal <$> literal <|>
-        -- first Ident <$> ident
+  x <- P.many $
+        symbol <|>
+        first Literal <$> literal <|>
+        first Ident <$> ident
   _ <- padding
   pure x
 
 
 symbol :: Lexer (Token, TokenPos)
 symbol =
-  listEnd
+  assign <|>
+  colon <|>
+  comma <|>
+  dot <|>
+  sharp <|>
+  parenBegin <|>
+  parenEnd <|>
+  listBegin <|>
+  listEnd <|>
+  dictBegin <|>
+  dictEnd <|>
+  bar <|>
+  arrow <|>
+  lineBreak
   where
-    (&>>) :: Lexer (a, TokenPos) -> b -> Lexer (b, TokenPos)
-    lexer' &>> result = lexer' <&> first (const result)
-
     -- assignments
     assign = spaces *> char '=' &>> Assign
 
@@ -57,8 +67,8 @@ symbol =
     -- - call f (10)        , call f(10)
     -- - function f (x)     , function f(x)
     -- - Maybe (Either E A) , Maybe(Either E A)
-    parenBegin = spaces *> char '(' &>> ParenBegin
-    parenEnd   = spaces *> char ')' &>> ParenEnd
+    parenBegin = spaces *> (char '(') &>> ParenBegin
+    parenEnd   = spaces *> (char ')') &>> ParenEnd
 
     -- destructive assignments, lists, dict index accessing, function options.
     -- Both below are allowed.
@@ -66,15 +76,15 @@ symbol =
     -- - [x, y, z]     , [ x, y, z ]
     -- - xs[x]         , xs[ x ]
     -- - [[no-abort]]  , [ [no-abort] ]    , [ [ no-abort ] ]
-    listBegin = spaces *> char '[' &>> ListBegin
-    listEnd   = spaces *> char ']' &>> ListEnd
+    listBegin = spaces *> (char '[') &>> ListBegin
+    listEnd   = spaces *> (char ']') &>> ListEnd
 
     -- dicts, lambdas
-    dictBegin = spaces *> char '{' &>> DictBegin
-    dictEnd   = spaces *> char '}' &>> DictEnd
+    dictBegin = spaces *> (char '{') &>> DictBegin
+    dictEnd   = spaces *> (char '}') &>> DictEnd
 
     -- line splitting
-    bar = spaces *> char '|' &>> Bar
+    bar = spaces *> (char '|') &>> Bar
 
     -- arrow types, lambdas
     arrow = spaces *> string "->" &>> Arrow
