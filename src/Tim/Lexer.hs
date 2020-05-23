@@ -21,26 +21,31 @@ lex = runLexer lexer . Text.unpack
 lexer :: Lexer [(Token, TokenPos)]
 lexer = P.many $ do
   _ <- P.many spaceChar `forwardBy` length
-  symbol <|>
-    first Literal <$> literal <|>
-    first Ident <$> ident
+  result <- P.choice
+              [ symbol
+              , first Literal <$> literal
+              , first Ident <$> ident
+              ]
+  _ <- P.space *> P.eof
+  pure result
 
 symbol :: Lexer (Token, TokenPos)
-symbol =
-  aSymbol "=" Assign <|>
-  aSymbol ":" Colon <|>
-  aSymbol "," Comma <|>
-  aSymbol "." Dot <|>
-  aSymbol "#" Sharp <|>
-  aSymbol "(" ParenBegin <|>
-  aSymbol ")" ParenEnd <|>
-  aSymbol "[" ListBegin <|>
-  aSymbol "]" ListEnd <|>
-  aSymbol "{" DictBegin <|>
-  aSymbol "}" DictEnd <|>
-  aSymbol "|" Bar <|>
-  aSymbol "->" Arrow <|>
-  lineBreak &>> LineBreak
+symbol = P.choice
+  [ aSymbol "=" Assign
+  , aSymbol ":" Colon
+  , aSymbol "," Comma
+  , aSymbol "." Dot
+  , aSymbol "#" Sharp
+  , aSymbol "(" ParenBegin
+  , aSymbol ")" ParenEnd
+  , aSymbol "[" ListBegin
+  , aSymbol "]" ListEnd
+  , aSymbol "{" DictBegin
+  , aSymbol "}" DictEnd
+  , aSymbol "|" Bar
+  , aSymbol "->" Arrow
+  , lineBreak &>> LineBreak
+  ]
   where
     -- Takes expected chars, and its corresponding token
     aSymbol :: String -> Token -> Lexer (Token, TokenPos)
@@ -50,19 +55,19 @@ symbol =
 
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
-literal =
-  floatLiteral <|>
-  natLiteral <|>
-  intLiteral <|>
-  stringLiteral
+literal = P.choice
+  [ floatLiteral
+  , natLiteral
+  , intLiteral
+  , stringLiteral
+  ]
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
 natLiteral =
-  first Nat <$> P.try P.decimal `forwardBy` length . show
+  first Nat <$> try' P.decimal `forwardBy` length . show
 
 intLiteral :: Lexer (AtomicLiteral, TokenPos)
-intLiteral = restoreOnFail $
-  first Int <$> int
+intLiteral = try' $ first Int <$> int
   where
     int :: Lexer (Int, TokenPos)
     int = do
@@ -76,29 +81,29 @@ intLiteral = restoreOnFail $
 
 floatLiteral :: Lexer (AtomicLiteral, TokenPos)
 floatLiteral =
-  first Float <$> P.try P.float `forwardBy` length . show
+  first Float <$> try' P.float `forwardBy` length . show
 
 stringLiteral :: Lexer (AtomicLiteral, TokenPos)
-stringLiteral = P.try $ do
-    (q, pos) <- quote `forward` 1
-    -- +1 is a length of `q`
+stringLiteral = try' $ do
+    (q, pos) <- quote `forward` 1  -- +1 is a length of `q`
     (str, _) <- flip forwardBy ((+1) . length) $ P.manyTill P.charLiteral $ P.char (quoteToChar q)
     pure (String' q str, pos)
 
 -- | Parses a string that surrounded by `'` or `"`
 quote :: Lexer Quote
-quote =
-  P.char '\'' $> SingleQ <|>
-  P.char '"' $> DoubleQ
+quote = P.choice
+  [ P.char '\'' $> SingleQ
+  , P.char '"' $> DoubleQ
+  ]
 
 data IntSign = IntPlus | IntMinus
   deriving (Show, Eq)
 
 intSign :: Lexer IntSign
-intSign = plus <|> minus
-  where
-    plus = P.char '+' $> IntPlus
-    minus = P.char '-' $> IntMinus
+intSign = P.choice
+  [ P.char '+' $> IntPlus
+  , P.char '-' $> IntMinus
+  ]
 
 -- | Does sign
 sign :: IntSign -> Natural -> Int

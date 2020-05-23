@@ -54,8 +54,8 @@ token tokenLexer = do
   pure result
 
 -- | Rollbacks the state if taken lexer is failure
-restoreOnFail :: Lexer a -> Lexer a
-restoreOnFail lexer = do
+try' :: Lexer a -> Lexer a
+try' lexer = do
   pos <- get
   lexer `catchError` \e -> do
     put pos
