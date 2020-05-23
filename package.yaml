@@ -48,6 +48,7 @@ default-extensions:
   - PartialTypeSignatures
   - PatternGuards
   - PolyKinds
+  - QuasiQuotes
   - RankNTypes
   - RecordWildCards
   - ScopedTypeVariables
