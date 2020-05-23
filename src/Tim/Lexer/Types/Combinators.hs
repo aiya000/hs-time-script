@@ -9,9 +9,9 @@ import Data.Generics.Product (field)
 import RIO
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
-import qualified Text.Megaparsec.Debug as P
 import Tim.Lexer.Types
 import Tim.Processor (TokenPos)
+-- import qualified Text.Megaparsec.Debug as P  -- Please see 'dbg'
 
 -- |
 -- Executes the taken lexer and increments 'colNum' by the taken `Int`,
@@ -58,7 +58,7 @@ token tokenLexer = do
 try' :: Lexer a -> Lexer a
 try' lexer = do
   pos <- get
-  lexer `catchError` \e -> do
+  P.try lexer `catchError` \e -> do
     put pos
     throwError e
 
@@ -88,6 +88,8 @@ lineBreak = down P.newline
 lexer &>> x = first (const x) <$> lexer
 
 
-dbg :: forall a. Show a => String -> Lexer a -> Lexer a
-dbg name lexer =
-  Lexer . P.dbg name $ unLexer lexer
+-- NOTE: Uncomment out this to debug.
+-- dbg :: forall a. Show a => String -> Lexer a -> Lexer a
+-- dbg name lexer = Lexer . P.dbg name $ unLexer lexer
+dbg :: String -> Lexer a -> Lexer a
+dbg _ lexer = lexer

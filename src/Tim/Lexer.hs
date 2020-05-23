@@ -19,18 +19,21 @@ lex :: Text -> Either Failure [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
-lexer = P.many $ do
-  _ <- P.many spaceChar `forwardBy` length
-  result <- P.choice
-              [ symbol
-              , first Literal <$> literal
-              , first Ident <$> ident
-              ]
-  _ <- P.space *> P.eof
+lexer = do
+  result <- P.many once
+  _ <- dbg "ending spaces and eof" $ P.space *> P.eof
   pure result
+  where
+    once = do
+      _ <- dbg "beginning spaces" $ P.many spaceChar `forwardBy` length
+      dbg "lexer" $
+        P.choice [ symbol
+                 , first Literal <$> literal
+                 , first Ident <$> ident
+                 ]
 
 symbol :: Lexer (Token, TokenPos)
-symbol = P.choice
+symbol = dbg "symbol" $ P.choice
   [ aSymbol "=" Assign
   , aSymbol ":" Colon
   , aSymbol "," Comma
@@ -56,18 +59,20 @@ symbol = P.choice
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)
 literal = P.choice
-  [ floatLiteral
-  , natLiteral
+  [ natLiteral
   , intLiteral
+  , floatLiteral
   , stringLiteral
   ]
 
 natLiteral :: Lexer (AtomicLiteral, TokenPos)
-natLiteral =
-  first Nat <$> try' P.decimal `forwardBy` length . show
+natLiteral = dbg "nat" . try' $ do
+  (nat, pos) <- P.decimal `forwardBy` length . show
+  _ <- P.notFollowedBy $ P.string "."  -- Avoid to parse floats
+  pure (Nat nat, pos)
 
 intLiteral :: Lexer (AtomicLiteral, TokenPos)
-intLiteral = try' $ first Int <$> int
+intLiteral = dbg "int" $ try' (first Int <$> int)
   where
     int :: Lexer (Int, TokenPos)
     int = do
@@ -80,12 +85,12 @@ intLiteral = try' $ first Int <$> int
       pure (sign s nat, pos)
 
 floatLiteral :: Lexer (AtomicLiteral, TokenPos)
-floatLiteral =
-  first Float <$> try' P.float `forwardBy` length . show
+floatLiteral = dbg "float" $
+  first Float <$> try' (P.float `forwardBy` length . show)
 
 stringLiteral :: Lexer (AtomicLiteral, TokenPos)
-stringLiteral = try' $ do
-    (q, pos) <- quote `forward` 1  -- +1 is a length of `q`
+stringLiteral = dbg "string" $ try' $ do
+    (q, pos) <- quote `forward` 1 -- +1 is a length of `q`
     (str, _) <- flip forwardBy ((+1) . length) $ P.manyTill P.charLiteral $ P.char (quoteToChar q)
     pure (String' q str, pos)
 
@@ -111,5 +116,5 @@ sign IntPlus nat = fromIntegral nat
 sign IntMinus nat = negate $ fromIntegral nat
 
 ident :: Lexer (Ident, TokenPos)
-ident =
+ident = dbg "ident" $
   parseIdent `forwardBy` length . unIdent
