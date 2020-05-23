@@ -9,6 +9,7 @@ import Data.Generics.Product (field)
 import RIO
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
+import qualified Text.Megaparsec.Debug as P
 import Tim.Lexer.Types
 import Tim.Processor (TokenPos)
 
@@ -85,3 +86,8 @@ lineBreak = down P.newline
 
 (&>>) :: Lexer (a, TokenPos) -> b -> Lexer (b, TokenPos)
 lexer &>> x = first (const x) <$> lexer
+
+
+dbg :: forall a. Show a => String -> Lexer a -> Lexer a
+dbg name lexer =
+  Lexer . P.dbg name $ unLexer lexer
