@@ -87,6 +87,8 @@ lineBreak = down P.newline
 (&>>) :: Lexer (a, TokenPos) -> b -> Lexer (b, TokenPos)
 lexer &>> x = first (const x) <$> lexer
 
+infixl 4 &>>
+
 
 -- NOTE: Uncomment out this to debug.
 -- dbg :: forall a. Show a => String -> Lexer a -> Lexer a
