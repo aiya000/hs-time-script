@@ -3,7 +3,8 @@
 module Tim.Lexer (lex, lexer, symbol, literal, ident) where
 
 import Control.Lens ((+=))
-import Control.Monad.State.Class (gets)
+import Control.Monad.State.Class (get)
+import Data.Generics.Product (field)
 import qualified Data.Text as Text
 import RIO
 import qualified Text.Megaparsec as P
@@ -75,12 +76,12 @@ intLiteral = dbg "int" $ try' (first Int <$> int)
   where
     int :: Lexer (Int, TokenPos)
     int = do
-      pos <- gets currentPos
+      pos <- get
       s <- intSign
       nat <- P.decimal
       let signLen = 1
       let natLen = length $ show nat
-      currentColNum += signLen + natLen
+      field @"colNum" += signLen + natLen
       pure (sign s nat, pos)
 
 floatLiteral :: Lexer (AtomicLiteral, TokenPos)
