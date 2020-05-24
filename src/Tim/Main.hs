@@ -53,6 +53,9 @@ app = ask >>= liftIO . runInputT defaultSettings . loop
 type PrettyFailure = String
 
 process :: Text -> Either PrettyFailure AST
-process code =
-  let x = parse =<< lex code
-  in first (show . pretty) x
+process code = do
+  -- TODO: Now, I only show errors via `show` and `prettyShow`. Improve the error notification if needed.
+  x <- first show $ lex code
+  first prettyShow $ parse x
+  where
+    prettyShow = show . pretty

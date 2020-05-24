@@ -3,7 +3,6 @@
 module Tim.Lexer.Types.Combinators where
 
 import Control.Lens ((+=), (.=))
-import Control.Monad.Error.Class (catchError, throwError)
 import Control.Monad.State.Class (get, put)
 import Data.Generics.Product (field)
 import RIO
@@ -58,9 +57,9 @@ token tokenLexer = do
 try' :: Lexer a -> Lexer a
 try' lexer = do
   pos <- get
-  P.try lexer `catchError` \e -> do
+  P.try lexer <|> do  -- do if trying lexer failed
     put pos
-    throwError e
+    P.try lexer  -- To throw the same error, pull the error again
 
 
 -- | Simular to P.spaceChar, but doesn't consume line-breaks.

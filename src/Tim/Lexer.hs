@@ -12,10 +12,10 @@ import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P hiding (space)
 import Tim.Lexer.Types
 import Tim.Lexer.Types.Combinators
-import Tim.Processor (Failure, TokenPos)
+import Tim.Processor (TokenPos)
 
 -- | Tokenizes a code
-lex :: Text -> Either Failure [(Token, TokenPos)]
+lex :: Text -> Either LexErrorBundle [(Token, TokenPos)]
 lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]

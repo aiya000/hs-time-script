@@ -6,12 +6,8 @@
 -- a parser `parseFoo` means a parsing with `try`.
 -- a parser `foo` means a parsing without `try`.
 module Tim.Lexer.Types
-  ( LexError
-  , LexErrorItem
-  , LexErrorFancy
-  , Naked
-  , Lexed
-  , Lexer (..)
+  ( Lexer (..)
+  , LexErrorBundle
   , runLexer
   , AtomicLiteral (..)
   , Quote (..)
@@ -36,14 +32,10 @@ module Tim.Lexer.Types
   , parseOption
   ) where
 
-import Control.Monad.Except (MonadError)
 import Control.Monad.State (StateT, runStateT)
 import Control.Monad.State.Class (MonadState)
-import Data.Bifunctor (first)
 import Data.Char.Cases hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Data.Default (Default (def))
-import Data.List.NonEmpty hiding (toList, map)
-import qualified Data.List.NonEmpty as List
 import qualified Data.String as String
 import Data.String.Cases
 import qualified Data.String.Cases as Name
@@ -51,95 +43,32 @@ import Data.String.Here (i)
 import qualified Data.Text as Text
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO hiding (first)
-import RIO.List
 import Text.Megaparsec hiding (Token, SourcePos)
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P
 import Tim.Megaparsec
 import Tim.Processor
-import Tim.Util.String
 
-type LexError = ParseError String Void
 type LexErrorBundle = ParseErrorBundle String Void
-type LexErrorItem = ErrorItem (P.Token String)
-type LexErrorFancy = ErrorFancy Void
-
--- | Before 'runNaked'
-type Naked = ParsecT Void String (StateT TokenPos Processor)
-
--- | After 'runNaked'
-type Lexed = Either LexErrorBundle
-
-runNaked :: forall a. String -> Naked a -> Processor (Lexed a)
-runNaked code parser =
-  runParserT parser "lexer" code
-    & flip runStateT def
-    & fmap fst
-
--- | Takes the last of a taken error
-compatible :: LexErrorBundle -> Failure
-compatible ParseErrorBundle{..} =
-    Failure (argue bundleErrors) (onlyPos bundlePosState)
-  where
-    onlyPos :: PosState String -> SourcePos
-    onlyPos PosState{..} =
-      OnAToken $ TokenPos
-        (unPos $ sourceLine pstateSourcePos)
-        (unPos $ sourceColumn pstateSourcePos)
-
--- |
--- When the lexer is failure,
--- shows an error message for user.
-argue :: List.NonEmpty LexError -> String
-argue = intercalate "\n" . toList . fmap errorDetail
-  where
-    errorDetail :: LexError -> String
-    errorDetail (TrivialError offSet maybeActual expected) = contrast offSet maybeActual expected
-    errorDetail (FancyError offSet errors) = something offSet errors
-
-    -- TODO: What is offset? Unfortunately, it maybe not a line of the parse error.
-    contrast :: Int -> Maybe LexErrorItem -> Set LexErrorItem -> String
-    contrast _ Nothing expected =
-        [i|Expected ${commaSeparated expected}|]
-    contrast _ (Just actual) expected =
-      [i|Got ${visible actual}, but expected ${commaSeparated expected}.|]
-
-    commaSeparated :: Set LexErrorItem -> String
-    commaSeparated (toList -> items) =
-      enumerateByComma $ map visible items
-
-    visible :: LexErrorItem -> String
-    visible (Tokens (x :| xs)) = enumerateByComma . map (: []) $ x : xs
-    visible (Label (l :| abel)) = l : abel
-    visible EndOfInput = "EOF"
-
-    -- TODO: What is 'FancyError'?
-    something :: Int -> Set LexErrorFancy -> String
-    something offSet errors = [i|This message is TODO. What is this? offSet=${show offSet}, errors=${show errors}|]
-
 
 -- | A context for the lexer
 newtype Lexer a = Lexer
-  { unLexer :: Naked a
+  { unLexer :: ParsecT Void String (StateT TokenPos Identity) a
   } deriving ( Functor, Applicative, Monad
              , Alternative, MonadPlus
+             , MonadParsec Void String
              , MonadFail
              , MonadState TokenPos
-             , MonadError Failure
-             , MonadParsec Void String
              )
 
 -- | Do tokenize
-runLexer :: Lexer a -> String -> Either Failure a
-runLexer lexer code = unLexer lexer
-                      & runNaked code
-                      & runProcessor
-                      & include
-  where
-    include :: Either Failure (Lexed a) -> Either Failure a
-    include (Left e) = Left e
-    include (Right x) = join . Right $ first compatible x
+runLexer :: forall a. Lexer a -> String -> Either LexErrorBundle a
+runLexer lexer code = do
+  let x = unLexer lexer :: ParsecT Void String (StateT TokenPos Identity) a
+  let y = runParserT x "lexer" code :: StateT TokenPos Identity (Either LexErrorBundle a)
+  let z = runStateT y def
+  fst $ runIdentity z
 
 -- |
 -- Atomic literals
