@@ -4,8 +4,7 @@ module Tim.Lexer.Types.Combinators where
 
 import Control.Lens ((+=), (.=))
 import Control.Monad.Error.Class (catchError, throwError)
-import Control.Monad.State.Class (get, put)
-import Data.Generics.Product (field)
+import Control.Monad.State.Class (gets, modify')
 import RIO
 import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
@@ -27,9 +26,9 @@ infixl 5 `forward`
 -- but increments by taken function with the lexer result.
 forwardBy :: Lexer a -> (a -> Int) -> Lexer (a, TokenPos)
 forwardBy lexer makeLength = do
-  pos <- get
+  pos <- gets currentPos
   x <- lexer
-  field @"colNum" += makeLength x
+  currentColNum += makeLength x
   pure (x, pos)
 
 infixl 5 `forwardBy`
@@ -57,9 +56,9 @@ token tokenLexer = do
 -- | Rollbacks the state if taken lexer is failure
 try' :: Lexer a -> Lexer a
 try' lexer = do
-  pos <- get
+  pos <- gets currentPos
   P.try lexer `catchError` \e -> do
-    put pos
+    modify' $ \s -> s { currentPos = pos }
     throwError e
 
 
@@ -78,15 +77,16 @@ lineBreak = down P.newline
     -- and sets 'colNum' to 1.
     down :: Lexer a -> Lexer (a, TokenPos)
     down lexer = do
-      pos <- get
+      pos <- gets currentPos
       x <- lexer
-      field @"colNum" .= 1
-      field @"lineNum" += 1
+      currentColNum .= 1
+      currentLineNum += 1
       pure (x, pos)
 
 (&>>) :: Lexer (a, TokenPos) -> b -> Lexer (b, TokenPos)
 lexer &>> x = first (const x) <$> lexer
 
+infixl 4 &>>
 
 -- NOTE: Uncomment out this to debug.
 -- dbg :: forall a. Show a => String -> Lexer a -> Lexer a

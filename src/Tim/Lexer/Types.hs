@@ -12,6 +12,9 @@ module Tim.Lexer.Types
   , Naked
   , Lexed
   , Lexer (..)
+  , LexerState (..)
+  , currentColNum
+  , currentLineNum
   , runLexer
   , AtomicLiteral (..)
   , Quote (..)
@@ -42,6 +45,7 @@ import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
 import Data.Char.Cases hiding (UpperChar(G, S, L, A, V, B, W, T))
 import Data.Default (Default (def))
+import Data.Generics.Product (field)
 import Data.List.NonEmpty hiding (toList, map)
 import qualified Data.List.NonEmpty as List
 import qualified Data.String as String
@@ -66,7 +70,7 @@ type LexErrorItem = ErrorItem (P.Token String)
 type LexErrorFancy = ErrorFancy Void
 
 -- | Before 'runNaked'
-type Naked = ParsecT Void String (StateT TokenPos Processor)
+type Naked = ParsecT Void String (StateT LexerState Processor)
 
 -- | After 'runNaked'
 type Lexed = Either LexErrorBundle
@@ -125,7 +129,7 @@ newtype Lexer a = Lexer
   } deriving ( Functor, Applicative, Monad
              , Alternative, MonadPlus
              , MonadFail
-             , MonadState TokenPos
+             , MonadState LexerState
              , MonadError Failure
              , MonadParsec Void String
              )
@@ -140,6 +144,22 @@ runLexer lexer code = unLexer lexer
     include :: Either Failure (Lexed a) -> Either Failure a
     include (Left e) = Left e
     include (Right x) = join . Right $ first compatible x
+
+-- | Positions of a code.
+data LexerState = LexerState
+  { currentPos :: TokenPos -- ^ A current progressing position.
+  , lastFailedPos :: TokenPos -- ^ A position to be recorded by 'Tim.Lexer.Types.Combinators.try''. To recover lexer error on exiting a failed lexer (on 'Tim.Lexer.lexer').
+  } deriving (Show, Eq, Generic)
+
+instance Default LexerState where
+  def = LexerState def def
+
+currentColNum :: Lens' LexerState Int
+currentColNum = field @"currentPos" . field @"colNum"
+
+currentLineNum :: Lens' LexerState Int
+currentLineNum = field @"currentPos" . field @"lineNum"
+
 
 -- |
 -- Atomic literals
