@@ -37,9 +37,11 @@ module Tim.Lexer.Types
   ) where
 
 import Control.Monad.Except (MonadError)
+import Control.Monad.State (StateT, runStateT)
 import Control.Monad.State.Class (MonadState)
 import Data.Bifunctor (first)
 import Data.Char.Cases hiding (UpperChar(G, S, L, A, V, B, W, T))
+import Data.Default (Default (def))
 import Data.List.NonEmpty hiding (toList, map)
 import qualified Data.List.NonEmpty as List
 import qualified Data.String as String
@@ -64,13 +66,16 @@ type LexErrorItem = ErrorItem (P.Token String)
 type LexErrorFancy = ErrorFancy Void
 
 -- | Before 'runNaked'
-type Naked = ParsecT Void String Processor
+type Naked = ParsecT Void String (StateT TokenPos Processor)
 
 -- | After 'runNaked'
 type Lexed = Either LexErrorBundle
 
-runNaked :: String -> Naked a -> Processor (Lexed a)
-runNaked code naked = runParserT naked "lexer" code
+runNaked :: forall a. String -> Naked a -> Processor (Lexed a)
+runNaked code parser =
+  runParserT parser "lexer" code
+    & flip runStateT def
+    & fmap fst
 
 -- | Takes the last of a taken error
 compatible :: LexErrorBundle -> Failure
@@ -135,7 +140,6 @@ runLexer lexer code = unLexer lexer
     include :: Either Failure (Lexed a) -> Either Failure a
     include (Left e) = Left e
     include (Right x) = join . Right $ first compatible x
-
 
 -- |
 -- Atomic literals

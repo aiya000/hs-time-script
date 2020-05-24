@@ -53,8 +53,8 @@ symbol = dbg "symbol" $ P.choice
     -- Takes expected chars, and its corresponding token
     aSymbol :: String -> Token -> Lexer (Token, TokenPos)
     aSymbol expected itsToken =
-      first (const itsToken) <$>
-        token (P.string expected) `forwardBy` length
+      token (P.string expected) `forwardBy` length
+        &>> itsToken
 
 -- | Int literals
 literal :: Lexer (AtomicLiteral, TokenPos)

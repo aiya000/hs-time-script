@@ -1,37 +1,19 @@
-{-# LANGUAGE QuasiQuotes #-}
-
 -- | Exposes contexts for both the lexer and the parser
 module Tim.Processor where
 
-import Control.Monad.Except (MonadError, ExceptT, runExceptT, throwError)
-import Control.Monad.State (State, runState)
-import Control.Monad.State.Class (MonadState, get)
+import Control.Monad.Except (MonadError, throwError)
 import Data.Default (Default(..))
+import qualified Data.String as IsString
 import Data.String.Here (i)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import RIO
-import qualified Data.String as IsString
 
 -- | A context for both the lexer and the parser
 newtype Processor a = Processor
-  { unProcessor :: ExceptT Failure (State TokenPos) a
+  { runProcessor :: Either Failure a -- ^ Extracts the lexed/parsed result
   } deriving ( Functor, Applicative, Monad
-             , MonadState TokenPos
              , MonadError Failure
              )
-
--- | Extracts the lexed/parsed result
-runProcessor :: Processor a -> Either Failure a
-runProcessor = unProcessor
-                 >>> runExceptT'
-                 >>> runState'
-                 >>> fst
-  where
-    runExceptT' :: ExceptT Failure (State TokenPos) a -> State TokenPos (Either Failure a)
-    runExceptT' = runExceptT
-
-    runState' :: State TokenPos (Either Failure a) -> (Either Failure a, TokenPos)
-    runState' = flip runState def
 
 
 data TokenPos = TokenPos
@@ -67,19 +49,6 @@ instance Pretty Failure where
   pretty (Failure message (OnAToken pos)) =
     IsString.fromString [i|Failure! ${show $ pretty pos}: ${message}|]
 
-
--- | Makes the context into a failure with the lexer's current position
-throwTokenErrorNow :: String -> Processor a
-throwTokenErrorNow msg = do
-  pos <- get
-  throwError $ Failure msg (OnAToken pos)
-
--- |
--- Simular to 'throwTokenErrorNow',
--- but throws only for `Nothing`.
-includeIntoLexer :: Maybe a -> String -> Processor a
-includeIntoLexer Nothing msg = throwTokenErrorNow msg
-includeIntoLexer (Just x) _ = pure x
 
 -- | Makes the context into a failure with a reason by a token.
 throwTokenError :: TokenPos -> String -> Processor a
