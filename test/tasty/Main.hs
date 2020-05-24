@@ -6,12 +6,9 @@
 -- import Prelude
 -- import Test.Tasty
 -- import Tim.LexerTest.Error
--- import Tim.ParserTest.Rhs
+-- -- import Tim.ParserTest.Rhs
 -- 
 -- main :: IO ()
 -- main = defaultMain $ testGroup "selected"
---   [ testGroup "" test_nats
---   , testGroup "" test_floats
---   , testGroup "" test_dicts
---   , testGroup "" test_lexer_error_positions
+--   [ testGroup "" test_lexer_error_positions
 --   ]

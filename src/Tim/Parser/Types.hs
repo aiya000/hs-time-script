@@ -1,13 +1,49 @@
 {-# LANGUAGE NoDataKinds #-}
 {-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Tim.Parser.Types where
 
+import Control.Monad.Except (MonadError)
 import qualified Data.List.NonEmpty as List
+import qualified Data.String as IsString
 import Data.String.Cases
 import qualified Data.String.Cases as String
+import Data.String.Here (i)
+import Data.Text.Prettyprint.Doc (Pretty(..))
+import qualified RIO as General
 import RIO hiding (String)
 import qualified Tim.Lexer.Types as Lexer
+import Tim.Processor
+
+
+-- | A context for both the lexer and the parser
+newtype Parser a = Parser
+  { runParser :: Either ParseError a
+  } deriving ( Functor, Applicative, Monad
+             , MonadError ParseError
+             )
+
+data SourcePos = OnAToken TokenPos
+               | EOF -- ^ The end of input
+  deriving (Show, Eq)
+
+instance Pretty SourcePos where
+  pretty (OnAToken x) = pretty x
+  pretty EOF = IsString.fromString "EOF"
+
+-- | For error messages
+data ParseError = ParseError
+  { what_  :: General.String  -- ^ What is wrong / Why it is failed
+  , where_ :: SourcePos  -- ^ Where it is failed
+  } deriving (Show, Eq)
+
+instance Pretty ParseError where
+  pretty (ParseError message EOF) =
+    IsString.fromString [i|Parse error! At the EOF: ${message}|]
+  pretty (ParseError message (OnAToken pos)) =
+    IsString.fromString [i|Parse error! ${show $ pretty pos}: ${message}|]
+
 
 type Code = [Syntax]
 

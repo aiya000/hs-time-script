@@ -7,7 +7,7 @@ import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase, assertFailure)
-import Text.Megaparsec
+import qualified Text.Megaparsec as P
 import Tim.Main (process)
 import Tim.Parser.Types hiding (String)
 
@@ -45,7 +45,7 @@ name :: String -> Camel
 name = ignore parseCamel
   where
     ignore parser input =
-      case runParser parser "time-script test" input of
+      case P.runParser parser "time-script test" input of
         Left  x -> error $ displayException x
         Right x -> x
 

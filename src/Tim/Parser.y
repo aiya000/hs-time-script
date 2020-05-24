@@ -32,7 +32,6 @@ import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
 import RIO.List
-import Text.Megaparsec (runParser)
 import Tim.Lexer.Types (Token, Register(..), Option(..), Scope(..))
 import Tim.Megaparsec
 import Tim.Parser.Types hiding (String)
@@ -41,6 +40,7 @@ import qualified Data.List.NonEmpty as List
 import qualified Data.List.NonEmpty as NonEmptyList
 import qualified Data.Map.Strict as Map
 import qualified Data.String.Cases as String
+import qualified Text.Megaparsec as P
 import qualified Text.Megaparsec.Char as P
 import qualified Text.Megaparsec.Char.Lexer as P
 import qualified Tim.Lexer.Types as Token
@@ -49,7 +49,7 @@ import qualified Tim.Parser.Types as Parser
 
 %error { parseError }
 %errorhandlertype explist
-%monad { Processor }
+%monad { Parser }
 %name parseAST
 %tokentype { (Token, TokenPos) }
 
@@ -207,7 +207,7 @@ TypeApp :: { Type }
   | Type '(' Type ')' { TypeApp $1 $3           }
 
 Camel :: { Camel }
-  : ident {% runParserInProcessor pos String.parseCamel $1 }
+  : ident {% runParsecParserInParser pos String.parseCamel $1 }
 
 Variable :: { Variable }
   : VariableScoped      { $1 }
@@ -228,14 +228,14 @@ ScopedVar :: { ScopedVar }
   | varB       { ScopeVarB ScopedNameEmpty                                                       }
   | varW       { ScopeVarW ScopedNameEmpty                                                       }
   | varT       { ScopeVarT ScopedNameEmpty                                                       }
-  | varScopedG {% fmap (ScopeVarG . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedS {% fmap (ScopeVarS . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedL {% fmap (ScopeVarL . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedV {% fmap (ScopeVarV . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedB {% fmap (ScopeVarB . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParserInProcessor pos parseSnake $1 }
-  | varScopedA {% fmap ScopeVarA $ runParserInProcessor pos parseAScopeVar $1                    }
+  | varScopedG {% fmap (ScopeVarG . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedS {% fmap (ScopeVarS . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedL {% fmap (ScopeVarL . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedV {% fmap (ScopeVarV . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedB {% fmap (ScopeVarB . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
+  | varScopedA {% fmap ScopeVarA $ runParsecParserInParser pos parseAScopeVar $1                    }
 
 VariableAutoload :: { Variable }
   : AutoloadVar { VariableAutoload $1 }
@@ -285,7 +285,7 @@ VariableUnqualified :: { Variable }
   : UnqualifiedName { VariableUnqualified $1 }
 
 UnqualifiedName :: { Snake }
-  : ident {% runParserInProcessor pos parseSnake $1 }
+  : ident {% runParsecParserInParser pos parseSnake $1 }
 
 Rhs :: { Rhs }
   : Variable    { RhsVar $1    }
@@ -356,18 +356,18 @@ pattern KeywordNoDict :: Token
 pattern KeywordNoDict = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-dict"))
 
 
-parse :: [(Token, TokenPos)] -> Either Failure AST
-parse = runProcessor . parseAST
+parse :: [(Token, TokenPos)] -> Either ParseError AST
+parse = runParser . parseAST
 
 -- TODO: Show all [(Token, TokenPos)] if --verbose specified on cli.
-parseError :: ([(Token, TokenPos)], [String]) -> Processor a
+parseError :: ([(Token, TokenPos)], [String]) -> Parser a
 parseError ((got, pos) : _, expected) =
-  throwError . flip Failure (OnAToken pos) $ flattenMargins [i|
+  throwError . flip ParseError (OnAToken pos) $ flattenMargins [i|
     got a token `${show $ pretty got}`,
     but ${expected} are expected at here.
   |]
 parseError ([], expected) =
-  throwError $ Failure [i|got EOF, but ${makePluralForm expected} are expected at here.|] EOF
+  throwError $ ParseError [i|got EOF, but ${makePluralForm expected} are expected at here.|] EOF
   where
     -- ["a", "b"]      -> "a or b"
     -- ["a", "b", "c"] -> "a, b, or c"
@@ -388,11 +388,11 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
     replace ('\n' : xs) = ' ' : replace xs
     replace (x : xs) = x : replace xs
 
-runParserInProcessor :: TokenPos -> CodeParsec a -> String -> Processor a
-runParserInProcessor pos parser input =
-  case runParser parser "time-script" input of
+runParsecParserInParser :: TokenPos -> CodeParsec a -> String -> Parser a
+runParsecParserInParser pos parser input =
+  case P.runParser parser "time-script" input of
     Right x -> pure x
-    Left  e -> throwError $ Failure (displayException e) (OnAToken pos)
+    Left  e -> throwError $ ParseError (displayException e) (OnAToken pos)
 
 parseAScopeVar :: CodeParsec AScopeName
 parseAScopeVar =
