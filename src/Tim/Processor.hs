@@ -1,3 +1,5 @@
+{-# LANGUAGE QuasiQuotes #-}
+
 -- | Exposes contexts for both the lexer and the parser
 module Tim.Processor where
 
