@@ -22,6 +22,7 @@ ghcExtensions :: [String]
 ghcExtensions =
     [ "-XBangPatterns"
     , "-XBinaryLiterals"
+    , "-XBlockArguments"
     , "-XConstraintKinds"
     , "-XDataKinds"
     , "-XDefaultSignatures"
