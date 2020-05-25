@@ -20,12 +20,13 @@ lex = runLexer lexer . Text.unpack
 
 lexer :: Lexer [(Token, TokenPos)]
 lexer = do
+  _ <- dbg "beginning spaces" P.space
   result <- P.many once
   _ <- dbg "ending spaces and eof" $ P.space *> P.eof
   pure result
   where
-    once = do
-      _ <- dbg "beginning spaces" $ P.many spaceChar `forwardBy` length
+    once = try' do
+      _ <- dbg "spaces" $ P.many spaceChar `forwardBy` length
       dbg "lexer" $
         P.choice [ symbol
                  , first Literal <$> literal
