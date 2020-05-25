@@ -71,6 +71,7 @@ dependencies:
   - lens
   - megaparsec
   - mtl
+  - optparse-applicative
   - prettyprinter
   - rio
   - safe
