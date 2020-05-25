@@ -7,6 +7,7 @@ import Data.Text.Prettyprint.Doc (pretty)
 import Prelude (putStrLn, print)
 import RIO hiding (logInfo, logDebug, first)
 import System.Console.Haskeline
+import Text.Megaparsec.Error (errorBundlePretty)
 import Tim.Lexer (lex)
 import Tim.Parser (parse)
 import Tim.Parser.Types (AST)
@@ -54,8 +55,7 @@ type PrettyFailure = String
 
 process :: Text -> Either PrettyFailure AST
 process code = do
-  -- TODO: Now, I only show errors via `show` and `prettyShow`. Improve the error notification if needed.
-  x <- first show $ lex code
+  x <- first errorBundlePretty $ lex code
   first prettyShow $ parse x
   where
     prettyShow = show . pretty
