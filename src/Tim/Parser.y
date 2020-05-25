@@ -72,7 +72,7 @@ import qualified Tim.Parser.Types as Parser
   "->"          { (Token.Arrow, _)                                   }
   '|'           { (Token.Bar, _)                                     }
   '#'           { (Token.Sharp, _)                                   }
-  newline       { (Token.LineBreak, _)                               }
+  newline       { (Token.NewLine, _)                                 }
 
   -- Important commands identifiers
   let         { (KeywordLet, _)         }

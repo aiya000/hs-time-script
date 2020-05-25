@@ -48,7 +48,7 @@ symbol = dbg "symbol" $ P.choice
   , aSymbol "}" DictEnd
   , aSymbol "|" Bar
   , aSymbol "->" Arrow
-  , lineBreak &>> LineBreak
+  , newline &>> NewLine
   ]
   where
     -- Takes expected chars, and its corresponding token

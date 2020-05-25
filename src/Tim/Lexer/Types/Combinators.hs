@@ -69,8 +69,8 @@ spaceChar = (P.char ' ' <|> P.char '\t') `forward` 1
 spaces :: Lexer [(Char, TokenPos)]
 spaces = P.many spaceChar
 
-lineBreak :: Lexer (Char, TokenPos)
-lineBreak = down P.newline
+newline :: Lexer (Char, TokenPos)
+newline = down P.newline
   where
     -- Simular to 'forward',
     -- but increments 'lineNum' instead of 'colNum',

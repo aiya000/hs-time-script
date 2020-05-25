@@ -125,7 +125,7 @@ data Token = Ident Ident -- ^ An identifier for a command, a variable, or a type
            | Comma -- ^ ,
            | Dot -- ^ .
            | Sharp -- ^ #
-           | LineBreak -- ^ "\n", "\r", "\r\n"
+           | NewLine -- ^ "\n"
   deriving (Show, Eq)
 
 instance Pretty Token where
@@ -142,7 +142,7 @@ instance Pretty Token where
   pretty Comma       = String.fromString ","
   pretty Dot         = String.fromString "."
   pretty Sharp       = String.fromString "#"
-  pretty LineBreak   = String.fromString "{a line break}"
+  pretty NewLine     = String.fromString "{a line break}"
   pretty (Ident x)   = pretty x
   pretty (Literal x) = pretty x
 
