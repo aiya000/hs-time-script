@@ -72,7 +72,7 @@ import qualified Tim.Parser.Types as Parser
   "->"          { (Token.Arrow, _)                                   }
   '|'           { (Token.Bar, _)                                     }
   '#'           { (Token.Sharp, _)                                   }
-  lineBreak     { (Token.LineBreak, _)                               }
+  newline       { (Token.LineBreak, _)                               }
 
   -- Important commands identifiers
   let         { (KeywordLet, _)         }
@@ -136,9 +136,18 @@ AST :: { AST }
   | Rhs  { Rhs $1  }
 
 Code :: { Code }
-  : {- empty -}           { []      }
-  | Syntax                { [$1]    }
-  | Syntax lineBreak Code { $1 : $3 }
+  : {- empty -}                      { []      }
+  | OptNewLines Syntax OptNewLines   { [$2]    }
+  | OptNewLines Syntax NewLines Code { $2 : $4 }
+
+-- | Zero or more line-breaks
+OptNewLines :: { () }
+  : {- empty -}         { () }
+  | newline OptNewLines { () }
+
+-- | One or more
+NewLines :: { () }
+  : newline OptNewLines { () }
 
 Syntax :: { Syntax }
   : Let      { $1 }
@@ -149,7 +158,7 @@ Return :: { Syntax }
   : return Rhs { Return $2 }
 
 Function :: { Syntax }
-  : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts endfunction { Function $2 $4 $6 $7 [] }
+  : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts OptNewLines Code OptNewLines endfunction { Function $2 $4 $6 $7 $9 }
 
 FuncName :: { FuncName }
   : UnqualifiedName { FuncNameUnqualified $1 }
