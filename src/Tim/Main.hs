@@ -49,7 +49,11 @@ compile src' = do
       in maybe altDist id dist''
 
 compileToAst :: FilePath -> FilePath -> RIO Config ()
-compileToAst _ _ = liftIO $ putStrLn "TODO: compileToAst"
+compileToAst src' dist' = do
+  code <- readFileUtf8 src'
+  case process code of
+    Left e -> liftIO $ putStrLn e
+    Right ast -> writeFileUtf8 dist' $ tshow ast
 
 compileToVim :: FilePath -> FilePath -> RIO Config ()
 compileToVim src' dist' = liftIO . putStrLn $ trimMargins
