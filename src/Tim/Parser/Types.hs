@@ -89,6 +89,7 @@ data Lhs = LhsVar Variable
 -- | The right hand side
 data Rhs = RhsVar Variable
          | RhsLit Literal
+         | RhsFuncCall FuncCallee [Rhs] -- ^ F(), f(x, 10)
          | RhsParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
   deriving (Show, Eq)
 
@@ -98,6 +99,11 @@ data Literal = LiteralNat Natural
              | LiteralString String
              | LiteralList [Literal]
              | LiteralDict (Map String Literal) -- ^ {'foo': 10}
+  deriving (Show, Eq)
+
+-- | Identifiers that can be called as a function.
+data FuncCallee = FuncCalleeFuncName FuncName
+                | FuncCalleeUnqualified String.Snake -- ^ a variable. e.g. `f` of `let f = function('string')`.
   deriving (Show, Eq)
 
 

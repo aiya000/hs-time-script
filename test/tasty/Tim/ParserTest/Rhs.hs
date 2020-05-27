@@ -75,6 +75,39 @@ test_dicts =
     dict = Rhs . RhsLit . LiteralDict
 
 
+-- NOTE: Testing for FuncName is executed in Tim.ParserTest.Code.Function.
+--       In here, tested only a one of FuncCalleeFuncName and FuncCalleeUnqualified.
+test_function_call :: [TestTree]
+test_function_call =
+  [ "F()" `shouldBe` Rhs
+      (RhsFuncCall
+        (FuncCalleeFuncName $ FuncNameUnqualified [snakeQ|F|])
+        [])
+  , "f()" `shouldBe` Rhs
+      (RhsFuncCall
+        (FuncCalleeUnqualified [snakeQ|f|])
+        [])
+  , "f(x)" `shouldBe` Rhs
+      (RhsFuncCall
+        (FuncCalleeUnqualified [snakeQ|f|])
+        [RhsVar $ VariableUnqualified [snakeQ|x|]
+        ])
+  , "f(x, y)" `shouldBe` Rhs
+      (RhsFuncCall
+        (FuncCalleeUnqualified [snakeQ|f|])
+        [ RhsVar $ VariableUnqualified [snakeQ|x|]
+        ,  RhsVar $ VariableUnqualified [snakeQ|y|]
+        ])
+  , "f(g())" `shouldBe` Rhs
+      (RhsFuncCall
+        (FuncCalleeUnqualified [snakeQ|f|])
+        [ RhsFuncCall
+            (FuncCalleeUnqualified [snakeQ|g|])
+            []
+        ])
+  ]
+
+
 test_idents :: [TestTree]
 test_idents =
   [ "simple" `shouldBe` Rhs
