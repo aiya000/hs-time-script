@@ -1,0 +1,4 @@
+function F(x: Nat): Int
+  let y: String = 'y'
+  return 10
+endfunction
