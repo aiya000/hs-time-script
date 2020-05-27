@@ -2,15 +2,6 @@ resolver: lts-15.4
 packages:
   - '.'
 extra-deps:
-  - git: https://github.com/tonatona-project/tonatona
-    commit: 224e084fef661873808eaf3f70bb7887ff8b50e8
-    subdirs:
-      - tonaparser
-      - tonatona
-      - tonatona-logger
-      - tonatona-persistent-postgresql
-      - tonatona-persistent-sqlite
-      - tonatona-servant
   - git: https://github.com/aiya000/hs-character-cases
     commit: d47babc633e7c396f04c44d75d0354f7a74b3460
 flags: {}

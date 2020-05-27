@@ -1,8 +1,7 @@
 module Main where
 
 import RIO
-import Tim.Main (app)
-import Tonatona (run)
+import Tim.Main (defaultMain)
 
 main :: IO ()
-main = run app
+main = defaultMain

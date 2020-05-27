@@ -78,8 +78,6 @@ dependencies:
   - safe-exceptions
   - template-haskell
   - text
-  - tonatona
-  - tonatona-logger
 
 library:
   source-dirs: src

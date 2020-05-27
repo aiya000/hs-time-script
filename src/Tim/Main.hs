@@ -15,25 +15,21 @@ import Tim.CLIOptions (CLIOptions(..))
 import Tim.Lexer (lex)
 import Tim.Parser (parse)
 import Tim.Parser.Types (AST)
-import Tonatona (HasConfig(..), HasParser(..))
-import qualified Tonatona.Logger as TonaLogger
-
-data Config = Config
-  { tonaLogger :: TonaLogger.Config
-  , cliOptions :: CLIOptions
-  }
-
-instance HasConfig Config TonaLogger.Config where
-  config = tonaLogger
-
-instance HasParser Config where
-  parser = Config <$> parser <*> liftIO (OptParser.execParser CLIOptions.cliOptions)
-
 
 -- | The standard entry point
+defaultMain :: IO ()
+defaultMain = do
+  config <- Config <$> OptParser.execParser CLIOptions.cliOptions
+  runRIO config app
+
+
+data Config = Config
+  { cliOptions :: CLIOptions
+  }
+
 app :: RIO Config ()
 app = ask >>= \case
-  Config _ (CLIOptions _ (Just src') _) -> compile src'
+  Config (CLIOptions _ (Just src') _) -> compile src'
   _ -> repl
 
 
