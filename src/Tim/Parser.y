@@ -54,77 +54,77 @@ import qualified Tim.Parser.Types as Parser
 %tokentype { (Token, TokenPos) }
 
 %token
-  ':'           { (Token.Colon, _)                                   }
-  '='           { (Token.Assign, _)                                  }
-  nat           { (Token.Literal (Token.Nat $$), _)                  }
-  int           { (Token.Literal (Token.Int $$), _)                  }
-  float         { (Token.Literal (Token.Float $$), _)                }
-  stringLiteral { (Token.Literal (Token.String Token.SingleQ $$), _) }
-  stringDouble  { (Token.Literal (Token.String Token.DoubleQ $$), _) }
-  '['           { (Token.ListBegin, _)                               }
-  ']'           { (Token.ListEnd, _)                                 }
-  '{'           { (Token.DictBegin, _)                               }
-  '}'           { (Token.DictEnd, _)                                 }
-  '('           { (Token.ParenBegin, _)                              }
-  ')'           { (Token.ParenEnd, _)                                }
-  ','           { (Token.Comma, _)                                   }
-  '.'           { (Token.Dot, _)                                     }
-  "->"          { (Token.Arrow, _)                                   }
-  '|'           { (Token.Bar, _)                                     }
-  '#'           { (Token.Sharp, _)                                   }
-  newline       { (Token.NewLine, _)                                 }
+  ':'           {  (Token.Colon, _)                                    }
+  '='           {  (Token.Assign, _)                                   }
+  nat           {  (Token.Literal (Token.Nat $$), _)                   }
+  int           {  (Token.Literal (Token.Int $$), _)                   }
+  float         {  (Token.Literal (Token.Float $$), _)                 }
+  stringLiteral {  (Token.Literal (Token.String Token.SingleQ $$), _)  }
+  stringDouble  {  (Token.Literal (Token.String Token.DoubleQ $$), _)  }
+  '['           {  (Token.ListBegin, _)                                }
+  ']'           {  (Token.ListEnd, _)                                  }
+  '{'           {  (Token.DictBegin, _)                                }
+  '}'           {  (Token.DictEnd, _)                                  }
+  '('           {  (Token.ParenBegin, _)                               }
+  ')'           {  (Token.ParenEnd, _)                                 }
+  ','           {  (Token.Comma, _)                                    }
+  '.'           {  (Token.Dot, _)                                      }
+  "->"          {  (Token.Arrow, _)                                    }
+  '|'           {  (Token.Bar, _)                                      }
+  '#'           {  (Token.Sharp, _)                                    }
+  newline       {  (Token.NewLine, _)                                  }
 
   -- Important commands identifiers
-  let         { (KeywordLet, _)         }
-  function    { (KeywordFunction, _)    }
-  endfunction { (KeywordEndFunction, _) }
-  return      { (KeywordReturn, _)      }
+  let         {  (KeywordLet, _)          }
+  function    {  (KeywordFunction, _)     }
+  endfunction {  (KeywordEndFunction, _)  }
+  return      {  (KeywordReturn, _)       }
 
   -- variable identifiers
-  varG       { (ScopedIdent G "", _) }
-  varS       { (ScopedIdent S "", _) }
-  varL       { (ScopedIdent L "", _) }
-  varV       { (ScopedIdent V "", _) }
-  varB       { (ScopedIdent B "", _) }
-  varW       { (ScopedIdent W "", _) }
-  varT       { (ScopedIdent T "", _) }
+  varG       {  (ScopedIdent G "", _)    }
+  varS       {  (ScopedIdent S "", _)    }
+  varL       {  (ScopedIdent L "", _)    }
+  varV       {  (ScopedIdent V "", _)    }
+  varB       {  (ScopedIdent B "", _)    }
+  varW       {  (ScopedIdent W "", _)    }
+  varT       {  (ScopedIdent T "", _)    }
   -- varA (the identifier 'a:') is parsed by parseAScopeVar
-  varScopedG { (ScopedIdent G $$, pos) }
-  varScopedS { (ScopedIdent S $$, pos) }
-  varScopedL { (ScopedIdent L $$, pos) }
-  varScopedA { (ScopedIdent A $$, pos) }
-  varScopedV { (ScopedIdent V $$, pos) }
-  varScopedB { (ScopedIdent B $$, pos) }
-  varScopedW { (ScopedIdent W $$, pos) }
-  varScopedT { (ScopedIdent T $$, pos) }
+  varScopedG {  (ScopedIdent G $$, pos)  }
+  varScopedS {  (ScopedIdent S $$, pos)  }
+  varScopedL {  (ScopedIdent L $$, pos)  }
+  varScopedA {  (ScopedIdent A $$, pos)  }
+  varScopedV {  (ScopedIdent V $$, pos)  }
+  varScopedB {  (ScopedIdent B $$, pos)  }
+  varScopedW {  (ScopedIdent W $$, pos)  }
+  varScopedT {  (ScopedIdent T $$, pos)  }
 
-  varRegUnnamed   { (RegisterIdent Unnamed, _)         }
-  varRegSmallDel  { (RegisterIdent SmallDelete, _)     }
-  varRegReadOnlyC { (RegisterIdent ReadOnlyColon, _)   }
-  varRegReadonlyD { (RegisterIdent ReadOnlyDot, _)     }
-  varRegReadOnlyP { (RegisterIdent ReadOnlyPercent, _) }
-  varRegBuffer    { (RegisterIdent Buffer, _)          }
-  varRegExpr      { (RegisterIdent Expression, _)      }
-  varRegClipS     { (RegisterIdent ClipboardStar, _)   }
-  varRegClipP     { (RegisterIdent ClipboardPlus, _)   }
-  varRegBlackHole { (RegisterIdent BlackHole, _)       }
-  varRegSeached   { (RegisterIdent Searched, _)        }
-  varRegNum       { (RegisterIdent (Numeric $$), _)    } -- 1-9
-  varRegAlpha     { (RegisterIdent (Alphabetic $$), _) } -- a-zA-Z
+  varRegUnnamed   {  (RegisterIdent Unnamed, _)          }
+  varRegSmallDel  {  (RegisterIdent SmallDelete, _)      }
+  varRegReadOnlyC {  (RegisterIdent ReadOnlyColon, _)    }
+  varRegReadonlyD {  (RegisterIdent ReadOnlyDot, _)      }
+  varRegReadOnlyP {  (RegisterIdent ReadOnlyPercent, _)  }
+  varRegBuffer    {  (RegisterIdent Buffer, _)           }
+  varRegExpr      {  (RegisterIdent Expression, _)       }
+  varRegClipS     {  (RegisterIdent ClipboardStar, _)    }
+  varRegClipP     {  (RegisterIdent ClipboardPlus, _)    }
+  varRegBlackHole {  (RegisterIdent BlackHole, _)        }
+  varRegSeached   {  (RegisterIdent Searched, _)         }
+  varRegNum       {  (RegisterIdent (Numeric $$), _)     } -- 1-9
+  varRegAlpha     {  (RegisterIdent (Alphabetic $$), _)  } -- a-zA-Z
 
-  varOption  { (OptionIdent $$, _)  }
-  varLOption { (LOptionIdent $$, _) }
-  varGOption { (GOptionIdent $$, _) }
+  varOption  {  (OptionIdent $$, _)   }
+  varLOption {  (LOptionIdent $$, _)  }
+  varGOption {  (GOptionIdent $$, _)  }
 
-  noAbort   { (KeywordNoAbort, _)   }
-  noClosure { (KeywordNoClosure, _) }
-  noRange   { (KeywordNoRange, _)   }
-  noDict    { (KeywordNoDict, _)    }
+  noAbort   {  (KeywordNoAbort, _)    }
+  noClosure {  (KeywordNoClosure, _)  }
+  noRange   {  (KeywordNoRange, _)    }
+  noDict    {  (KeywordNoDict, _)     }
 
   -- An another identifier, e.g.
   -- - An unscoped variable identifier
   -- - A type identifier
-  ident { (Token.Ident (Token.unIdent -> $$), pos) }
+  ident {  (Token.Ident (Token.unIdent -> $$), pos)  }
 
 %right '|'
 %right "->"
@@ -132,196 +132,196 @@ import qualified Tim.Parser.Types as Parser
 %%
 
 AST :: { AST }
-  : Code { Code $1 }
-  | Rhs  { Rhs $1  }
+  : Code {  Code $1  }
+  | Rhs  {  Rhs $1   }
 
 Code :: { Code }
-  : {- empty -}                      { []      }
-  | OptNewLines Syntax OptNewLines   { [$2]    }
-  | OptNewLines Syntax NewLines Code { $2 : $4 }
+  : {- empty -}                      {  []       }
+  | OptNewLines Syntax OptNewLines   {  [$2]     }
+  | OptNewLines Syntax NewLines Code {  $2 : $4  }
 
 -- | Zero or more line-breaks
 OptNewLines :: { () }
-  : {- empty -}         { () }
-  | newline OptNewLines { () }
+  : {- empty -}         {  ()  }
+  | newline OptNewLines {  ()  }
 
 -- | One or more
 NewLines :: { () }
-  : newline OptNewLines { () }
+  : newline OptNewLines {  ()  }
 
 Syntax :: { Syntax }
-  : Let      { $1 }
-  | Return   { $1 }
-  | Function { $1 }
+  : Let      {  $1  }
+  | Return   {  $1  }
+  | Function {  $1  }
 
 Return :: { Syntax }
-  : return Rhs { Return $2 }
+  : return Rhs {  Return $2  }
 
 Function :: { Syntax }
-  : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts OptNewLines Code OptNewLines endfunction { Function $2 $4 $6 $7 $9 }
+  : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts OptNewLines Code OptNewLines endfunction {  Function $2 $4 $6 $7 $9  }
 
 FuncName :: { FuncName }
-  : UnqualifiedName { FuncNameUnqualified $1 }
-  | ScopedVar       { FuncNameScoped $1      }
-  | DictVar         { FuncNameDict $1        }
-  | AutoloadVar     { FuncNameAutoload $1    }
+  : UnqualifiedName {  FuncNameUnqualified $1  }
+  | ScopedVar       {  FuncNameScoped $1       }
+  | DictVar         {  FuncNameDict $1         }
+  | AutoloadVar     {  FuncNameAutoload $1     }
 
 FuncParams :: { [FuncParam] }
-  : {- empty -}              { []      }
-  | FuncParam                { $1 : [] }
-  | FuncParam ',' FuncParams { $1 : $3 }
+  : {- empty -}              {  []       }
+  | FuncParam                {  $1 : []  }
+  | FuncParam ',' FuncParams {  $1 : $3  }
 
 FuncParam :: { FuncParam }
-  : UnqualifiedName ':' Type { FuncParamBound $1 $3 }
-  | UnqualifiedName          { FuncParamUnbound $1  }
-  | '.' '.' '.'              { FuncParamVariadic    }
+  : UnqualifiedName ':' Type {  FuncParamBound $1 $3  }
+  | UnqualifiedName          {  FuncParamUnbound $1   }
+  | '.' '.' '.'              {  FuncParamVariadic     }
 
 FuncReturnType :: { Maybe Type }
-  : {- empty -} { Nothing }
-  | ':' Type    { Just $2 }
+  : {- empty -} {  Nothing  }
+  | ':' Type    {  Just $2  }
 
 FuncOpts :: { [FuncOpt] }
-  : {- empty -} { [] }
-  | FuncOpt FuncOpts { $1 : $2 }
+  : {- empty -}      {  []       }
+  | FuncOpt FuncOpts {  $1 : $2  }
 
 FuncOpt :: { FuncOpt }
-  : '[' '[' noAbort   ']' ']' { FuncOptNoAbort   }
-  | '[' '[' noClosure ']' ']' { FuncOptNoClosure }
-  | '[' '[' noRange   ']' ']' { FuncOptNoRange   }
-  | '[' '[' noDict    ']' ']' { FuncOptNoDict    }
+  : '[' '[' noAbort   ']' ']' {  FuncOptNoAbort    }
+  | '[' '[' noClosure ']' ']' {  FuncOptNoClosure  }
+  | '[' '[' noRange   ']' ']' {  FuncOptNoRange    }
+  | '[' '[' noDict    ']' ']' {  FuncOptNoDict     }
 
 Let :: { Syntax }
-  : let Lhs ':' Type '=' Rhs { Let $2 (Just $4) $6 }
-  | let Lhs '=' Rhs          { Let $2 Nothing $4   }
+  : let Lhs ':' Type '=' Rhs {  Let $2 (Just $4) $6  }
+  | let Lhs '=' Rhs          {  Let $2 Nothing $4    }
 
 Lhs :: { Lhs }
-  : Variable            { LhsVar $1        }
-  | '[' DestructVar ']' { LhsDestuctVar $2 }
+  : Variable            {  LhsVar $1         }
+  | '[' DestructVar ']' {  LhsDestuctVar $2  }
 
 -- Destructive assignee variables
 DestructVar :: { List.NonEmpty Variable }
-  : Variable                 { ($1 :| []) }
-  | Variable ',' DestructVar { $1 <| $3   }
+  : Variable                 {  ($1 :| [])  }
+  | Variable ',' DestructVar {  $1 <| $3    }
 
 Type :: { Type }
-  : Type "->" Type { TypeArrow $1 $3 }
-  | Type '|'  Type { TypeUnion $1 $3 }
-  | Camel          { TypeCon $1      }
-  | '(' Type ')'   { $2              }
-  | TypeApp        { $1              }
+  : Type "->" Type {  TypeArrow $1 $3  }
+  | Type '|'  Type {  TypeUnion $1 $3  }
+  | Camel          {  TypeCon $1       }
+  | '(' Type ')'   {  $2               }
+  | TypeApp        {  $1               }
 
 -- lefty bias
 TypeApp :: { Type }
-  : Type Camel        { TypeApp $1 (TypeCon $2) }
-  | Type '(' Type ')' { TypeApp $1 $3           }
+  : Type Camel        {  TypeApp $1 (TypeCon $2)  }
+  | Type '(' Type ')' {  TypeApp $1 $3            }
 
 Camel :: { Camel }
-  : ident {% runParsecParserInParser pos String.parseCamel $1 }
+  : ident {% runParsecParserInParser pos String.parseCamel $1  }
 
 Variable :: { Variable }
-  : VariableScoped      { $1 }
-  | VariableAutoload    { $1 }
-  | VariableDict        { $1 }
-  | VariableRegister    { $1 }
-  | VariableOption      { $1 }
-  | VariableUnqualified { $1 }
+  : VariableScoped      {  $1  }
+  | VariableAutoload    {  $1  }
+  | VariableDict        {  $1  }
+  | VariableRegister    {  $1  }
+  | VariableOption      {  $1  }
+  | VariableUnqualified {  $1  }
 
 VariableScoped :: { Variable }
-  : ScopedVar { VariableScoped $1 }
+  : ScopedVar {  VariableScoped $1  }
 
 ScopedVar :: { ScopedVar }
-  : varG       { ScopeVarG ScopedNameEmpty                                                       }
-  | varS       { ScopeVarS ScopedNameEmpty                                                       }
-  | varL       { ScopeVarL ScopedNameEmpty                                                       }
-  | varV       { ScopeVarV ScopedNameEmpty                                                       }
-  | varB       { ScopeVarB ScopedNameEmpty                                                       }
-  | varW       { ScopeVarW ScopedNameEmpty                                                       }
-  | varT       { ScopeVarT ScopedNameEmpty                                                       }
-  | varScopedG {% fmap (ScopeVarG . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedS {% fmap (ScopeVarS . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedL {% fmap (ScopeVarL . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedV {% fmap (ScopeVarV . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedB {% fmap (ScopeVarB . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1 }
-  | varScopedA {% fmap ScopeVarA $ runParsecParserInParser pos parseAScopeVar $1                    }
+  : varG       {  ScopeVarG ScopedNameEmpty                                                          }
+  | varS       {  ScopeVarS ScopedNameEmpty                                                          }
+  | varL       {  ScopeVarL ScopedNameEmpty                                                          }
+  | varV       {  ScopeVarV ScopedNameEmpty                                                          }
+  | varB       {  ScopeVarB ScopedNameEmpty                                                          }
+  | varW       {  ScopeVarW ScopedNameEmpty                                                          }
+  | varT       {  ScopeVarT ScopedNameEmpty                                                          }
+  | varScopedG {% fmap (ScopeVarG . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedS {% fmap (ScopeVarS . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedL {% fmap (ScopeVarL . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedV {% fmap (ScopeVarV . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedB {% fmap (ScopeVarB . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
+  | varScopedA {% fmap ScopeVarA $ runParsecParserInParser pos parseAScopeVar $1                     }
 
 VariableAutoload :: { Variable }
-  : AutoloadVar { VariableAutoload $1 }
+  : AutoloadVar {  VariableAutoload $1  }
 
 AutoloadVar :: { AutoloadVar }
-  : AutoloadVarNames '#'                 { AutoloadVar (NonEmptyList.reverse $1) OmittableSnakeOmitted    }
-  | AutoloadVarNames '#' UnqualifiedName { AutoloadVar (NonEmptyList.reverse $1) (OmittableSnakeSnake $3) }
+  : AutoloadVarNames '#'                 {  AutoloadVar (NonEmptyList.reverse $1) OmittableSnakeOmitted     }
+  | AutoloadVarNames '#' UnqualifiedName {  AutoloadVar (NonEmptyList.reverse $1) (OmittableSnakeSnake $3)  }
 
 AutoloadVarNames :: { List.NonEmpty Snake }
-  : UnqualifiedName                      { $1 :| [] }
-  | AutoloadVarNames '#' UnqualifiedName { $3 <| $1 }
+  : UnqualifiedName                      {  $1 :| []  }
+  | AutoloadVarNames '#' UnqualifiedName {  $3 <| $1  }
 
 VariableDict :: { Variable }
-  : DictVar { VariableDict $1 }
+  : DictVar {  VariableDict $1  }
 
 DictVar :: { DictVar }
-  : DictSelf '[' Rhs ']'         { DictVarIndexAccess $1 $3         }
-  | DictSelf '.' UnqualifiedName { DictVarPropertyAccess $1 $3      }
-  | DictVar '[' Rhs ']'          { DictVarIndexAccessChain $1 $3    }
-  | DictVar '.' UnqualifiedName  { DictVarPropertyAccessChain $1 $3 }
+  : DictSelf '[' Rhs ']'         {  DictVarIndexAccess $1 $3          }
+  | DictSelf '.' UnqualifiedName {  DictVarPropertyAccess $1 $3       }
+  | DictVar '[' Rhs ']'          {  DictVarIndexAccessChain $1 $3     }
+  | DictVar '.' UnqualifiedName  {  DictVarPropertyAccessChain $1 $3  }
 
 DictSelf :: { DictSelf }
-  : UnqualifiedName { DictSelfUnqualified $1 }
-  | ScopedVar       { DictSelfScoped $1      }
+  : UnqualifiedName {  DictSelfUnqualified $1  }
+  | ScopedVar       {  DictSelfScoped $1       }
 
 VariableRegister :: { Variable }
-  : varRegUnnamed   { VariableRegister Unnamed         }
-  | varRegSmallDel  { VariableRegister SmallDelete     }
-  | varRegReadOnlyC { VariableRegister ReadOnlyColon   }
-  | varRegReadonlyD { VariableRegister ReadOnlyDot     }
-  | varRegReadOnlyP { VariableRegister ReadOnlyPercent }
-  | varRegBuffer    { VariableRegister Buffer          }
-  | varRegExpr      { VariableRegister Expression      }
-  | varRegClipS     { VariableRegister ClipboardStar   }
-  | varRegClipP     { VariableRegister ClipboardPlus   }
-  | varRegBlackHole { VariableRegister BlackHole       }
-  | varRegSeached   { VariableRegister Searched        }
-  | varRegNum       { VariableRegister $ Numeric $1    }
-  | varRegAlpha     { VariableRegister $ Alphabetic $1 }
+  : varRegUnnamed   {  VariableRegister Unnamed          }
+  | varRegSmallDel  {  VariableRegister SmallDelete      }
+  | varRegReadOnlyC {  VariableRegister ReadOnlyColon    }
+  | varRegReadonlyD {  VariableRegister ReadOnlyDot      }
+  | varRegReadOnlyP {  VariableRegister ReadOnlyPercent  }
+  | varRegBuffer    {  VariableRegister Buffer           }
+  | varRegExpr      {  VariableRegister Expression       }
+  | varRegClipS     {  VariableRegister ClipboardStar    }
+  | varRegClipP     {  VariableRegister ClipboardPlus    }
+  | varRegBlackHole {  VariableRegister BlackHole        }
+  | varRegSeached   {  VariableRegister Searched         }
+  | varRegNum       {  VariableRegister $ Numeric $1     }
+  | varRegAlpha     {  VariableRegister $ Alphabetic $1  }
 
 VariableOption :: { Variable }
-  : varLOption { VariableOption $ LocalScopedOption $1  }
-  | varGOption { VariableOption $ GlobalScopedOption $1 }
-  | varOption  { VariableOption $ UnscopedOption $1     }
+  : varLOption {  VariableOption $ LocalScopedOption $1   }
+  | varGOption {  VariableOption $ GlobalScopedOption $1  }
+  | varOption  {  VariableOption $ UnscopedOption $1      }
 
 VariableUnqualified :: { Variable }
-  : UnqualifiedName { VariableUnqualified $1 }
+  : UnqualifiedName {  VariableUnqualified $1  }
 
 UnqualifiedName :: { Snake }
-  : ident {% runParsecParserInParser pos parseSnake $1 }
+  : ident {% runParsecParserInParser pos parseSnake $1  }
 
 Rhs :: { Rhs }
-  : Variable    { RhsVar $1    }
-  | Literal     { RhsLit $1    }
-  | '(' Rhs ')' { RhsParens $2 }
+  : Variable    {  RhsVar $1       }
+  | Literal     {  RhsLit $1       }
+  | '(' Rhs ')' {  RhsParens $2    }
 
 Literal :: { Literal }
-  : nat               { LiteralNat $1    }
-  | int               { LiteralInt $1    }
-  | float             { LiteralFloat $1  }
-  | String            { LiteralString $1 }
-  | '[' ListInner ']' { LiteralList $2   }
-  | '{' DictInner '}' { LiteralDict $2   }
+  : nat               {  LiteralNat $1     }
+  | int               {  LiteralInt $1     }
+  | float             {  LiteralFloat $1   }
+  | String            {  LiteralString $1  }
+  | '[' ListInner ']' {  LiteralList $2    }
+  | '{' DictInner '}' {  LiteralDict $2    }
 
 String :: { Parser.String }
-  : stringLiteral { StringLiteral $1 }
-  | stringDouble  { StringDouble $1  }
+  : stringLiteral {  StringLiteral $1  }
+  | stringDouble  {  StringDouble $1   }
 
 ListInner :: { [Literal] }
-  : {- empty -}           { []      }
-  | Literal               { [$1]    }
-  | Literal ',' ListInner { $1 : $3 }
+  : {- empty -}           {  []       }
+  | Literal               {  [$1]     }
+  | Literal ',' ListInner {  $1 : $3  }
 
 DictInner :: { Map Parser.String Literal }
-  : {- empty -}                      { Map.empty           }
-  | String ':' Literal               { Map.singleton $1 $3 }
-  | String ':' Literal ',' DictInner { Map.insert $1 $3 $5 }
+  : {- empty -}                      {  Map.empty            }
+  | String ':' Literal               {  Map.singleton $1 $3  }
+  | String ':' Literal ',' DictInner {  Map.insert $1 $3 $5  }
 
 {
 pattern ScopedIdent :: Scope -> String -> Token
