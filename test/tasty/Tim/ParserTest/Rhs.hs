@@ -81,7 +81,7 @@ test_function_call :: [TestTree]
 test_function_call =
   [ "F()" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeFuncName $ FuncNameUnqualified [snakeQ|F|])
+        (FuncCalleeFuncName $ FuncNameUnqualified [upperSnakeQ|F|])
         [])
   , "f()" `shouldBe` Rhs
       (RhsFuncCall

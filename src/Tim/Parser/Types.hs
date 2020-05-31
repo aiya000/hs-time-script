@@ -57,7 +57,7 @@ data FuncParam = FuncParamUnbound String.Snake -- ^ a variable that is not bound
                | FuncParamVariadic -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
-data FuncName = FuncNameUnqualified String.Snake -- ^ F, G
+data FuncName = FuncNameUnqualified String.UpperSnake -- ^ F, G
               | FuncNameScoped ScopedVar -- ^ s:f, g:F
               | FuncNameDict DictVar -- ^ foo.bar
               | FuncNameAutoload AutoloadVar

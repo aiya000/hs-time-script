@@ -12,7 +12,7 @@ import Tim.Parser.Types
 import Tim.Test
 
 nameF :: FuncName
-nameF = FuncNameUnqualified [snakeQ|F|]
+nameF = FuncNameUnqualified [upperSnakeQ|F|]
 
 paramX :: FuncParam
 paramX = FuncParamUnbound [snakeQ|x|]

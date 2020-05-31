@@ -161,10 +161,10 @@ Function :: { Syntax }
   : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts OptNewLines Code OptNewLines endfunction {  Function $2 $4 $6 $7 $9  }
 
 FuncName :: { FuncName }
-  : UnqualifiedName {  FuncNameUnqualified $1  }
-  | ScopedVar       {  FuncNameScoped $1       }
-  | DictVar         {  FuncNameDict $1         }
-  | AutoloadVar     {  FuncNameAutoload $1     }
+  : UnqualifiedFuncName {  FuncNameUnqualified $1  }
+  | ScopedVar           {  FuncNameScoped $1       }
+  | DictVar             {  FuncNameDict $1         }
+  | AutoloadVar         {  FuncNameAutoload $1     }
 
 FuncParams :: { [FuncParam] }
   : {- empty -}              {  []       }
@@ -295,6 +295,9 @@ VariableUnqualified :: { Variable }
 
 UnqualifiedName :: { Snake }
   : ident {% runParsecParserInParser pos parseSnake $1  }
+
+UnqualifiedFuncName :: { UpperSnake }
+  : ident {% runParsecParserInParser pos parseUpperSnake $1 }
 
 Rhs :: { Rhs }
   : Variable    {  RhsVar $1       }
