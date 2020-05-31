@@ -300,9 +300,10 @@ UnqualifiedFuncName :: { UpperSnake }
   : ident {% runParsecParserInParser pos parseUpperSnake $1 }
 
 Rhs :: { Rhs }
-  : Variable    {  RhsVar $1       }
-  | Literal     {  RhsLit $1       }
-  | '(' Rhs ')' {  RhsParens $2    }
+  : Variable            {  RhsVar $1          }
+  | Literal             {  RhsLit $1          }
+  | FuncCallee FuncArgs {  RhsFuncCall $1 $2  }
+  | '(' Rhs ')'         {  RhsParens $2       }
 
 Literal :: { Literal }
   : nat               {  LiteralNat $1     }
@@ -311,6 +312,18 @@ Literal :: { Literal }
   | String            {  LiteralString $1  }
   | '[' ListInner ']' {  LiteralList $2    }
   | '{' DictInner '}' {  LiteralDict $2    }
+
+FuncCallee :: { FuncCallee }
+  : FuncName        {  FuncCalleeFuncName $1     }
+  | UnqualifiedName {  FuncCalleeUnqualified $1  }
+
+FuncArgs :: { [Rhs] }
+  : '(' FuncArgsInner ')' { $2 }
+
+FuncArgsInner :: { [Rhs] }
+  : {- empty -}           {  []       }
+  | Rhs                   {  [$1]     }
+  | Rhs ',' FuncArgsInner {  $1 : $3  }
 
 String :: { Parser.String }
   : stringLiteral {  StringLiteral $1  }
