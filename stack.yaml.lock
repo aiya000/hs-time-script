@@ -3,18 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    name: character-cases
-    version: 0.1.0.3
-    git: https://github.com/aiya000/hs-character-cases
-    pantry-tree:
-      size: 606
-      sha256: d0717049f40ef58aa708f3ccd1be3ee6e5fd408e64ad9478d99ccd0ebf054cc7
-    commit: d47babc633e7c396f04c44d75d0354f7a74b3460
-  original:
-    git: https://github.com/aiya000/hs-character-cases
-    commit: d47babc633e7c396f04c44d75d0354f7a74b3460
+packages: []
 snapshots:
 - completed:
     size: 491163

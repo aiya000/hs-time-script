@@ -3,6 +3,6 @@ packages:
   - '.'
 extra-deps:
   - git: https://github.com/aiya000/hs-character-cases
-    commit: d47babc633e7c396f04c44d75d0354f7a74b3460
+    commit: 0ee9e9040b317a150f17eb4b4251d8592d9caabe
 flags: {}
 extra-package-dbs: []
