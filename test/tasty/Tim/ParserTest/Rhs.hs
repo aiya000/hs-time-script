@@ -98,6 +98,12 @@ test_function_call =
         [ RhsVar $ VariableUnqualified [snakeQ|x|]
         ,  RhsVar $ VariableUnqualified [snakeQ|y|]
         ])
+  , "f(x, y, )" `shouldBe` Rhs -- tail comma
+      (RhsFuncCall
+        (FuncCalleeUnqualified [snakeQ|f|])
+        [ RhsVar $ VariableUnqualified [snakeQ|x|]
+        ,  RhsVar $ VariableUnqualified [snakeQ|y|]
+        ])
   , "f(g())" `shouldBe` Rhs
       (RhsFuncCall
         (FuncCalleeUnqualified [snakeQ|f|])
