@@ -136,9 +136,12 @@ AST :: { AST }
   | Rhs  {  Rhs $1   }
 
 Code :: { Code }
-  : {- empty -}                      {  []       }
-  | OptNewLines Syntax OptNewLines   {  [$2]     }
-  | OptNewLines Syntax NewLines Code {  $2 : $4  }
+  : {- empty -}                       {  []  }
+  | OptNewLines CodeInner OptNewLines {  $2  }
+
+CodeInner :: { Code }
+  : Syntax               {  [$1]     }
+  | Syntax NewLines Code {  $1 : $3  }
 
 -- | Zero or more line-breaks
 OptNewLines :: { () }
