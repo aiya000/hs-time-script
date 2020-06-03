@@ -292,10 +292,10 @@ VariableUnqualified :: { Variable }
   : ident {  VariableUnqualified $1  }
 
 Rhs :: { Rhs }
-  : Variable            {  RhsVar $1          }
-  | Literal             {  RhsLit $1          }
-  | FuncCallee FuncArgs {  RhsFuncCall $1 $2  }
-  | '(' Rhs ')'         {  RhsParens $2       }
+  : Variable          {  RhsVar $1          }
+  | Literal           {  RhsLit $1          }
+  | FuncName FuncArgs {  RhsFuncCall $1 $2  }
+  | '(' Rhs ')'       {  RhsParens $2       }
 
 Literal :: { Literal }
   : nat               {  LiteralNat $1     }
@@ -304,10 +304,6 @@ Literal :: { Literal }
   | String            {  LiteralString $1  }
   | '[' ListInner ']' {  LiteralList $2    }
   | '{' DictInner '}' {  LiteralDict $2    }
-
-FuncCallee :: { FuncCallee }
-  : FuncName {  FuncCalleeFuncName $1     }
-  | ident    {  FuncCalleeUnqualified $1  }
 
 FuncArgs :: { [Rhs] }
   : '(' FuncArgsInner ')' { $2 }

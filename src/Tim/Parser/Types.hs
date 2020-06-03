@@ -56,7 +56,7 @@ data FuncParam = FuncParamUnbound General.String -- ^ a variable that is not bou
                | FuncParamVariadic -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
-data FuncName = FuncNameUnqualified General.String -- ^ F, G
+data FuncName = FuncNameUnqualified General.String -- ^ F, G, f, g
               | FuncNameScoped ScopedVar -- ^ s:f, g:F
               | FuncNameDict DictVar -- ^ foo.bar
               | FuncNameAutoload AutoloadVar
@@ -88,7 +88,7 @@ data Lhs = LhsVar Variable
 -- | The right hand side
 data Rhs = RhsVar Variable
          | RhsLit Literal
-         | RhsFuncCall FuncCallee [Rhs] -- ^ F(), f(x, 10)
+         | RhsFuncCall FuncName [Rhs] -- ^ F(), f(x, 10)
          | RhsParens Rhs -- ^ enclosed terms => `(10)`, `('str')`
   deriving (Show, Eq)
 
@@ -98,11 +98,6 @@ data Literal = LiteralNat Natural
              | LiteralString String
              | LiteralList [Literal]
              | LiteralDict (Map String Literal) -- ^ {'foo': 10}
-  deriving (Show, Eq)
-
--- | Identifiers that can be called as a function.
-data FuncCallee = FuncCalleeFuncName FuncName
-                | FuncCalleeUnqualified General.String -- ^ a variable. e.g. `f` of `let f = function('string')`.
   deriving (Show, Eq)
 
 

@@ -76,39 +76,39 @@ test_dicts =
 
 
 -- NOTE: Testing for FuncName is executed in Tim.ParserTest.Code.Function.
---       In here, tested only a one of FuncCalleeFuncName and FuncCalleeUnqualified.
+--       In here, tested only for arguments.
 test_function_call :: [TestTree]
 test_function_call =
   [ "F()" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeFuncName $ FuncNameUnqualified "F")
+        (FuncNameUnqualified "F")
         [])
   , "f()" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified "f")
+        (FuncNameUnqualified "f")
         [])
   , "f(x)" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified "f")
+        (FuncNameUnqualified "f")
         [RhsVar $ VariableUnqualified "x"
         ])
   , "f(x, y)" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified "f")
+        (FuncNameUnqualified "f")
         [ RhsVar $ VariableUnqualified "x"
         ,  RhsVar $ VariableUnqualified "y"
         ])
   , "f(x, y, )" `shouldBe` Rhs -- tail comma
       (RhsFuncCall
-        (FuncCalleeUnqualified "f")
+        (FuncNameUnqualified "f")
         [ RhsVar $ VariableUnqualified "x"
         ,  RhsVar $ VariableUnqualified "y"
         ])
   , "f(g())" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified "f")
+        (FuncNameUnqualified "f")
         [ RhsFuncCall
-            (FuncCalleeUnqualified "g")
+            (FuncNameUnqualified "g")
             []
         ])
   ]
