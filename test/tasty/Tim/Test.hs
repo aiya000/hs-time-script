@@ -1,13 +1,11 @@
 -- | Helpers for tests.
 module Tim.Test where
 
-import Data.String.Cases (Camel, parseCamel)
 import Data.String.Here (i)
 import qualified Data.Text as Text
 import RIO
 import Test.Tasty (TestName, TestTree)
 import Test.Tasty.HUnit ((@?=), Assertion, testCase, assertFailure)
-import qualified Text.Megaparsec as P
 import Tim.Main (process)
 import Tim.Parser.Types hiding (String)
 
@@ -39,19 +37,6 @@ shouldBe expr expected = thatShouldBe expr expected expr
 
 syntax :: Syntax -> AST
 syntax = Code . (: [])
-
--- | Unsafe
-name :: String -> Camel
-name = ignore parseCamel
-  where
-    ignore parser input =
-      case P.runParser parser "time-script test" input of
-        Left  x -> error $ displayException x
-        Right x -> x
-
--- | Unsafe
-con :: String -> Type
-con = TypeCon . name
 
 
 trimMargins :: String -> String

@@ -3,8 +3,6 @@
 
 module Tim.ParserTest.Code.Function where
 
-import Data.Char.Cases hiding (UpperChar (G, S, B, W))
-import Data.String.Cases
 import Data.String.Here (i)
 import RIO hiding (first)
 import Test.Tasty (TestTree)
@@ -12,38 +10,38 @@ import Tim.Parser.Types
 import Tim.Test
 
 nameF :: FuncName
-nameF = FuncNameUnqualified [upperSnakeQ|F|]
+nameF = FuncNameUnqualified "F"
 
 paramX :: FuncParam
-paramX = FuncParamUnbound [snakeQ|x|]
+paramX = FuncParamUnbound "x"
 
 paramY :: FuncParam
-paramY = FuncParamUnbound [snakeQ|y|]
+paramY = FuncParamUnbound "y"
 
 paramXNat :: FuncParam
-paramXNat = FuncParamBound [snakeQ|x|] $ TypeCon [camelQ|Nat|]
+paramXNat = FuncParamBound "x" $ TypeCon "Nat"
 
 paramYInt :: FuncParam
-paramYInt = FuncParamBound [snakeQ|y|] $ TypeCon [camelQ|Int|]
+paramYInt = FuncParamBound "y" $ TypeCon "Int"
 
 letXWith10 :: Syntax
 letXWith10 =
   Let
-    (LhsVar $ VariableUnqualified [snakeQ|x|])
+    (LhsVar $ VariableUnqualified "x")
     Nothing
     (RhsLit $ LiteralNat 10)
 
 typeVoid :: Type
-typeVoid = TypeCon [camelQ|Void|]
+typeVoid = TypeCon "Void"
 
 typeList :: Type
-typeList = TypeCon [camelQ|List|]
+typeList = TypeCon "List"
 
 typeNat :: Type
-typeNat = TypeCon [camelQ|Nat|]
+typeNat = TypeCon "Nat"
 
 typeInt :: Type
-typeInt = TypeCon [camelQ|Int|]
+typeInt = TypeCon "Int"
 
 
 test_function_names :: [TestTree]
@@ -55,7 +53,7 @@ test_function_names =
         endfunction
       |]
   , ("scoped" `thatShouldBe` syntax
-      (Function (FuncNameScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|f|]) [] Nothing [] []))
+      (Function (FuncNameScoped . ScopeVarS $ ScopedNameNonEmpty "f") [] Nothing [] []))
       [i|
         function s:f()
         endfunction
@@ -64,7 +62,7 @@ test_function_names =
       (Function
         (FuncNameDict
           (DictVarPropertyAccess
-            (DictSelfUnqualified [snakeQ|foo|]) [snakeQ|bar|]))
+            (DictSelfUnqualified "foo") "bar"))
         [] Nothing [] []))
     [i|
       function foo.bar()
@@ -74,7 +72,7 @@ test_function_names =
       (Function
         (FuncNameDict
           (DictVarIndexAccess
-            (DictSelfUnqualified [snakeQ|foo|])
+            (DictSelfUnqualified "foo")
             (RhsLit . LiteralString $ StringLiteral "bar")))
         [] Nothing [] []))
     [i|
@@ -84,7 +82,7 @@ test_function_names =
   , ("autoload" `thatShouldBe` syntax
       (Function
         (FuncNameAutoload $
-          AutoloadVar ([snakeQ|foo|] :| [[snakeQ|bar|]]) (OmittableSnakeSnake [snakeQ|baz|]))
+          AutoloadVar ("foo" :| ["bar"]) (OmittableSnakeSnake "baz"))
         [] Nothing [] []))
       [i|
         function foo#bar#baz()
@@ -195,7 +193,7 @@ test_function_with_syntaxes =
   , ("with 'let' and 'return'" `thatShouldBe` syntax
       (Function nameF [] Nothing []
         [ letXWith10
-        , Return . RhsVar $ VariableUnqualified [snakeQ|x|]
+        , Return . RhsVar $ VariableUnqualified "x"
         ]
        ))
       [i|

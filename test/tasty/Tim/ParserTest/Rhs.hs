@@ -39,9 +39,9 @@ test_strings =
 
 test_literal_like_vim_variables :: [TestTree]
 test_literal_like_vim_variables =
-  [ "v:true"  `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty [snakeQ|true|])
-  , "v:false" `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty [snakeQ|false|])
-  , "v:null"  `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty [snakeQ|null|])
+  [ "v:true"  `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty "true")
+  , "v:false" `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty "false")
+  , "v:null"  `shouldBe` Rhs (RhsVar . VariableScoped . ScopeVarV $ ScopedNameNonEmpty "null")
   ]
 
 test_lists :: [TestTree]
@@ -81,34 +81,34 @@ test_function_call :: [TestTree]
 test_function_call =
   [ "F()" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeFuncName $ FuncNameUnqualified [upperSnakeQ|F|])
+        (FuncCalleeFuncName $ FuncNameUnqualified "F")
         [])
   , "f()" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified [snakeQ|f|])
+        (FuncCalleeUnqualified "f")
         [])
   , "f(x)" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified [snakeQ|f|])
-        [RhsVar $ VariableUnqualified [snakeQ|x|]
+        (FuncCalleeUnqualified "f")
+        [RhsVar $ VariableUnqualified "x"
         ])
   , "f(x, y)" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified [snakeQ|f|])
-        [ RhsVar $ VariableUnqualified [snakeQ|x|]
-        ,  RhsVar $ VariableUnqualified [snakeQ|y|]
+        (FuncCalleeUnqualified "f")
+        [ RhsVar $ VariableUnqualified "x"
+        ,  RhsVar $ VariableUnqualified "y"
         ])
   , "f(x, y, )" `shouldBe` Rhs -- tail comma
       (RhsFuncCall
-        (FuncCalleeUnqualified [snakeQ|f|])
-        [ RhsVar $ VariableUnqualified [snakeQ|x|]
-        ,  RhsVar $ VariableUnqualified [snakeQ|y|]
+        (FuncCalleeUnqualified "f")
+        [ RhsVar $ VariableUnqualified "x"
+        ,  RhsVar $ VariableUnqualified "y"
         ])
   , "f(g())" `shouldBe` Rhs
       (RhsFuncCall
-        (FuncCalleeUnqualified [snakeQ|f|])
+        (FuncCalleeUnqualified "f")
         [ RhsFuncCall
-            (FuncCalleeUnqualified [snakeQ|g|])
+            (FuncCalleeUnqualified "g")
             []
         ])
   ]
@@ -117,17 +117,17 @@ test_function_call =
 test_idents :: [TestTree]
 test_idents =
   [ "simple" `shouldBe` Rhs
-      (RhsVar $ VariableUnqualified [snakeQ|simple|])
+      (RhsVar $ VariableUnqualified "simple")
   , "g:" `shouldBe` Rhs
       (RhsVar . VariableScoped $ ScopeVarG ScopedNameEmpty)
   , "g:scoped" `shouldBe` Rhs
-      (RhsVar . VariableScoped . ScopeVarG $ ScopedNameNonEmpty [snakeQ|scoped|])
+      (RhsVar . VariableScoped . ScopeVarG $ ScopedNameNonEmpty "scoped")
   , "a:000" `shouldBe` Rhs
-      (RhsVar . VariableScoped $ ScopeVarA AScopeNameVarAll)
+      (RhsVar . VariableScoped . ScopeVarA $ ScopedNameNonEmpty "000")
   , "a:1" `shouldBe` Rhs
-      (RhsVar . VariableScoped . ScopeVarA $ AScopeNameVarNum 1)
+      (RhsVar . VariableScoped . ScopeVarA $ ScopedNameNonEmpty "1")
   , "a:foo" `shouldBe` Rhs
-      (RhsVar . VariableScoped . ScopeVarA . AScopeNameName $ ScopedNameNonEmpty [snakeQ|foo|])
+      (RhsVar . VariableScoped . ScopeVarA $ ScopedNameNonEmpty "foo")
   , "@a" `shouldBe` Rhs
       (RhsVar . VariableRegister . Alphabetic $ AlphaLower A_)
   , "@+" `shouldBe` Rhs
@@ -140,65 +140,65 @@ test_idents =
       (RhsVar . VariableOption $ GlobalScopedOption [lowerStringQ|opt|])
 
   , "foo#bar" `shouldBe` Rhs (RhsVar . VariableAutoload $
-        AutoloadVar ([snakeQ|foo|] :| []) (OmittableSnakeSnake [snakeQ|bar|]))
+        AutoloadVar ("foo" :| []) (OmittableSnakeSnake "bar"))
   , "foo#bar#baz" `shouldBe` Rhs (RhsVar . VariableAutoload $
-        AutoloadVar ([snakeQ|foo|] :| [[snakeQ|bar|]])
-          (OmittableSnakeSnake [snakeQ|baz|]))
+        AutoloadVar ("foo" :| ["bar"])
+          (OmittableSnakeSnake "baz"))
   , "foo#" `shouldBe` Rhs (RhsVar . VariableAutoload $
-        AutoloadVar ([snakeQ|foo|] :| []) OmittableSnakeOmitted)
+        AutoloadVar ("foo" :| []) OmittableSnakeOmitted)
 
   , "foo.bar" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarPropertyAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        [snakeQ|bar|])
+        (DictSelfUnqualified "foo")
+        "bar")
 
   , "s:foo.bar" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarPropertyAccess
-        (DictSelfScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|foo|])
-        [snakeQ|bar|])
+        (DictSelfScoped . ScopeVarS $ ScopedNameNonEmpty "foo")
+        "bar")
 
   , "g:.foo" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarPropertyAccess
         (DictSelfScoped $ ScopeVarG ScopedNameEmpty)
-        [snakeQ|foo|])
+        "foo")
 
   , "foo[x]" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarIndexAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        (RhsVar $ VariableUnqualified [snakeQ|x|]))
+        (DictSelfUnqualified "foo")
+        (RhsVar $ VariableUnqualified "x"))
 
   , "foo[s:x]" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarIndexAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        (RhsVar . VariableScoped . ScopeVarS $ ScopedNameNonEmpty [snakeQ|x|]))
+        (DictSelfUnqualified "foo")
+        (RhsVar . VariableScoped . ScopeVarS $ ScopedNameNonEmpty "x"))
 
   , "g:[x]" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarIndexAccess
         (DictSelfScoped $ ScopeVarG ScopedNameEmpty)
-        (RhsVar $ VariableUnqualified [snakeQ|x|]))
+        (RhsVar $ VariableUnqualified "x"))
 
   , "foo.bar.baz" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarPropertyAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        [snakeQ|bar|] `DictVarPropertyAccessChain`
-        [snakeQ|baz|])
+        (DictSelfUnqualified "foo")
+        "bar" `DictVarPropertyAccessChain`
+        "baz")
 
   , "foo.bar[x]" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarPropertyAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        [snakeQ|bar|] `DictVarIndexAccessChain`
-        (RhsVar $ VariableUnqualified [snakeQ|x|]))
+        (DictSelfUnqualified "foo")
+        "bar" `DictVarIndexAccessChain`
+        (RhsVar $ VariableUnqualified "x"))
 
   , "foo[x].bar" `shouldBe` Rhs (RhsVar . VariableDict $
       DictVarIndexAccess
-        (DictSelfUnqualified [snakeQ|foo|])
-        (RhsVar $ VariableUnqualified [snakeQ|x|]) `DictVarPropertyAccessChain`
-        [snakeQ|bar|])
+        (DictSelfUnqualified "foo")
+        (RhsVar $ VariableUnqualified "x") `DictVarPropertyAccessChain`
+        "bar")
   ]
 
 test_parens :: [TestTree]
 test_parens =
   [ "(10)" `shouldBe` Rhs (RhsParens . RhsLit $ LiteralNat 10)
-  , "(ident)" `shouldBe` Rhs (RhsParens . RhsVar $ VariableUnqualified [snakeQ|ident|])
-  , "((nested))" `shouldBe` Rhs (RhsParens . RhsParens . RhsVar $ VariableUnqualified [snakeQ|nested|])
+  , "(ident)" `shouldBe` Rhs (RhsParens . RhsVar $ VariableUnqualified "ident")
+  , "((nested))" `shouldBe` Rhs (RhsParens . RhsParens . RhsVar $ VariableUnqualified "nested")
   ]
