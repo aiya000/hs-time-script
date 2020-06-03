@@ -2,13 +2,12 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
 
+-- | Please see 'Tim.Parser'.
 module Tim.Parser.Types where
 
 import Control.Monad.Except (MonadError)
 import qualified Data.List.NonEmpty as List
 import qualified Data.String as IsString
-import Data.String.Cases
-import qualified Data.String.Cases as String
 import Data.String.Here (i)
 import Data.Text.Prettyprint.Doc (Pretty(..))
 import qualified RIO as General
@@ -52,12 +51,12 @@ data AST = Code Code -- ^ Whole of a code
          | Rhs Rhs -- ^ a term
   deriving (Show, Eq)
 
-data FuncParam = FuncParamUnbound String.Snake -- ^ a variable that is not bound by a type: `x`
-               | FuncParamBound String.Snake Type -- ^ bound by a type: `x: Int`
+data FuncParam = FuncParamUnbound General.String -- ^ a variable that is not bound by a type: `x`
+               | FuncParamBound General.String Type -- ^ bound by a type: `x: Int`
                | FuncParamVariadic -- ^ variadic parameters: `...`
   deriving (Show, Eq)
 
-data FuncName = FuncNameUnqualified String.UpperSnake -- ^ F, G
+data FuncName = FuncNameUnqualified General.String -- ^ F, G
               | FuncNameScoped ScopedVar -- ^ s:f, g:F
               | FuncNameDict DictVar -- ^ foo.bar
               | FuncNameAutoload AutoloadVar
@@ -103,7 +102,7 @@ data Literal = LiteralNat Natural
 
 -- | Identifiers that can be called as a function.
 data FuncCallee = FuncCalleeFuncName FuncName
-                | FuncCalleeUnqualified String.Snake -- ^ a variable. e.g. `f` of `let f = function('string')`.
+                | FuncCalleeUnqualified General.String -- ^ a variable. e.g. `f` of `let f = function('string')`.
   deriving (Show, Eq)
 
 
@@ -114,7 +113,7 @@ data String = StringLiteral Text -- ^ literal-string
 
 
 -- | Please see the parser implementation
-data Type = TypeCon Camel
+data Type = TypeCon General.String
           | TypeApp Type Type
           | TypeArrow Type Type
           | TypeUnion Type Type
@@ -124,7 +123,7 @@ infixr 3 `TypeArrow`
 infixr 4 `TypeUnion`
 
 -- | The parser's variable identifiers
-data Variable = VariableUnqualified String.Snake -- ^ simple_idents
+data Variable = VariableUnqualified General.String -- ^ simple_idents
               | VariableScoped ScopedVar -- ^ s:coped, l:, a:000
               | VariableAutoload AutoloadVar
               | VariableDict DictVar -- ^ `foo.bar.baz`, `g:foo.bar`
@@ -139,16 +138,11 @@ data ScopedVar = ScopeVarG ScopedName
                | ScopeVarB ScopedName
                | ScopeVarW ScopedName
                | ScopeVarT ScopedName
-               | ScopeVarA AScopeName
+               | ScopeVarA ScopedName
   deriving (Show, Eq)
 
 data ScopedName = ScopedNameEmpty -- ^ To allow g:, s:, l:, ...
-                | ScopedNameNonEmpty String.Snake
-  deriving (Show, Eq)
-
-data AScopeName = AScopeNameVarAll -- ^ a:000
-                | AScopeNameVarNum Natural -- ^ a:0, a:1, ...
-                | AScopeNameName ScopedName -- ^ a:foo, a:bar
+                | ScopedNameNonEmpty General.String
   deriving (Show, Eq)
 
 -- |
@@ -159,13 +153,13 @@ data AScopeName = AScopeNameVarAll -- ^ a:000
 -- - foo[bar][baz]
 -- - foo.bar[baz]
 data DictVar = DictVarIndexAccess DictSelf Rhs -- ^ `foo.bar`
-             | DictVarPropertyAccess DictSelf String.Snake -- ^ `foo[bar]`
+             | DictVarPropertyAccess DictSelf General.String -- ^ `foo[bar]`
              | DictVarIndexAccessChain DictVar Rhs
-             | DictVarPropertyAccessChain DictVar String.Snake
+             | DictVarPropertyAccessChain DictVar General.String
   deriving (Show, Eq)
 
 -- | A part of 'Variable' for 'DictVar'
-data DictSelf = DictSelfUnqualified String.Snake
+data DictSelf = DictSelfUnqualified General.String
               | DictSelfScoped ScopedVar
   deriving (Show, Eq)
 
@@ -175,10 +169,10 @@ data DictSelf = DictSelfUnqualified String.Snake
 -- - foo#bar#baz
 -- - x#
 data AutoloadVar = AutoloadVar
-  { names :: List.NonEmpty String.Snake -- ^ names excluding the last. e.g. `foo`, `bar` of `foo#bar#baz`
+  { names :: List.NonEmpty General.String -- ^ names excluding the last. e.g. `foo`, `bar` of `foo#bar#baz`
   , lastName :: OmittableSnake -- ^ the last name. e.g. `baz` of `foo#bar#baz`, `` (the empty) of `x#`
   } deriving (Show, Eq)
 
 data OmittableSnake = OmittableSnakeOmitted -- ^ an empty string
-                    | OmittableSnakeSnake String.Snake -- ^ a non-empty string
+                    | OmittableSnakeSnake General.String -- ^ a non-empty string
   deriving (Show, Eq)

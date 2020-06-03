@@ -6,14 +6,12 @@
 -- |
 -- Parses codes, commands, and expressions.
 --
--- NOTICE:
--- This only parses syntaxes, doesn't check valid syntaxes strictly.
--- Please use Tim.Checker if you want.
+-- NOTICE: This only parses syntaxes, This doesn't
 --
--- e.g.
--- These are parsed successfully.
--- `let x: String = 10` (invalid assigning)
--- `1.0` (1.0 is not a command, commands are not allowed at top level)
+--   * check static types
+--   (Please also see 'Tim.TypeChecker')
+--   * check naming cases
+--   (e.g. unqualified function names must be UpperSnakeCase "[A-Z][A-Za-z0-9_]*", but String (".*") is allowed in here.)
 module Tim.Parser
   ( parse
   ) where
@@ -22,15 +20,15 @@ import Control.Applicative ((<|>))
 import Control.Arrow ((>>>))
 import Control.Exception.Safe (displayException)
 import Control.Monad.Except (throwError)
-import Data.Char.Cases (DigitChar(..))
 import Data.Function ((&))
 import Data.List.NonEmpty (NonEmpty(..), (<|))
 import Data.Map.Strict (Map)
-import Data.String.Cases
+import Data.String.Cases (LowerString(..))
 import Data.String.Here (i)
 import Data.Text (Text)
 import Data.Text.Prettyprint.Doc (pretty)
 import Prelude
+import RIO
 import RIO.List
 import Tim.Lexer.Types (Token, Register(..), Option(..), Scope(..))
 import Tim.Megaparsec
@@ -164,10 +162,10 @@ Function :: { Syntax }
   : function FuncName '(' FuncParams ')' FuncReturnType FuncOpts OptNewLines Code OptNewLines endfunction {  Function $2 $4 $6 $7 $9  }
 
 FuncName :: { FuncName }
-  : UnqualifiedFuncName {  FuncNameUnqualified $1  }
-  | ScopedVar           {  FuncNameScoped $1       }
-  | DictVar             {  FuncNameDict $1         }
-  | AutoloadVar         {  FuncNameAutoload $1     }
+  : ScopedVar   {  FuncNameScoped $1       }
+  | DictVar     {  FuncNameDict $1         }
+  | AutoloadVar {  FuncNameAutoload $1     }
+  | ident       {  FuncNameUnqualified $1  }
 
 FuncParams :: { [FuncParam] }
   : {- empty -}              {  []       }
@@ -175,9 +173,9 @@ FuncParams :: { [FuncParam] }
   | FuncParam ',' FuncParams {  $1 : $3  }
 
 FuncParam :: { FuncParam }
-  : UnqualifiedName ':' Type {  FuncParamBound $1 $3  }
-  | UnqualifiedName          {  FuncParamUnbound $1   }
-  | '.' '.' '.'              {  FuncParamVariadic     }
+  : ident ':' Type {  FuncParamBound $1 $3  }
+  | ident          {  FuncParamUnbound $1   }
+  | '.' '.' '.'    {  FuncParamVariadic     }
 
 FuncReturnType :: { Maybe Type }
   : {- empty -} {  Nothing  }
@@ -209,17 +207,14 @@ DestructVar :: { List.NonEmpty Variable }
 Type :: { Type }
   : Type "->" Type {  TypeArrow $1 $3  }
   | Type '|'  Type {  TypeUnion $1 $3  }
-  | Camel          {  TypeCon $1       }
   | '(' Type ')'   {  $2               }
   | TypeApp        {  $1               }
+  | ident          {  TypeCon $1       }
 
 -- lefty bias
 TypeApp :: { Type }
-  : Type Camel        {  TypeApp $1 (TypeCon $2)  }
+  : Type ident        {  TypeApp $1 (TypeCon $2)  }
   | Type '(' Type ')' {  TypeApp $1 $3            }
-
-Camel :: { Camel }
-  : ident {% runParsecParserInParser pos String.parseCamel $1  }
 
 Variable :: { Variable }
   : VariableScoped      {  $1  }
@@ -233,45 +228,45 @@ VariableScoped :: { Variable }
   : ScopedVar {  VariableScoped $1  }
 
 ScopedVar :: { ScopedVar }
-  : varG       {  ScopeVarG ScopedNameEmpty                                                          }
-  | varS       {  ScopeVarS ScopedNameEmpty                                                          }
-  | varL       {  ScopeVarL ScopedNameEmpty                                                          }
-  | varV       {  ScopeVarV ScopedNameEmpty                                                          }
-  | varB       {  ScopeVarB ScopedNameEmpty                                                          }
-  | varW       {  ScopeVarW ScopedNameEmpty                                                          }
-  | varT       {  ScopeVarT ScopedNameEmpty                                                          }
-  | varScopedG {% fmap (ScopeVarG . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedS {% fmap (ScopeVarS . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedL {% fmap (ScopeVarL . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedV {% fmap (ScopeVarV . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedB {% fmap (ScopeVarB . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedW {% fmap (ScopeVarW . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedT {% fmap (ScopeVarT . ScopedNameNonEmpty) $ runParsecParserInParser pos parseSnake $1  }
-  | varScopedA {% fmap ScopeVarA $ runParsecParserInParser pos parseAScopeVar $1                     }
+  : varG       {  ScopeVarG ScopedNameEmpty          }
+  | varS       {  ScopeVarS ScopedNameEmpty          }
+  | varL       {  ScopeVarL ScopedNameEmpty          }
+  | varV       {  ScopeVarV ScopedNameEmpty          }
+  | varB       {  ScopeVarB ScopedNameEmpty          }
+  | varW       {  ScopeVarW ScopedNameEmpty          }
+  | varT       {  ScopeVarT ScopedNameEmpty          }
+  | varScopedG {  ScopeVarG $ ScopedNameNonEmpty $1  }
+  | varScopedS {  ScopeVarS $ ScopedNameNonEmpty $1  }
+  | varScopedL {  ScopeVarL $ ScopedNameNonEmpty $1  }
+  | varScopedV {  ScopeVarV $ ScopedNameNonEmpty $1  }
+  | varScopedB {  ScopeVarB $ ScopedNameNonEmpty $1  }
+  | varScopedW {  ScopeVarW $ ScopedNameNonEmpty $1  }
+  | varScopedT {  ScopeVarT $ ScopedNameNonEmpty $1  }
+  | varScopedA {  ScopeVarA $ ScopedNameNonEmpty $1  }
 
 VariableAutoload :: { Variable }
   : AutoloadVar {  VariableAutoload $1  }
 
 AutoloadVar :: { AutoloadVar }
-  : AutoloadVarNames '#'                 {  AutoloadVar (NonEmptyList.reverse $1) OmittableSnakeOmitted     }
-  | AutoloadVarNames '#' UnqualifiedName {  AutoloadVar (NonEmptyList.reverse $1) (OmittableSnakeSnake $3)  }
+  : AutoloadVarNames '#'       {  AutoloadVar (NonEmptyList.reverse $1) OmittableSnakeOmitted     }
+  | AutoloadVarNames '#' ident {  AutoloadVar (NonEmptyList.reverse $1) (OmittableSnakeSnake $3)  }
 
-AutoloadVarNames :: { List.NonEmpty Snake }
-  : UnqualifiedName                      {  $1 :| []  }
-  | AutoloadVarNames '#' UnqualifiedName {  $3 <| $1  }
+AutoloadVarNames :: { List.NonEmpty String }
+  : ident                      {  $1 :| []  }
+  | AutoloadVarNames '#' ident {  $3 <| $1  }
 
 VariableDict :: { Variable }
   : DictVar {  VariableDict $1  }
 
 DictVar :: { DictVar }
-  : DictSelf '[' Rhs ']'         {  DictVarIndexAccess $1 $3          }
-  | DictSelf '.' UnqualifiedName {  DictVarPropertyAccess $1 $3       }
-  | DictVar '[' Rhs ']'          {  DictVarIndexAccessChain $1 $3     }
-  | DictVar '.' UnqualifiedName  {  DictVarPropertyAccessChain $1 $3  }
+  : DictSelf '[' Rhs ']' {  DictVarIndexAccess $1 $3          }
+  | DictSelf '.' ident   {  DictVarPropertyAccess $1 $3       }
+  | DictVar '[' Rhs ']'  {  DictVarIndexAccessChain $1 $3     }
+  | DictVar '.' ident    {  DictVarPropertyAccessChain $1 $3  }
 
 DictSelf :: { DictSelf }
-  : UnqualifiedName {  DictSelfUnqualified $1  }
-  | ScopedVar       {  DictSelfScoped $1       }
+  : ident     {  DictSelfUnqualified $1  }
+  | ScopedVar {  DictSelfScoped $1       }
 
 VariableRegister :: { Variable }
   : varRegUnnamed   {  VariableRegister Unnamed          }
@@ -294,13 +289,7 @@ VariableOption :: { Variable }
   | varOption  {  VariableOption $ UnscopedOption $1      }
 
 VariableUnqualified :: { Variable }
-  : UnqualifiedName {  VariableUnqualified $1  }
-
-UnqualifiedName :: { Snake }
-  : ident {% runParsecParserInParser pos parseSnake $1  }
-
-UnqualifiedFuncName :: { UpperSnake }
-  : ident {% runParsecParserInParser pos parseUpperSnake $1 }
+  : ident {  VariableUnqualified $1  }
 
 Rhs :: { Rhs }
   : Variable            {  RhsVar $1          }
@@ -317,8 +306,8 @@ Literal :: { Literal }
   | '{' DictInner '}' {  LiteralDict $2    }
 
 FuncCallee :: { FuncCallee }
-  : FuncName        {  FuncCalleeFuncName $1     }
-  | UnqualifiedName {  FuncCalleeUnqualified $1  }
+  : FuncName {  FuncCalleeFuncName $1     }
+  | ident    {  FuncCalleeUnqualified $1  }
 
 FuncArgs :: { [Rhs] }
   : '(' FuncArgsInner ')' { $2 }
@@ -372,16 +361,16 @@ pattern KeywordReturn :: Token
 pattern KeywordReturn = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'r' "eturn"))
 
 pattern KeywordNoAbort :: Token
-pattern KeywordNoAbort = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-abort"))
+pattern KeywordNoAbort = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'n' "o-abort"))
 
 pattern KeywordNoClosure :: Token
-pattern KeywordNoClosure = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-closure"))
+pattern KeywordNoClosure = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'n' "o-closure"))
 
 pattern KeywordNoRange :: Token
-pattern KeywordNoRange = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-range"))
+pattern KeywordNoRange = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'n' "o-range"))
 
 pattern KeywordNoDict :: Token
-pattern KeywordNoDict = Token.Ident (Token.UnqualifiedIdent (NonEmpty 'n' "o-dict"))
+pattern KeywordNoDict = Token.Ident (Token.UnqualifiedIdent (String.NonEmpty 'n' "o-dict"))
 
 
 parse :: [(Token, TokenPos)] -> Either ParseError AST
@@ -415,22 +404,4 @@ flattenMargins = replace . unlines . filter (/= "") . map (dropWhile (== ' ')) .
     replace [] = []
     replace ('\n' : xs) = ' ' : replace xs
     replace (x : xs) = x : replace xs
-
-runParsecParserInParser :: TokenPos -> CodeParsec a -> String -> Parser a
-runParsecParserInParser pos parser input =
-  case P.runParser parser "time-script" input of
-    Right x -> pure x
-    Left  e -> throwError $ ParseError (displayException e) (OnAToken pos)
-
-parseAScopeVar :: CodeParsec AScopeName
-parseAScopeVar =
-    varAll <|>
-    varNum <|>
-    nonEmptyName <|>
-    emptyName
-  where
-    varAll = AScopeNameVarAll <$ P.string "000"
-    varNum = AScopeNameVarNum <$> P.decimal
-    nonEmptyName = AScopeNameName . ScopedNameNonEmpty <$> parseSnake
-    emptyName = AScopeNameName ScopedNameEmpty <$ P.string ""
 }
