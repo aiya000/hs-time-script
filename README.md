@@ -1,4 +1,6 @@
-**Now this project is the implementing phase!**
+~~**Now this project is the implementing phase!**~~
+Development has stopped.
+Use denops.vim instead.
 
 Please see the test and the test status to check this progress.
 
